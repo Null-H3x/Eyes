@@ -184,6 +184,34 @@ def selftest() -> List[tuple[str, bool]]:
         bad = big.score("xqzjkvwbxqzjkvwbxqzjkvwb")
         out.append(("real English LM: words >> gibberish", good > bad))
 
+    # --- edge / error paths -------------------------------------------------
+    # add_k must be positive (keep log-probs finite).
+    try:
+        MarkovModel.from_int_sequences([[0, 1]], 2, add_k=0.0)
+        addk_rejected = False
+    except ValueError:
+        addk_rejected = True
+    out.append(("add_k <= 0 rejected", addk_rejected))
+
+    # Out-of-range symbols are rejected, not silently wrapped.
+    try:
+        MarkovModel.from_int_sequences([[0, 5]], 3)
+        oor_rejected = False
+    except ValueError:
+        oor_rejected = True
+    out.append(("out-of-range symbol rejected", oor_rejected))
+
+    # logprob of a single symbol equals its unigram log-prob; empty == 0.
+    single = MarkovModel.from_int_sequences([[0, 0, 1, 1, 2]], 3, add_k=0.5)
+    out.append(("single-symbol logprob == unigram & empty == 0.0",
+                abs(single.logprob([2]) - float(single.uni_logp[2])) < 1e-12
+                and single.logprob([]) == 0.0))
+
+    # CharModel skips characters outside its alphabet (no crash, no KeyError).
+    cm2 = CharModel.train(["abc abc abc"])
+    out.append(("CharModel ignores unknown chars",
+                isinstance(cm2.score("abc ??? zzz abc"), float)))
+
     return out
 
 

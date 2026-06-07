@@ -34,6 +34,7 @@ Two solvers are provided:
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -215,7 +216,14 @@ def solve_keystream_viterbi(c: corpus_mod.Corpus, model: MarkovModel,
             e += uni[idx]
         return e
 
-    # Viterbi
+    # Viterbi for the EXACT 1st-order Markov MAP:
+    #   score = sum_i [ uni(p_i[0]) + sum_{t>=1} bi(p_i[t-1], p_i[t]) ]
+    # Every message starts at column 0, and message presence is contiguous, so
+    # a message present at column t (t>=1) is present at t-1 too: each symbol
+    # after position 0 is scored by exactly one bigram term, and only the first
+    # symbol carries a unigram term.  (We must NOT add a per-column unigram at
+    # t>=1 -- that would double-count, since bi already accounts for the target
+    # symbol's probability given its predecessor.)
     dp = emission(0)
     back: List[np.ndarray] = []
     for t in range(1, L):
@@ -226,9 +234,8 @@ def solve_keystream_viterbi(c: corpus_mod.Corpus, model: MarkovModel,
             if i in prev_map:
                 idx_prev = prev_map[i]
                 trans += bi[np.ix_(idx_prev, idx_cur)]
-        emis = emission(t)
-        # total[s_prev, s_cur] = dp[s_prev] + trans + emis[s_cur]
-        total = dp[:, None] + trans + emis[None, :]
+        # total[s_prev, s_cur] = dp[s_prev] + bigram(s_prev -> s_cur)
+        total = dp[:, None] + trans
         bp = np.argmax(total, axis=0)
         dp = total[bp, np.arange(N)]
         back.append(bp)
@@ -255,10 +262,9 @@ def solve_keystream_viterbi(c: corpus_mod.Corpus, model: MarkovModel,
 # ---------------------------------------------------------------------------
 
 def _make_markov(N: int, concentration: float, seed: int) -> MarkovModel:
-    """A 1st-order chain with strong bigram structure but a near-uniform
-    stationary distribution (mirroring the corpus: flat unigram IoC, structure
-    hiding in the transitions).  Built as a noisy cyclic permutation so each row
-    is peaky yet every column is balanced => uniform stationary."""
+    """A language-like ground-truth 1st-order chain for the synthetic test:
+    a non-uniform unigram (Dirichlet) plus a non-uniform, non-translation-
+    invariant transition matrix (Dirichlet rows)."""
     rng = np.random.default_rng(seed)
     # Language-like model: a NON-uniform unigram (the primary per-column signal
     # that pins each shift in classic depth attacks) plus moderate, identity-
@@ -323,9 +329,61 @@ def _synthetic_corpus(model: MarkovModel, lengths: Sequence[int],
     return c, plains
 
 
+def _score_keystream(c: corpus_mod.Corpus, model: MarkovModel,
+                     key: Sequence[int], mode: str) -> float:
+    """The exact 1st-order MAP objective the Viterbi maximises, scored directly
+    (for brute-force cross-checking)."""
+    combiner = cipher_ops.get_mode(mode)
+    N = c.N
+    total = 0.0
+    for ct in c.ciphertexts:
+        p = [combiner.decrypt(ct[t], key[t], N) for t in range(len(ct))]
+        total += float(model.uni_logp[p[0]])
+        for t in range(1, len(p)):
+            total += float(model.bi_logp[p[t - 1], p[t]])
+    return total
+
+
+def _brute_force_best(c: corpus_mod.Corpus, model: MarkovModel, mode: str
+                      ) -> Tuple[List[int], float]:
+    import itertools
+    N = c.N
+    L = c.max_length
+    best_key: List[int] = []
+    best_score = -math.inf
+    for key in itertools.product(range(N), repeat=L):
+        s = _score_keystream(c, model, list(key), mode)
+        if s > best_score:
+            best_score = s
+            best_key = list(key)
+    return best_key, best_score
+
+
 def selftest() -> List[tuple[str, bool]]:
     out: List[tuple[str, bool]] = []
     N = 83
+
+    # ---- DP correctness: Viterbi == brute-force optimum on a tiny instance --
+    sN, sL = 4, 4
+    srng = np.random.default_rng(41)
+    tiny_model = MarkovModel.from_int_sequences(
+        [list(srng.integers(0, sN, size=30)) for _ in range(8)], sN, add_k=0.4)
+    tiny_key = [int(srng.integers(0, sN)) for _ in range(sL)]
+    tcomb = cipher_ops.get_mode("add")
+    tiny_plains = [[int(srng.integers(0, sN)) for _ in range(sL)]
+                   for _ in range(3)]
+    tiny_cts = tuple(tuple(tcomb.encrypt(tiny_plains[i][t], tiny_key[t], sN)
+                           for t in range(sL)) for i in range(3))
+    tiny_c = corpus_mod.Corpus(deck_size=sN, labels=("a", "b", "c"),
+                               ciphertexts=tiny_cts, lengths=(sL, sL, sL),
+                               sigma0_targets=None)
+    vit = solve_keystream_viterbi(tiny_c, tiny_model, mode="add")
+    bf_key, bf_score = _brute_force_best(tiny_c, tiny_model, "add")
+    out.append(("Viterbi total_logprob == brute-force optimum",
+                abs(vit.total_logprob - bf_score) < 1e-9))
+    out.append(("Viterbi keystream achieves the optimal score",
+                abs(_score_keystream(tiny_c, tiny_model, vit.keystream, "add")
+                    - bf_score) < 1e-9))
 
     # ---- Synthetic end-to-end recovery (the core "math works" guarantee) ---
     truth_model = _make_markov(N, concentration=0.05, seed=1)
@@ -348,45 +406,43 @@ def selftest() -> List[tuple[str, bool]]:
     train = [_sample_chain(truth_model, 400, train_rng) for _ in range(60)]
     est_model = MarkovModel.from_int_sequences(train, N, add_k=0.3)
 
-    # (b) Viterbi recovers the keystream where columns are well sampled.
-    res = solve_keystream_viterbi(c, est_model, mode=mode)
-    well = [t for t in range(c.max_length) if res.column_samples[t] >= 5]
-    key_acc_well = np.mean([res.keystream[t] == keystream_true[t]
-                            for t in well])
-    out.append((f"synthetic: keystream accuracy on well-sampled cols "
-                f"= {key_acc_well:.2f} (> 0.80)", key_acc_well > 0.80))
+    # (b)-(d): exercise EVERY linear combiner mode end to end, since _dec_index
+    # and crib_drag differ per mode.  Same plaintexts/keystream, different
+    # cipher.  Recovery and crib propagation must both hold for each.
+    for m in ("add", "sub", "beaufort"):
+        cm, pm = _synthetic_corpus(truth_model, lengths, keystream_true,
+                                   m, seed=3, keep_prob=0.5)
 
-    # (c) Plaintext symbol accuracy overall, far above the 1/N chance level.
-    tot = corr = 0
-    for i in range(len(plains)):
-        for t in range(len(plains[i])):
-            tot += 1
-            if res.plaintext[i][t] == plains[i][t]:
-                corr += 1
-    sym_acc = corr / tot
-    out.append((f"synthetic: plaintext symbol accuracy = {sym_acc:.2f} "
-                f"(>> 1/N = {1/N:.3f})", sym_acc > 0.5))
+        res = solve_keystream_viterbi(cm, est_model, mode=m)
+        well = [t for t in range(cm.max_length) if res.column_samples[t] >= 5]
+        key_acc = np.mean([res.keystream[t] == keystream_true[t]
+                           for t in well])
+        tot = corr = 0
+        for i in range(len(pm)):
+            for t in range(len(pm[i])):
+                tot += 1
+                if res.plaintext[i][t] == pm[i][t]:
+                    corr += 1
+        sym_acc = corr / tot
+        out.append((f"synthetic [{m}]: keystream acc {key_acc:.2f} (>0.80) "
+                    f"& symbol acc {sym_acc:.2f} (>0.5)",
+                    key_acc > 0.80 and sym_acc > 0.5))
 
-    # (d) crib_drag is exact: feed true plaintext of one message as a crib and
-    # verify every message's revealed span matches its true plaintext.
-    ref = 4  # the longest message
-    start, span_len = 10, 25
-    crib_plain = plains[ref][start:start + span_len]
-    cr = crib_drag(c, ref_index=ref, start=start, plain=crib_plain, mode=mode)
-    out.append(("crib_drag recovers the true shared keystream",
-                cr.keystream == keystream_true[start:start + span_len]))
-    crib_ok = True
-    for i in range(len(plains)):
-        for off in range(span_len):
-            t = start + off
-            rec = cr.revealed[i][off]
-            if t < len(plains[i]):
-                if rec != plains[i][t]:
+        # crib_drag is exact: feed a message's true plaintext as a crib and
+        # verify every message's revealed span matches its true plaintext.
+        ref, start, span_len = 4, 10, 25
+        crib_plain = pm[ref][start:start + span_len]
+        cr = crib_drag(cm, ref_index=ref, start=start, plain=crib_plain, mode=m)
+        crib_ok = (cr.keystream == list(keystream_true[start:start + span_len]))
+        for i in range(len(pm)):
+            for off in range(span_len):
+                t = start + off
+                rec = cr.revealed[i][off]
+                expect = pm[i][t] if t < len(pm[i]) else None
+                if rec != expect:
                     crib_ok = False
-            else:
-                if rec is not None:
-                    crib_ok = False
-    out.append(("crib_drag reveals correct plaintext in every message", crib_ok))
+        out.append((f"crib_drag [{m}]: keystream + all-message reveal exact",
+                    crib_ok))
 
     # ---- Non-depth control: independent keystreams per message => no depth --
     rng2 = np.random.default_rng(5)
@@ -413,6 +469,51 @@ def selftest() -> List[tuple[str, bool]]:
     max_pair = max(p[3] for p in rrep.per_pair)
     out.append((f"real corpus: strongest pair agreement {max_pair:.0%} "
                 f"(> 40%, the E1/W1 anomaly)", max_pair > 0.40))
+
+    # --- edge / error paths & determinism -----------------------------------
+    # confirm_depth is deterministic for a fixed seed.
+    r1 = confirm_depth(real, n_null=50, seed=123)
+    r2 = confirm_depth(real, n_null=50, seed=123)
+    out.append(("confirm_depth is deterministic for fixed seed",
+                r1.significance.z == r2.significance.z
+                and r1.mean_pair_diff_ioc == r2.mean_pair_diff_ioc))
+
+    # crib_drag rejects a crib running past the reference message.
+    try:
+        crib_drag(real, ref_index=0, start=real.lengths[0] - 1,
+                  plain=[1, 2, 3], mode="add")
+        crib_caught = False
+    except ValueError:
+        crib_caught = True
+    out.append(("crib_drag rejects over-long crib", crib_caught))
+
+    # solver rejects a model whose alphabet differs from the corpus.
+    wrong = MarkovModel.from_int_sequences([[0, 1]], 2, add_k=0.5)
+    try:
+        solve_keystream_viterbi(real, wrong, mode="add")
+        model_caught = False
+    except ValueError:
+        model_caught = True
+    out.append(("solver rejects mismatched model alphabet", model_caught))
+
+    # _dec_index rejects an unsupported mode.
+    try:
+        _dec_index(0, "rot13", N)
+        mode_caught = False
+    except KeyError:
+        mode_caught = True
+    out.append(("_dec_index rejects unsupported mode", mode_caught))
+
+    # _dec_index is exactly the per-key decrypt for every mode (cross-check
+    # against cipher_ops for a couple of ciphertext values).
+    dec_ok = True
+    for m in ("add", "sub", "beaufort"):
+        comb = cipher_ops.get_mode(m)
+        for cv in (0, 17, 82):
+            idx = _dec_index(cv, m, N)
+            if any(int(idx[s]) != comb.decrypt(cv, s, N) for s in range(N)):
+                dec_ok = False
+    out.append(("_dec_index == cipher_ops.decrypt for all modes/keys", dec_ok))
 
     return out
 

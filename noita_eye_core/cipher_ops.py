@@ -207,6 +207,48 @@ def selftest() -> List[tuple[str, bool]]:
                 break
     out.append(("differencing cancels key for linear modes", diff_ok))
 
+    # --- edge / error paths -------------------------------------------------
+    # Smallest meaningful alphabet (N=2) round-trips for every mode.
+    small_ok = True
+    for mode in MODES:
+        m = MODES[mode]
+        for p in range(2):
+            for k in range(2):
+                if m.decrypt(m.encrypt(p, k, 2), k, 2) != p:
+                    small_ok = False
+    out.append(("round-trip holds at N=2", small_ok))
+
+    # A large prime-ish N also round-trips (no hidden 83 assumption).
+    big_ok = all(
+        MODES["add"].decrypt(MODES["add"].encrypt(p, k, 257), k, 257) == p
+        for p in (0, 1, 100, 256) for k in (0, 5, 256))
+    out.append(("no hidden N=83 assumption (N=257)", big_ok))
+
+    # get_mode rejects unknown modes.
+    try:
+        get_mode("rot13")
+        rejected = False
+    except KeyError:
+        rejected = True
+    out.append(("get_mode rejects unknown mode", rejected))
+
+    # encrypt_stream rejects a too-short key (no silent truncation).
+    try:
+        encrypt_stream([1, 2, 3], [0, 0], "add", N)
+        short_rejected = False
+    except ValueError:
+        short_rejected = True
+    out.append(("encrypt_stream rejects short key", short_rejected))
+
+    # keystream_from_known rejects length mismatch.
+    try:
+        keystream_from_known([1, 2], [1, 2, 3], "add", N)
+        mismatch_rejected = False
+    except ValueError:
+        mismatch_rejected = True
+    out.append(("keystream_from_known rejects length mismatch",
+                mismatch_rejected))
+
     return out
 
 

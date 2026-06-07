@@ -162,6 +162,42 @@ def selftest() -> List[tuple[str, bool]]:
     out.append(("empirical_null centres near data mean",
                 abs(float(np.mean(nd)) - data.mean()) < 5.0))
 
+    # --- edge / error paths -------------------------------------------------
+    # 'less' tail flags a small observation.
+    sig_low = significance(-5.0, null, tail="less")
+    out.append(("'less' tail flags a small observation",
+                sig_low.p_value < 1e-3))
+
+    # empty null is rejected.
+    try:
+        significance(1.0, [])
+        empty_rejected = False
+    except ValueError:
+        empty_rejected = True
+    out.append(("empty null rejected", empty_rejected))
+
+    # invalid tail rejected.
+    try:
+        significance(1.0, null, tail="sideways")
+        tail_rejected = False
+    except ValueError:
+        tail_rejected = True
+    out.append(("invalid tail rejected", tail_rejected))
+
+    # bonferroni rejects n_tests < 1; BH of [] is [].
+    try:
+        bonferroni(0.1, 0)
+        bonf_rejected = False
+    except ValueError:
+        bonf_rejected = True
+    out.append(("bonferroni rejects n_tests<1 & BH([]) == []",
+                bonf_rejected and benjamini_hochberg([]) == []))
+
+    # single-sample null gives sd=0 -> finite, signed-inf z (no crash).
+    sig_one = significance(2.0, [0.0])
+    out.append(("single-sample null: z is +inf, p computed",
+                sig_one.z == math.inf and 0.0 < sig_one.p_value <= 1.0))
+
     return out
 
 

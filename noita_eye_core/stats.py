@@ -134,6 +134,21 @@ def selftest() -> List[tuple[str, bool]]:
     f = frequencies(big, N)
     out.append(("frequencies sum to 1.0", abs(sum(f) - 1.0) < 1e-9))
 
+    # --- edge cases ---------------------------------------------------------
+    # difference uses the common prefix when lengths differ.
+    out.append(("difference clips to common length",
+                difference([1, 2, 3, 4], [1, 1, 1], N) == [0, 1, 2]))
+    # empty inputs are safe.
+    out.append(("empty-sequence stats are safe",
+                ioc([]) == 0.0 and frequencies([], N) == [0.0] * N
+                and chi2_uniform([], N) == 0.0))
+    # difference_ioc of a sequence with itself is 1.0 (all zeros).
+    out.append(("difference_ioc(x, x) == 1.0",
+                abs(difference_ioc(big, big, N) - 1.0) < 1e-12))
+    # histogram counts sum to length.
+    out.append(("histogram sums to length",
+                sum(histogram(big, N)) == len(big)))
+
     return out
 
 

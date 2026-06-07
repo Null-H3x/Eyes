@@ -138,6 +138,26 @@ def selftest() -> List[tuple[str, bool]]:
                 recompose_sequence(decompose_sequence(sample, 5, 3), 5)
                 == sample))
 
+    # --- edge cases ---------------------------------------------------------
+    out.append(("per_digit_ioc returns one value per digit",
+                len(per_digit_ioc(sample, 5, 3)) == 3))
+    # from_digits rejects an out-of-range digit.
+    try:
+        from_digits([0, 5, 1], 5)
+        digit_rejected = False
+    except ValueError:
+        digit_rejected = True
+    out.append(("from_digits rejects out-of-range digit", digit_rejected))
+    # base < 2 rejected.
+    try:
+        to_digits(3, 1, 3)
+        base_rejected = False
+    except ValueError:
+        base_rejected = True
+    out.append(("to_digits rejects base < 2", base_rejected))
+    # zero decomposes to all-zero digits.
+    out.append(("0 -> all-zero digits", to_digits(0, 5, 3) == [0, 0, 0]))
+
     return out
 
 

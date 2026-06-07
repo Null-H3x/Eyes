@@ -257,6 +257,36 @@ def selftest() -> List[tuple[str, bool]]:
         finally:
             sys.path.pop(0)
 
+    # --- paranoia: random(a,b) bounds under stress (float rounding risk) ----
+    bounds_ok = True
+    range_seen = set()
+    for ws in (1, 2, 7, 12345, 0xFFFFFFFF, 987654321):
+        q = NollaPRNG(ws)
+        q.set_random_seed(float(ws % 97), float((ws * 3) % 89))
+        for _ in range(20000):
+            v = q.random(0, 82)
+            if not (0 <= v <= 82):
+                bounds_ok = False
+                break
+            range_seen.add(v)
+        if not bounds_ok:
+            break
+    out.append(("random(0,82) never escapes bounds over 120k draws",
+                bounds_ok))
+    out.append(("random(0,82) reaches both endpoints",
+                0 in range_seen and 82 in range_seen))
+
+    # next_raw stays in the valid MINSTD range [1, 2^31-2] from a healthy seed.
+    q2 = NollaPRNG(424242)
+    q2.set_random_seed(5.0, 9.0)
+    rng_ok = all(1 <= q2.next_raw() <= INT_MAX - 1 for _ in range(50000))
+    out.append(("next_raw stays in [1, 2^31-2]", rng_ok))
+
+    # random(a,b) with a==b is constant a (degenerate range).
+    q3 = NollaPRNG(11)
+    q3.set_random_seed(1.0, 2.0)
+    out.append(("random(a,a) == a", all(q3.random(7, 7) == 7 for _ in range(100))))
+
     return out
 
 

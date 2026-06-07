@@ -143,6 +143,33 @@ def selftest() -> List[tuple[str, bool]]:
         out.append(("corpus.json == EyeStat data (single source)",
                     cross_check_eyestat(eyestat_json)))
 
+    # --- edge / integrity paths ---------------------------------------------
+    # messages_with_length_at_least is contiguous & consistent with column().
+    t = 100
+    out.append(("messages_with_length_at_least matches column()",
+                c.messages_with_length_at_least(t)
+                == [i for i, _ in c.column(t)]))
+
+    # _validate catches a declared-length / actual-length mismatch.
+    bad = Corpus(deck_size=83, labels=("x",), ciphertexts=((1, 2, 3),),
+                 lengths=(2,), sigma0_targets=None)
+    try:
+        _validate(bad)
+        len_caught = False
+    except ValueError:
+        len_caught = True
+    out.append(("_validate catches length mismatch", len_caught))
+
+    # _validate catches an out-of-alphabet symbol.
+    bad2 = Corpus(deck_size=83, labels=("x",), ciphertexts=((1, 99),),
+                  lengths=(2,), sigma0_targets=None)
+    try:
+        _validate(bad2)
+        sym_caught = False
+    except ValueError:
+        sym_caught = True
+    out.append(("_validate catches out-of-alphabet symbol", sym_caught))
+
     return out
 
 
