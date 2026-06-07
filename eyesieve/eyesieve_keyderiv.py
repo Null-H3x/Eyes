@@ -230,22 +230,33 @@ THEORY2_DEFAULT_PERMUTATION_NAMES: tuple[str, ...] = (
 
 
 def _select_combine_ops(deck_size: int, names: Sequence[str]) -> list:
-    """Pull MergeOp instances by name from the sources enumeration."""
+    """Pull MergeOp instances by name from the sources enumeration.
+
+    Raises KeyDerivError on an unknown name rather than silently dropping it —
+    a typo in a config previously produced a smaller-than-intended sweep with
+    no warning, so the run looked complete while skipping whole derivations.
+    """
     by_name = {op.name: op for op in es.enumerate_merge_ops(deck_size=deck_size)}
-    selected = []
-    for n in names:
-        if n in by_name:
-            selected.append(by_name[n])
-    return selected
+    unknown = [n for n in names if n not in by_name]
+    if unknown:
+        raise KeyDerivError(
+            f"unknown combine op name(s) {unknown!r}; "
+            f"valid: {sorted(by_name)}"
+        )
+    return [by_name[n] for n in names]
 
 
 def _select_permutations(max_len: int, names: Sequence[str]) -> list:
+    """Pull Permutation instances by name. Raises KeyDerivError on an unknown
+    name (see _select_combine_ops for the silent-drop hazard this prevents)."""
     by_name = {p.name: p for p in ep.enumerate_permutations(max_len=max_len)}
-    selected = []
-    for n in names:
-        if n in by_name:
-            selected.append(by_name[n])
-    return selected
+    unknown = [n for n in names if n not in by_name]
+    if unknown:
+        raise KeyDerivError(
+            f"unknown permutation name(s) {unknown!r}; "
+            f"valid: {sorted(by_name)}"
+        )
+    return [by_name[n] for n in names]
 
 
 def enumerate_theory2(

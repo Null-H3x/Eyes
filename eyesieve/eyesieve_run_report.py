@@ -169,8 +169,15 @@ def render_funnel(telemetry: dict) -> str:
     stages.append(("input", running, total, "var(--accent-cyan)"))
     running -= exec_fail
     stages.append(("execute", running, total, "var(--accent-red)"))
-    # Stages in the order they typically appear in default cascade
-    stage_order = ["alphabet_closure", "ic", "distribution"]
+    # Stages in the order they appear in the default cascade. "length" runs
+    # first and MUST be included — omitting it made its kills invisible and
+    # let the survivor bar disagree with the killed_by_stage totals. Any stage
+    # name present in the telemetry but not listed here is appended afterwards
+    # so custom cascades never silently drop kills from the waterfall.
+    stage_order = ["length", "alphabet_closure", "ic", "distribution"]
+    for extra in killed:
+        if extra not in stage_order:
+            stage_order.append(extra)
     for s in stage_order:
         n_killed = killed.get(s, 0)
         running -= n_killed

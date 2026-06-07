@@ -2185,6 +2185,31 @@ def t_t2_constant_unknown() -> None:
     raise AssertionError("_build_constant should raise on unknown pattern")
 
 
+def t_t2_select_combine_unknown_raises() -> None:
+    # A typo'd combine-op name must fail loudly, not silently shrink the sweep.
+    valid = _keyderiv._select_combine_ops(
+        83, _keyderiv.THEORY2_DEFAULT_COMBINE_OP_NAMES)
+    assert len(valid) == len(_keyderiv.THEORY2_DEFAULT_COMBINE_OP_NAMES)
+    try:
+        _keyderiv._select_combine_ops(83, ["cyclic_add", "definitely_not_an_op"])
+    except _keyderiv.KeyDerivError as e:
+        assert ERROR_PREFIX in str(e)
+        return
+    raise AssertionError("_select_combine_ops should raise on unknown name")
+
+
+def t_t2_select_perm_unknown_raises() -> None:
+    valid = _keyderiv._select_permutations(
+        140, _keyderiv.THEORY2_DEFAULT_PERMUTATION_NAMES)
+    assert len(valid) == len(_keyderiv.THEORY2_DEFAULT_PERMUTATION_NAMES)
+    try:
+        _keyderiv._select_permutations(140, ["reverse", "definitely_not_a_perm"])
+    except _keyderiv.KeyDerivError as e:
+        assert ERROR_PREFIX in str(e)
+        return
+    raise AssertionError("_select_permutations should raise on unknown name")
+
+
 def t_t2_enumerate_count() -> None:
     c = _corpus_for_phase45()
     # Default: 5 perms × 4 ops + 4 cross × 4 ops + 5 patterns × 4 ops
@@ -2789,9 +2814,10 @@ def t_rr_funnel_rows() -> None:
     with tempfile.TemporaryDirectory() as td:
         run_dir = _rr_quick_run_dir(td)
         html = _run_report.render_html(run_dir)
-        # Default cascade has 3 stages + input + execute + survivors = 6 funnel rows
+        # Default cascade has 4 kill stages (length, alphabet_closure, ic,
+        # distribution) + input + execute + survivors = 7 funnel rows.
         n_rows = html.count('class="funnel-row"')
-        assert n_rows == 6, f"expected 6 funnel rows, got {n_rows}"
+        assert n_rows == 7, f"expected 7 funnel rows, got {n_rows}"
 
 
 def t_rr_breakdown_t2_parsing() -> None:
@@ -3309,6 +3335,10 @@ def main() -> int:
          t_t2_constant_patterns)
     _run("ConstantMerge raises on unknown pattern via _build_constant",
          t_t2_constant_unknown)
+    _run("_select_combine_ops raises on unknown combine-op name",
+         t_t2_select_combine_unknown_raises)
+    _run("_select_permutations raises on unknown permutation name",
+         t_t2_select_perm_unknown_raises)
     _run("enumerate_theory2 default count matches expectation",
          t_t2_enumerate_count)
     _run("enumerate_theory2 excludes key_code from CrossMerge targets",
