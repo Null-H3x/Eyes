@@ -8,3 +8,6 @@ venv/
 
 # report runtime ledger
 report/ledger.json
+
+# keyscan generated report
+keyscan_report.html

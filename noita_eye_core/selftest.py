@@ -16,6 +16,7 @@ import cribdrag
 import depth
 import embedded_key
 import grouping
+import keyscan
 import keystream_scope
 import langdetect
 import lm
@@ -44,6 +45,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("langdetect", langdetect.selftest),
     ("cribdrag", cribdrag.selftest),
     ("cipher_fingerprint", cipher_fingerprint.selftest),
+    ("keyscan", keyscan.selftest),
 ]
 
 
