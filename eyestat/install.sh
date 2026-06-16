@@ -22,6 +22,8 @@
 # Safe to re-run — every step checks if the work is already done.
 #
 
+# Re-exec under bash if started via `sh install.sh` / dash.
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 set -euo pipefail
 
 # ----- Color + helpers -----
@@ -92,6 +94,11 @@ else
     ok "Ubuntu ${VERSION_ID} (${VERSION_CODENAME:-noble}) detected"
 fi
 
+# Derive version-specific values so this works beyond 24.04 (e.g. 22.04/26.04).
+PYVER="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "3")"
+UBUNTU_REPO="ubuntu$(echo "${VERSION_ID:-24.04}" | tr -d '.')"   # 24.04->ubuntu2404, 26.04->ubuntu2604
+info "Python ${PYVER}; NVIDIA apt repo target: ${UBUNTU_REPO}"
+
 # Verify project files
 REQUIRED_FILES=(eyestat_runner.py eyestat_kernels.py eyestat_prngs.py eyestat_scoring.py
                 eyestat_selftest.py eyestat_preflight.py noita_eye_data.json)
@@ -146,6 +153,14 @@ sudo apt-get install -y -qq \
     >/dev/null
 ok "Base packages installed"
 
+# CRITICAL: `python3 -m venv` needs ensurepip from the *version-matched* venv
+# package, or it produces a pip-less, broken venv and numpy never installs
+# (the #1 "can't run because of numpy" cause on 26.04 / Python 3.14).
+info "Ensuring python${PYVER}-venv (ensurepip) for the active interpreter..."
+if ! sudo apt-get install -y -qq "python${PYVER}-venv" python3-full >/dev/null 2>&1; then
+    warn "Could not install python${PYVER}-venv explicitly; will verify pip after venv creation."
+fi
+
 # ====================================================================
 # STAGE 2 — Nvidia driver
 # ====================================================================
@@ -189,10 +204,10 @@ if [[ "$SKIP_CUDA" == "false" ]]; then
     fi
 
     if [[ "$INSTALL_CUDA" == "true" ]]; then
-        info "Adding NVIDIA CUDA apt repo (ubuntu2404)..."
+        info "Adding NVIDIA CUDA apt repo (${UBUNTU_REPO})..."
         TMPDIR=$(mktemp -d)
         cd "$TMPDIR"
-        wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+        wget -q "https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_REPO}/x86_64/cuda-keyring_1.1-1_all.deb"
         sudo dpkg -i cuda-keyring_1.1-1_all.deb >/dev/null
         cd "$PROJECT_DIR"
         rm -rf "$TMPDIR"
@@ -236,7 +251,12 @@ if [[ -d "$VENV_PATH" && -x "$VENV_PATH/bin/python3" ]]; then
     ok "venv already exists at $VENV_PATH"
 else
     info "Creating venv at $VENV_PATH..."
-    python3 -m venv "$VENV_PATH"
+    if ! python3 -m venv "$VENV_PATH"; then
+        warn "venv creation failed — retrying with python${PYVER}-venv installed."
+        sudo apt-get install -y -qq "python${PYVER}-venv" python3-full >/dev/null 2>&1 || true
+        rm -rf "$VENV_PATH"
+        python3 -m venv "$VENV_PATH" || fail "Could not create a venv. Install the venv module: sudo apt install python${PYVER}-venv"
+    fi
     ok "venv created"
 fi
 
@@ -246,9 +266,22 @@ source "$VENV_PATH/bin/activate"
 PYTHON_IN_VENV=$(which python3)
 ok "venv active: $PYTHON_IN_VENV"
 
+# Verify pip exists inside the venv (a pip-less venv is the classic ensurepip
+# failure that leaves numpy uninstallable).
+if ! python3 -m pip --version >/dev/null 2>&1; then
+    warn "venv has no pip (ensurepip missing) — bootstrapping..."
+    python3 -m ensurepip --upgrade >/dev/null 2>&1 || {
+        sudo apt-get install -y -qq "python${PYVER}-venv" python3-full >/dev/null 2>&1 || true
+        rm -rf "$VENV_PATH"; python3 -m venv "$VENV_PATH"
+        # shellcheck disable=SC1091
+        source "$VENV_PATH/bin/activate"
+    }
+    python3 -m pip --version >/dev/null 2>&1 || fail "venv pip still unavailable; install python${PYVER}-venv and re-run."
+fi
+
 info "Upgrading pip..."
-pip install --quiet --upgrade pip
-ok "pip $(pip --version | awk '{print $2}')"
+python3 -m pip install --quiet --upgrade pip
+ok "pip $(python3 -m pip --version | awk '{print $2}')"
 
 # ====================================================================
 # STAGE 5 — Python packages
@@ -256,13 +289,13 @@ ok "pip $(pip --version | awk '{print $2}')"
 banner "5. Python packages (in venv)"
 
 info "Installing numpy + scipy..."
-pip install --quiet numpy scipy
+python3 -m pip install --quiet numpy scipy
 ok "numpy $(python3 -c 'import numpy; print(numpy.__version__)'), scipy $(python3 -c 'import scipy; print(scipy.__version__)')"
 
 if [[ "$SKIP_GPU" == "false" ]]; then
     info "Installing $CUPY_PACKAGE (Blackwell-compatible >=13.4)..."
     info "  This downloads ~500 MB of CUDA libraries — first install takes a few minutes."
-    pip install --quiet "${CUPY_PACKAGE}>=13.4"
+    python3 -m pip install --quiet "${CUPY_PACKAGE}>=13.4"
 
     # Verify CuPy can import and see the GPU
     if python3 -c "import cupy" 2>/dev/null; then
