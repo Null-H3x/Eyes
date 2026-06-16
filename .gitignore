@@ -1,3 +1,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# full-installer.py virtualenv
+.venv/
+venv/
