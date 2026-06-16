@@ -5,6 +5,29 @@ main `README.md`.
 
 ---
 
+## Filesystem audit & bugfix (run.sh / install.sh)
+
+Fixes for "can't run because of numpy" + "run.sh error on line 14", and
+generalisation beyond Ubuntu 24.04 (works on 22.04 / 26.04, Python 3.12–3.14):
+
+* **`run.sh` line 14** (`set -euo pipefail`) aborted under `sh run.sh` because
+  dash rejects `-o pipefail`. Now re-execs under bash if not already in bash.
+* **numpy unreachable**: `run.sh` activated only `~/.venvs/eyestat`. It now
+  resolves an environment in order — `$EYESTAT_VENV`/`$BF_VENV`,
+  `~/.venvs/eyestat`, the shared repo-root `.venv`, an active venv, then system
+  `python3` — and gives a clear, actionable error if numpy is missing rather
+  than failing opaquely.
+* **broken-venv root cause**: on 26.04/Python 3.14, `python3 -m venv` produces a
+  *pip-less* venv unless `python3.14-venv` (version-matched ensurepip) is
+  present — so `pip install numpy` never ran. `install.sh` now installs the
+  version-matched venv package, **verifies pip inside the venv** and repairs it
+  (ensurepip / reinstall) before installing numpy/scipy.
+* **hardcoded `ubuntu2404`** CUDA repo replaced with a `${UBUNTU_REPO}` derived
+  from `VERSION_ID` (24.04→ubuntu2404, 26.04→ubuntu2604, …).
+* `install.sh` re-execs under bash too; pip calls use `python3 -m pip`.
+
+---
+
 ## Phase 1.5 — Chi² Pre-Filter (GPU)
 
 A new shape-distance filter runs on the GPU between decryption and CPU
