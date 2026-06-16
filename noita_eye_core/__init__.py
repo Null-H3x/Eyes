@@ -16,6 +16,7 @@ trigram      base-5 trigram decomposition + per-digit statistics
 depth        depth confirmation, crib-drag, and Viterbi keystream recovery
 classify     cipher-type discriminator (narrow the search before recovery)
 grouping     message-grouping model selection (EyeWitness core)
+oracle       joint multi-message calibrated verification scorer (EyeCrack core)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -24,5 +25,5 @@ Run ``python3 selftest.py`` (from this directory) to validate everything.
 
 __all__ = [
     "corpus", "cipher_ops", "stats", "lm", "null_model",
-    "prng", "trigram", "depth", "classify", "grouping",
+    "prng", "trigram", "depth", "classify", "grouping", "oracle",
 ]

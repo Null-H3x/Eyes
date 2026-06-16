@@ -15,6 +15,7 @@ import depth
 import grouping
 import lm
 import null_model
+import oracle
 import prng
 import stats
 import trigram
@@ -30,6 +31,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("depth", depth.selftest),
     ("classify", classify.selftest),
     ("grouping", grouping.selftest),
+    ("oracle", oracle.selftest),
 ]
 
 
