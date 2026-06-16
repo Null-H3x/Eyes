@@ -13,6 +13,7 @@ import corpus
 import depth
 import lm
 import null_model
+import oracle
 import prng
 import stats
 import trigram
@@ -26,6 +27,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("prng", prng.selftest),
     ("trigram", trigram.selftest),
     ("depth", depth.selftest),
+    ("oracle", oracle.selftest),
 ]
 
 
