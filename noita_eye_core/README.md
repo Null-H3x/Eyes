@@ -10,8 +10,10 @@ directory:
 
 ```bash
 cd noita_eye_core
-python3 selftest.py        # 62 checks across 8 modules
-python3 analyze.py         # depth analysis on the real corpus
+python3 selftest.py            # 76 checks across 9 modules (the math gate)
+python3 classify.py            # "what TYPE of cipher is this?" on the real corpus
+python3 classify.py --selftest # ground-truth checks for the classifier alone
+python3 analyze.py             # depth analysis on the real corpus
 ```
 
 `numpy` is required.
@@ -52,6 +54,7 @@ with up to 9 in-depth samples — i.e. multi-ciphertext Vigenère.
 | `prng` | faithful **Noita `NollaPRNG`** port | canonical MINSTD 10000-iterate KAT (1043618065); core == EyeStat Park-Miller V0 |
 | `trigram` | base-5 trigram decomposition + per-digit IoC | round-trip for all `0..124`; planted-digit detection |
 | `depth` | depth confirmation, crib-drag, Viterbi keystream solver | **synthetic end-to-end recovery**: 92% keystream / 92% symbol; crib-drag exact |
+| `classify` | cipher-**type** discriminator: per-family verdict with null-calibrated significance | ground-truth tested on mono/Vigenère/keystream/uniform/in-depth synthetics |
 
 ## What is proven vs. what is heuristic (honesty)
 
@@ -69,6 +72,46 @@ with up to 9 in-depth samples — i.e. multi-ciphertext Vigenère.
   keystreams). In that regime the high-value lever is **crib-drag** plus the
   exact difference structure — not blind Viterbi. The synthetic test makes the
   machinery's correctness explicit; it does not claim the real plaintext.
+
+## Which cipher *type* is it? (`classify`)
+
+Before spending GPU/seed budget you want to know what family of cipher you are
+even fighting, and what you can formally rule out. `classify` turns "everyone
+assumes polyalphabetic" into falsifiable statements, each with an explicit null
+distribution, an effect size, a multiple-testing-corrected p-value, and an honest
+power statement (the 3-sigma minimum detectable effect at this length/alphabet).
+
+It runs four discriminating tests and walks a decision tree:
+
+1. **Unigram uniformity** (IoC vs a uniform null). Monoalphabetic substitution
+   *and* transposition preserve the language distribution (IoC near language-like);
+   polyalphabetic/stream/random flatten it. The result is **banded**: `flat`,
+   `residual` (significant but ≪ language-like), or `language_like`.
+2. **Periodicity** (per-message Friedman coset-IoC lift + Kasiski). A short
+   repeating key (Vigenère) lights up a period; an aperiodic keystream does not.
+3. **Depth** (delegated to `depth.confirm_depth`). A shared position-keystream
+   makes differencing key-free — and **rules out per-message autokey/running-key**
+   (those depend on each message's own plaintext, so they would not cancel across
+   messages) and a per-message OTP.
+4. **Coordinate / fractionation** (per base-5-digit IoC). Careful: the most
+   significant base-5 digit of a value in `0..82` is capped to `0..3`, so it is
+   non-uniform *by construction*; the null samples symbols uniformly over the real
+   alphabet so that encoding cap is **not** mistaken for cipher structure.
+
+### Verdict on the real corpus (reproduce with `python3 classify.py`)
+
+| Family | Status | Why |
+|---|---|---|
+| `polyalphabetic_shared_keystream` | **SUPPORTED** | in depth, difference-IoC z ≈ 60 → message-independent position keystream (fixed long key or position PRNG) |
+| `monoalphabetic_substitution` / `simple_transposition` | **REFUTED** | unigram only ~9% of the way to language-like — too flat to preserve a language distribution |
+| `polyalphabetic_periodic_vigenere` | **REFUTED** | no short period shows a coset-IoC lift |
+| `autokey_or_running_key_per_message` | **REFUTED** | incompatible with confirmed cross-message depth |
+| `random_or_one_time_pad` | **REFUTED** | column coincidence rules out per-message random keys |
+| `fractionation_coordinate` | **UNDETERMINED** | no base-5 digit stands out beyond the encoding cap |
+
+Net: the type is a **polyalphabetic cipher with a message-independent, aperiodic,
+position-indexed keystream** — exactly EyeStat's keystream-hunt model plus the
+`depth`/crib-drag layer — and the cheap families are formally off the table.
 
 ## How it converges with the existing tools
 

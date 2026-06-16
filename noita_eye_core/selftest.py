@@ -9,6 +9,7 @@ import sys
 from typing import Callable, List, Tuple
 
 import cipher_ops
+import classify
 import corpus
 import depth
 import lm
@@ -26,6 +27,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("prng", prng.selftest),
     ("trigram", trigram.selftest),
     ("depth", depth.selftest),
+    ("classify", classify.selftest),
 ]
 
 
