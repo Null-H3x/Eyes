@@ -32,9 +32,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import time
+import zlib
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -227,6 +231,172 @@ def cmd_seedscan(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Subcommand: structscan — per-triplet seed scan (crib filter OR structure)
+# ---------------------------------------------------------------------------
+#
+# Aimed by the keystream-scope finding: the keystream is PER-TRIPLET, so we hunt
+# one keystream per triplet of 3 messages (not one global key over 9).
+#
+# Two scorers:
+#   * crib  (exact, high power): keep only seeds whose keystream decrypts a known
+#     plaintext fragment correctly.  The killer mode once a crib is known.
+#   * struct (language-agnostic, low power): score by how internally compressible
+#     the decrypts are vs a random-keystream null, with a Bonferroni trust gate.
+#     Honest expectation on a flat-unigram corpus: usually no trustworthy hit.
+
+TRIPLETS_DEFAULT = ((0, 1, 2), (3, 4, 5), (6, 7, 8))
+
+
+def _keystream(prng: str, seed: int, N: int, L: int) -> List[int]:
+    if prng == "nolla":
+        return NollaPRNG(seed).keystream_mod(N, L)
+    return np.random.default_rng(seed).integers(0, N, size=L).tolist()
+
+
+def _decrypt_from(msg: Sequence[int], ks: Sequence[int], N: int, mode: str,
+                  start: int) -> List[int]:
+    comb = cipher_ops.get_mode(mode)
+    return [comb.decrypt(msg[t], ks[t], N) for t in range(start, len(msg))]
+
+
+def _struct_score(tri_msgs, ks, N, mode, start) -> int:
+    """Lower total compressed size = more internal structure; negate so higher
+    is better (matches the 'greater' tail of the null test)."""
+    tot = 0
+    for m in tri_msgs:
+        d = _decrypt_from(m, ks, N, mode, start)
+        tot += len(zlib.compress(bytes(d), 6))
+    return -tot
+
+
+def _scan_chunk(spec) -> Tuple[str, list]:
+    (lo, hi, tri_msgs, N, mode, prng, start, crib, crib_idx, topk) = spec
+    Lmax = max(len(m) for m in tri_msgs)
+    comb = cipher_ops.get_mode(mode)
+    if crib is not None:
+        msg = tri_msgs[crib_idx]
+        matches = []
+        for seed in range(lo, hi):
+            ks = _keystream(prng, seed, N, Lmax)
+            if all(comb.decrypt(msg[start + o], ks[start + o], N) == crib[o]
+                   for o in range(len(crib))):
+                matches.append(seed)
+        return ("crib", matches)
+    best = []
+    for seed in range(lo, hi):
+        ks = _keystream(prng, seed, N, Lmax)
+        best.append((_struct_score(tri_msgs, ks, N, mode, start), seed))
+    best.sort(reverse=True)
+    return ("struct", best[:topk])
+
+
+def _chunks(start: int, count: int, n: int):
+    step = max(1, count // n)
+    s = start
+    while s < start + count:
+        e = min(start + count, s + step)
+        yield (s, e)
+        s = e
+
+
+def cmd_structscan(args) -> int:
+    c = corpus_mod.load(args.corpus) if args.corpus else corpus_mod.load()
+    N = c.N
+    messages = [list(ct) for ct in c.ciphertexts]
+    lab = c.labels
+    jobs = args.jobs or os.cpu_count() or 1
+
+    crib = [int(x) for x in args.crib.split(",")] if args.crib else None
+    crib_idx = None
+    if crib is not None:
+        gi = lab.index(args.crib_msg) if args.crib_msg in lab else int(args.crib_msg)
+        triplet = next(t for t in TRIPLETS_DEFAULT if gi in t)
+        crib_idx = triplet.index(gi)
+        triplets = [triplet]
+        print(f"crib mode: {args.crib_msg} @pos {args.start} must decrypt to "
+              f"{crib} (mode={args.mode}); scanning its triplet {triplet}")
+    else:
+        triplets = ([TRIPLETS_DEFAULT[args.triplet]] if args.triplet is not None
+                    else list(TRIPLETS_DEFAULT))
+
+    # Decoy batches calibrate the best-of-N order statistic (struct mode only).
+    K = 0 if crib is not None else args.decoy_batches
+
+    # Runtime projection from a quick single-core sample.
+    tri0 = [messages[i] for i in triplets[0]]
+    t0 = time.time()
+    for s in range(args.seed_start, args.seed_start + 2000):
+        _keystream(args.prng, s, N, max(len(m) for m in tri0))
+    rate = 2000 / max(1e-6, time.time() - t0)
+    total = args.count * len(triplets) * (1 + K)
+    est_min = total / (rate * jobs) / 60
+    print(f"~{rate:,.0f} seeds/s/core x {jobs} cores; {total:,} seed-evals "
+          f"({'crib filter' if crib is not None else f'scan + {K} decoy batches'})"
+          f" -> ~{est_min:.1f} min projected")
+    if est_min > 15 and not args.force:
+        print("Projected > 15 min. Re-run with --force, fewer --count/--decoy-"
+              "batches, or wire to the GPU. Aborting.")
+        return 3
+
+    def _scan(prng, seed_start, want_best):
+        specs = [(lo, hi, tri_msgs, N, args.mode, prng, args.start,
+                  None if want_best else crib, crib_idx, args.topk)
+                 for (lo, hi) in _chunks(seed_start, args.count, jobs * 4)]
+        payloads = []
+        with ProcessPoolExecutor(max_workers=jobs) as ex:
+            for _, payload in ex.map(_scan_chunk, specs):
+                payloads.append(payload)
+        return payloads
+
+    for triplet in triplets:
+        tri_msgs = [messages[i] for i in triplet]
+        names = "+".join(lab[i] for i in triplet)
+        print(f"\n--- triplet {triplet} ({names}) ---")
+
+        if crib is not None:
+            payloads = []
+            specs = [(lo, hi, tri_msgs, N, args.mode, args.prng, args.start,
+                      crib, crib_idx, args.topk)
+                     for (lo, hi) in _chunks(args.seed_start, args.count, jobs * 4)]
+            with ProcessPoolExecutor(max_workers=jobs) as ex:
+                for _, payload in ex.map(_scan_chunk, specs):
+                    payloads.append(payload)
+            hits = sorted(s for payload in payloads for s in payload)
+            print(f"  crib matches: {hits if hits else 'NONE in this range'}")
+            for seed in hits[:5]:
+                ks = _keystream(args.prng, seed, N, max(len(m) for m in tri_msgs))
+                for i, m in zip(triplet, tri_msgs):
+                    d = _decrypt_from(m, ks, N, args.mode, 0)
+                    print(f"    {lab[i]:8} {d[:24]} ...")
+            continue
+
+        # Structure mode: best real seed ...
+        real = sorted((x for payload in _scan(args.prng, args.seed_start, True)
+                       for x in payload), reverse=True)[:args.topk]
+        best_score, best_seed = real[0]
+        # ... vs the distribution of best-of-N from K decoy (uniform) batches.
+        decoy_maxes = []
+        for b in range(K):
+            base = 1_000_000_000 + b * args.count
+            batch = [x for payload in _scan("uniform", base, True) for x in payload]
+            decoy_maxes.append(max(s for s, _ in batch))
+        dm = np.array(decoy_maxes, dtype=float)
+        mu, sd = float(dm.mean()), float(dm.std(ddof=1)) if K > 1 else 0.0
+        z = (best_score - mu) / sd if sd > 0 else 0.0
+        trustworthy = bool(K >= 3 and best_score > dm.max() and z > 5)
+        print(f"  best {args.prng} seed {best_seed}: struct-score {best_score}")
+        print(f"  decoy best-of-N (K={K}): {mu:.1f}+/-{sd:.1f}  "
+              f"max={dm.max():.0f}   real z={z:.2f}")
+        if trustworthy:
+            print("  trustworthy hit: True  <- INVESTIGATE (real PRNG beats the "
+                  "best-of-N decoy distribution)")
+        else:
+            print("  trustworthy hit: False  (NollaPRNG does not beat random "
+                  "keystreams here; expected on a flat-unigram corpus)")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Subcommand: demo — plant a seed, recover it uniquely
 # ---------------------------------------------------------------------------
 
@@ -324,6 +494,29 @@ def main() -> int:
     p.add_argument("--lm", default="planted")
     p.add_argument("--topk", type=int, default=16)
     p.set_defaults(func=cmd_seedscan)
+
+    p = sub.add_parser("structscan", help="per-triplet seed scan (crib filter "
+                       "or language-agnostic structure), multi-core")
+    p.add_argument("--prng", default="nolla", choices=["nolla", "uniform"])
+    p.add_argument("--seed-start", type=int, default=0)
+    p.add_argument("--count", type=int, default=1_000_000)
+    p.add_argument("--mode", default="add", choices=["add", "sub", "beaufort"])
+    p.add_argument("--triplet", type=int, default=None,
+                   help="0/1/2 to scan one triplet (default: all three)")
+    p.add_argument("--start", type=int, default=25,
+                   help="body start position (skip the shared opening)")
+    p.add_argument("--crib", default="",
+                   help="known plaintext fragment 'v,v,v' (exact filter mode)")
+    p.add_argument("--crib-msg", default="East 1",
+                   help="message label the crib applies to")
+    p.add_argument("--topk", type=int, default=10)
+    p.add_argument("--jobs", type=int, default=0, help="0 = all cores")
+    p.add_argument("--decoy-batches", type=int, default=10,
+                   help="best-of-N decoy batches calibrating the trust gate "
+                        "(struct mode); higher = stricter")
+    p.add_argument("--force", action="store_true",
+                   help="run even if projected > 15 min")
+    p.set_defaults(func=cmd_structscan)
 
     p = sub.add_parser("demo", help="plant a seed and recover it end-to-end")
     p.add_argument("--true-seed", type=int, default=1234567)

@@ -59,6 +59,34 @@ reference does ~3000 seeds in under a second including null calibration, so the
 full 2³² space is a GPU job. Point EyeStat's kernels at `oracle.JointOracle` as
 the scoring backend to inherit the trust gate.
 
+### `structscan` — per-triplet seed scan (multi-core, no LM)
+
+Aimed by the keystream-scope finding (**per-triplet keystreams**): hunts one
+keystream per triplet of 3 messages, across all cores. Two scorers:
+
+```bash
+# crib filter (EXACT, high power): keep only seeds whose keystream reproduces a
+# known plaintext fragment. The killer mode once you have a crib.
+python3 eyecrack.py structscan --crib 12,4,7,1,9 --crib-msg "East 1" --start 1 \
+                               --prng nolla --count 100000000
+
+# language-agnostic structure scan (exploratory, low power on a flat unigram):
+python3 eyecrack.py structscan --prng nolla --count 10000000 --triplet 0
+```
+
+- **Multi-core** (`--jobs`, default all cores); prints a runtime projection up
+  front and aborts if > 15 min unless `--force`. At ~10k seeds/s/core, a
+  32-core box covers ~100M seeds in ~5 min.
+- The structure mode's trust gate uses a **best-of-N decoy calibration**
+  (`--decoy-batches`): NollaPRNG's best is compared against the distribution of
+  best-of-N maxes from random-keystream batches, so it can't cry wolf off the
+  near-zero variance of a compression metric (a false-positive trap that was
+  caught and fixed). On the real corpus it correctly reports **no trustworthy
+  hit** — expected, because the flat unigram gives this mode little power.
+- The **crib filter is the high-value path**: exact, needs no language model,
+  and validated end-to-end (a planted NollaPRNG seed is recovered uniquely from
+  a 6-symbol crib).
+
 ### `viterbi` — globally optimal keystream under a 1st-order model
 
 ```bash
