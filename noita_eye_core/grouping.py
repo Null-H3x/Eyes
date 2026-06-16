@@ -490,6 +490,22 @@ def selftest() -> List[tuple[str, bool]]:
     out.append(("agreement matrix symmetric, unit diagonal",
                 np.allclose(M, M.T) and np.allclose(np.diag(M), 1.0)))
 
+    # (7) Bron-Kerbosch KATs on known graphs (locks the clique extractor).
+    tri_plus = maximal_cliques({0: {1, 2}, 1: {0, 2}, 2: {0, 1, 3}, 3: {2}})
+    out.append(("clique KAT: triangle + pendant",
+                tri_plus == [(0, 1, 2), (2, 3)]))
+    two_edges = maximal_cliques({0: {1}, 1: {0}, 2: {3}, 3: {2}})
+    out.append(("clique KAT: two disjoint edges",
+                two_edges == [(0, 1), (2, 3)]))
+
+    # (8) Baseline-assumption guard: the median baseline is a CROSS rate only
+    #     while grouped pairs are a minority.  For the real 9-message corpus the
+    #     theories link 9/36 (triplets) or 4/36 (pairs) -- safely a minority.
+    n_pairs = 9 * 8 // 2
+    out.append(("named theories keep links a minority of all pairs",
+                len(_within_pairs(TRIPLETS)) < n_pairs / 2
+                and len(_within_pairs(PAIRS_PLUS_E5)) < n_pairs / 2))
+
     return out
 
 

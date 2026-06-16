@@ -10,11 +10,16 @@ directory:
 
 ```bash
 cd noita_eye_core
-python3 selftest.py            # 76 checks across 9 modules (the math gate)
+python3 selftest.py            # 99 checks across 11 modules (the math gate)
 python3 classify.py            # "what TYPE of cipher is this?" on the real corpus
 python3 classify.py --selftest # ground-truth checks for the classifier alone
 python3 analyze.py             # depth analysis on the real corpus
 ```
+
+Two front-end efforts build on this core (each with its own README):
+[`../eyewitness`](../eyewitness) (the verifiable pairs-vs-triplets fingerprint,
+on `grouping`) and [`../eyecrack`](../eyecrack) (depth-fed decryption, on
+`oracle`).
 
 `numpy` is required.
 
@@ -55,6 +60,8 @@ with up to 9 in-depth samples — i.e. multi-ciphertext Vigenère.
 | `trigram` | base-5 trigram decomposition + per-digit IoC | round-trip for all `0..124`; planted-digit detection |
 | `depth` | depth confirmation, crib-drag, Viterbi keystream solver | **synthetic end-to-end recovery**: 92% keystream / 92% symbol; crib-drag exact |
 | `classify` | cipher-**type** discriminator: per-family verdict with null-calibrated significance | ground-truth tested on mono/Vigenère/keystream/uniform/in-depth synthetics |
+| `grouping` | message-grouping model selection (pairs vs triplets); EyeWitness core | planted pair/triplet recovery; Bron-Kerbosch clique KATs; agreement tested vs the *depth* baseline (not a shuffle) |
+| `oracle` | joint multi-message calibrated verification scorer; EyeCrack core | planted-seed recovery as the unique Bonferroni hit; degenerate-null guard; vectorised-decrypt lock |
 
 ## What is proven vs. what is heuristic (honesty)
 

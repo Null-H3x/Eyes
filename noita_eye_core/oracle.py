@@ -83,10 +83,15 @@ class CandidateVerdict:
     p_analytic: float                  # normal-tail p from the z-score (CLT)
     q_bonferroni: float                # p_analytic corrected for n_trials
     n_trials: int
+    exceeds_null: bool = False         # obs strictly beats every null sample
 
     @property
     def trustworthy(self) -> bool:
-        return self.q_bonferroni < 0.01
+        # Require BOTH the corrected analytic significance AND an empirical
+        # exceedance of the whole null sample.  The second guard defends against
+        # a degenerate/under-sampled null where a tiny spread would otherwise
+        # manufacture an enormous z (and thus a spuriously tiny q).
+        return self.q_bonferroni < 0.01 and self.exceeds_null
 
 
 # A scorer maps a decrypted message (symbols) to a *total* log-probability.
@@ -158,10 +163,20 @@ class JointOracle:
         Bonferroni q-value for ``n_trials`` candidates tried."""
         sc = self.raw_score(keystream)
         sig = self.significance(keystream)
-        p_an = _normal_upper_p(sig.z)
+        # Analytic normal-tail p ONLY when the null has genuine spread; on a
+        # degenerate/zero-variance null the z is +/-inf, so fall back to the
+        # conservative empirical p (floored at 1/(n_null+1)) instead of
+        # claiming p=0.
+        if sig.null_std > 0 and math.isfinite(sig.z):
+            p_an = _normal_upper_p(sig.z)
+        else:
+            p_an = sig.p_value
         q = bonferroni(p_an, max(1, n_trials))
+        exceeds = bool(self._null is not None
+                       and sc.per_symbol > float(self._null.max()))
         return CandidateVerdict(score=sc, significance=sig, p_analytic=p_an,
-                                q_bonferroni=q, n_trials=n_trials)
+                                q_bonferroni=q, n_trials=n_trials,
+                                exceeds_null=exceeds)
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +275,31 @@ def selftest() -> List[tuple[str, bool]]:
     dec = oracle.decrypt(true_key)
     out.append(("true key decrypts to the planted plaintext",
                 dec[0] == plains[0] and dec[4] == plains[4]))
+    out.append(("true key exceeds the entire null sample",
+                v_true.exceeds_null))
+
+    # (7) PARANOIA: a degenerate (zero-variance) null must NOT yield false
+    #     confidence.  obs > mu with sd=0 gives z=+inf; the guard falls back to
+    #     the conservative empirical p, so a huge trial budget defeats it.
+    deg = JointOracle([[1, 2, 3] * 30], N, lambda s: 2.0 * len(s), mode="add")
+    deg._null = np.ones(50)                     # all-identical -> sd = 0
+    vdeg = deg.evaluate([0] * 90, n_trials=1_000_000)
+    out.append(("degenerate null is not over-claimed",
+                not vdeg.trustworthy and vdeg.p_analytic > 1e-3))
+
+    # (8) PARANOIA: vectorised decrypt matches cipher_ops for every mode (locks
+    #     the formulas EyeCrack's fast scan relies on).
+    rng2 = np.random.default_rng(99)
+    ks = rng2.integers(0, N, size=40).tolist()
+    msg = rng2.integers(0, N, size=40).tolist()
+    dec_ok = True
+    for m in ("add", "sub", "beaufort"):
+        comb = cipher_ops.get_mode(m)
+        ref = [comb.decrypt(msg[t], ks[t], N) for t in range(40)]
+        orc = JointOracle([msg], N, markov_scorer(model), mode=m)
+        if orc.decrypt(ks)[0] != ref:
+            dec_ok = False
+    out.append(("vectorised decrypt matches cipher_ops (all modes)", dec_ok))
 
     return out
 
