@@ -222,21 +222,30 @@ def main() -> int:
         print(_c("  note: an NVIDIA GPU was detected; re-run with --gpu to "
                  "install CuPy and exercise the GPU path.", C_YEL))
 
-    tmp_fp = str(Path(tempfile.gettempdir()) / "eyewitness_smoke_fingerprint.json")
+    # A UNIQUE, current-user-owned temp file (a fixed /tmp name collides with
+    # files left by other users / earlier sudo runs -> PermissionError on write).
+    _fd, tmp_fp = tempfile.mkstemp(prefix="eyewitness_smoke_", suffix=".json")
+    os.close(_fd)
     tests = build_tests(args.quick, args.gpu, tmp_fp)
 
     results: List[Tuple[Test, str, float, str]] = []
-    for t in tests:
-        print(f"\n  -> {t.name} ...", flush=True)
-        status, dt, tail = run_test(py, t)
-        color = {"PASS": C_GREEN, "FAIL": C_RED, "SKIP": C_YEL}[status]
-        print(f"     {_c('[' + status + ']', color)}  ({dt:.1f}s)")
-        if tail and status != "PASS":
-            for line in tail.splitlines():
-                print(_c(f"       {line}", C_DIM))
-        elif tail:
-            print(_c(f"       {tail.splitlines()[-1]}", C_DIM))
-        results.append((t, status, dt, tail))
+    try:
+        for t in tests:
+            print(f"\n  -> {t.name} ...", flush=True)
+            status, dt, tail = run_test(py, t)
+            color = {"PASS": C_GREEN, "FAIL": C_RED, "SKIP": C_YEL}[status]
+            print(f"     {_c('[' + status + ']', color)}  ({dt:.1f}s)")
+            if tail and status != "PASS":
+                for line in tail.splitlines():
+                    print(_c(f"       {line}", C_DIM))
+            elif tail:
+                print(_c(f"       {tail.splitlines()[-1]}", C_DIM))
+            results.append((t, status, dt, tail))
+    finally:
+        try:
+            os.unlink(tmp_fp)
+        except OSError:
+            pass
 
     # Summary.
     banner("Summary")
