@@ -293,9 +293,32 @@ python3 -m pip install --quiet numpy scipy
 ok "numpy $(python3 -c 'import numpy; print(numpy.__version__)'), scipy $(python3 -c 'import scipy; print(scipy.__version__)')"
 
 if [[ "$SKIP_GPU" == "false" ]]; then
-    info "Installing $CUPY_PACKAGE (Blackwell-compatible >=13.4)..."
+    # Pick the CuPy wheel matching the CUDA MAJOR version (CuPy bundles its own
+    # runtime). Ubuntu 26.04 ships CUDA 13 -> cupy-cuda13x; 24.04 ships 12 ->
+    # cupy-cuda12x. Detect from nvcc, else nvidia-smi's reported CUDA version.
+    CUDA_MAJOR=""
+    if command -v nvcc >/dev/null 2>&1; then
+        CUDA_MAJOR=$(nvcc --version | sed -n 's/.*release \([0-9]*\)\..*/\1/p' | head -1)
+    fi
+    if [[ -z "$CUDA_MAJOR" ]] && command -v nvidia-smi >/dev/null 2>&1; then
+        CUDA_MAJOR=$(nvidia-smi 2>/dev/null | grep -oE 'CUDA Version: [0-9]+' | grep -oE '[0-9]+' | head -1)
+    fi
+    if [[ "$CUDA_MAJOR" == "13" ]]; then
+        CUPY_TRY=("--pre cupy-cuda13x[ctk]" "cupy-cuda12x>=13.4")
+    else
+        CUPY_TRY=("cupy-cuda12x>=13.4" "--pre cupy-cuda13x[ctk]")
+    fi
+    info "Detected CUDA major: ${CUDA_MAJOR:-unknown}; trying: ${CUPY_TRY[*]}"
     info "  This downloads ~500 MB of CUDA libraries — first install takes a few minutes."
-    python3 -m pip install --quiet "${CUPY_PACKAGE}>=13.4"
+    CUPY_OK=false
+    for spec in "${CUPY_TRY[@]}"; do
+        # shellcheck disable=SC2086
+        if python3 -m pip install --quiet $spec && python3 -c "import cupy" 2>/dev/null; then
+            CUPY_OK=true; ok "CuPy installed via: $spec"; break
+        fi
+        warn "CuPy spec failed: $spec — trying next."
+    done
+    [[ "$CUPY_OK" == "true" ]] || warn "Could not install a working CuPy automatically — install manually for your CUDA version (e.g. pip install --pre 'cupy-cuda13x[ctk]')."
 
     # Verify CuPy can import and see the GPU
     if python3 -c "import cupy" 2>/dev/null; then
