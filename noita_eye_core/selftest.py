@@ -12,6 +12,7 @@ import cipher_ops
 import classify
 import corpus
 import depth
+import embedded_key
 import grouping
 import lm
 import null_model
@@ -32,6 +33,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("classify", classify.selftest),
     ("grouping", grouping.selftest),
     ("oracle", oracle.selftest),
+    ("embedded_key", embedded_key.selftest),
 ]
 
 

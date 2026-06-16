@@ -10,7 +10,7 @@ directory:
 
 ```bash
 cd noita_eye_core
-python3 selftest.py            # 99 checks across 11 modules (the math gate)
+python3 selftest.py            # 104 checks across 12 modules (the math gate)
 python3 classify.py            # "what TYPE of cipher is this?" on the real corpus
 python3 classify.py --selftest # ground-truth checks for the classifier alone
 python3 analyze.py             # depth analysis on the real corpus
@@ -62,6 +62,7 @@ with up to 9 in-depth samples — i.e. multi-ciphertext Vigenère.
 | `classify` | cipher-**type** discriminator: per-family verdict with null-calibrated significance | ground-truth tested on mono/Vigenère/keystream/uniform/in-depth synthetics |
 | `grouping` | message-grouping model selection (pairs vs triplets); EyeWitness core | planted pair/triplet recovery; Bron-Kerbosch clique KATs; agreement tested vs the *depth* baseline (not a shuffle) |
 | `oracle` | joint multi-message calibrated verification scorer; EyeCrack core | planted-seed recovery as the unique Bonferroni hit; degenerate-null guard; vectorised-decrypt lock |
+| `embedded_key` | intra-triplet "pair + key" test (Model B): is one triplet member the keystream for the other two? | recovers a planted embedded key; refutes the symmetric (global-key) case; does not false-positive on flat plaintext |
 
 ## What is proven vs. what is heuristic (honesty)
 

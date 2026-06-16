@@ -81,6 +81,31 @@ corpus hash, depth, the maximum-likelihood partition, and that every crib is a
 real identical run — from ~150 lines of stdlib + numpy, so the result does not
 require trusting the rest of the codebase.
 
+## Triplet embedded-key test (`triplet_keytest.py`)
+
+Tests the **"pair + embedded key"** model (Model B): within each triplet, is one
+member the *keystream* for the other two (so `decrypt(c_a, c_key) = p_a`)? If true,
+it hands EyeCrack a keystream for free — no PRNG hunt.
+
+```bash
+python3 triplet_keytest.py
+```
+
+It runs `noita_eye_core.embedded_key`, with two honest guards:
+- a **Layer-0 cross-check** that the committed `glyph_repetition_sheet.csv`
+  (the community glyph values) byte-matches the corpus;
+- the verdict is taken on each triplet's **divergent region** (after the shared
+  opening, and excluding the per-message `sigma0` at position 0), because
+  `decrypt(target, key)` over an identical opening is all-zeros and would
+  manufacture a false "structured" hit.
+
+**Current result:** *not detected* on any triplet — but for the right reason. The
+real plaintext unigram is near-flat, so even a correct embedded key yields a
+near-uniform decrypt the test can't certify. "Not detected" here means **"not
+confirmable from statistics,"** not "false." Confirming Model B needs a **crib**
+(one known word makes a decrypt readable). The selftest proves the test *does*
+recover a planted embedded key when the plaintext carries unigram signal.
+
 ## Math home
 
 All statistics live in [`noita_eye_core/grouping.py`](../noita_eye_core/grouping.py)
