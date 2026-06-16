@@ -8,6 +8,7 @@ from __future__ import annotations
 import sys
 from typing import Callable, List, Tuple
 
+import cipher_fingerprint
 import cipher_ops
 import classify
 import corpus
@@ -42,6 +43,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("pairdiff", pairdiff.selftest),
     ("langdetect", langdetect.selftest),
     ("cribdrag", cribdrag.selftest),
+    ("cipher_fingerprint", cipher_fingerprint.selftest),
 ]
 
 

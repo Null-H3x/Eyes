@@ -31,7 +31,7 @@ import hypotheses as H               # noqa: E402
 _GATE_MODULES = ["corpus", "cipher_ops", "stats", "lm", "null_model", "prng",
                  "trigram", "depth", "classify", "grouping", "oracle",
                  "embedded_key", "keystream_scope", "pairdiff", "langdetect",
-                 "cribdrag"]
+                 "cribdrag", "cipher_fingerprint"]
 
 
 def run_gate():

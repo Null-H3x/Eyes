@@ -48,6 +48,8 @@ WORKFLOWS = [
      "eyewitness", ["verify_fingerprint.py"]),
     ("Depth / crib-drag analysis", "Map the structure",
      "noita_eye_core", ["analyze.py"]),
+    ("Cipher fingerprint — keyless transform-stack test", "Map the structure",
+     "eyecrack", ["cipher_fingerprint.py"]),
     ("EyeCrack — crib-drag (Noita wordlist, unknown alphabet)", "Attack",
      "eyecrack", ["cribdrag.py"]),
     ("EyeCrack — recover a planted seed (demo)", "Attack",

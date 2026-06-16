@@ -17,6 +17,7 @@ HERE = Path(__file__).resolve().parent
 CORE = HERE.parent / "noita_eye_core"
 sys.path.insert(0, str(CORE))
 
+import cipher_fingerprint as cf  # noqa: E402
 import classify          # noqa: E402
 import corpus as corpus_mod  # noqa: E402
 import cribdrag           # noqa: E402
@@ -128,6 +129,37 @@ def h_coordinate(ctx: Context) -> HypothesisResult:
 # ---------------------------------------------------------------------------
 # Structure & grouping
 # ---------------------------------------------------------------------------
+
+def h_fingerprint(ctx: Context) -> HypothesisResult:
+    c = ctx.corpus
+    msgs = ctx.messages
+    res = cf.fingerprint(msgs, c.N, max_len=1, body_start=25, n_decoy=80,
+                         seed=0, top=10)
+    best = res[0]
+    any_det = any(r.detected for r in res)
+    chart = Chart("bar", "restored order-structure z of top transform stacks",
+                  ["+".join(n for n, _ in r.stack)[:6] for r in res[:10]],
+                  [r.z for r in res[:10]], baseline=5.0)
+    return HypothesisResult(
+        id="fingerprint", title="Keyless transform-stack (GAK/xGAK-style)",
+        group="Cipher type",
+        question="Does a stack of cut-parameterized transforms reveal structure?",
+        verdict="supported" if any_det else "exclusion",
+        strength=0.9 if any_det else 0.6, leverage=3,
+        statistic=f"best restored-structure z = {best.z:.2f} "
+                  f"(stack {best.stack}); detected={any_det}",
+        null_desc="random transform stacks (decoy); order-predictability score",
+        formula="argmax over transposition/sequence stacks of mean per-message "
+                "H(X)−H(X|prev); substitution is order-invariant (unresolvable)",
+        validated_by=ctx.badge("cipher_fingerprint"),
+        reproduce="cd eyecrack && python3 cipher_fingerprint.py",
+        interpretation="No keyless transform-stack restores sequential structure "
+        "(best z≈3, below threshold). That is evidence FOR a keystream cipher "
+        "(crib-drag's model) and AGAINST the keyless-stack hypothesis within the "
+        "searched transposition/sequence space. Substitution leaves no order "
+        "trace, so it is not resolvable by this signal.",
+        charts=[chart])
+
 
 def h_depth(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
@@ -363,7 +395,7 @@ def h_integrity(ctx: Context) -> HypothesisResult:
 
 
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
-    h_unigram, h_periodicity, h_coordinate,
+    h_unigram, h_periodicity, h_coordinate, h_fingerprint,
     h_depth, h_grouping, h_scope, h_pairdiff, h_embedded,
     h_cribdrag, h_language,
     h_header, h_integrity,
