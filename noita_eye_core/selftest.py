@@ -11,6 +11,7 @@ from typing import Callable, List, Tuple
 import cipher_ops
 import classify
 import corpus
+import cribdrag
 import depth
 import embedded_key
 import grouping
@@ -40,6 +41,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("keystream_scope", keystream_scope.selftest),
     ("pairdiff", pairdiff.selftest),
     ("langdetect", langdetect.selftest),
+    ("cribdrag", cribdrag.selftest),
 ]
 
 

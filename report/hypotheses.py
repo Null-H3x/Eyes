@@ -19,6 +19,7 @@ sys.path.insert(0, str(CORE))
 
 import classify          # noqa: E402
 import corpus as corpus_mod  # noqa: E402
+import cribdrag           # noqa: E402
 import depth as depth_mod    # noqa: E402
 import grouping          # noqa: E402
 import keystream_scope as ksc  # noqa: E402
@@ -257,6 +258,38 @@ def h_embedded(ctx: Context) -> HypothesisResult:
 # Attack readiness
 # ---------------------------------------------------------------------------
 
+def h_cribdrag(ctx: Context) -> HypothesisResult:
+    c = ctx.corpus
+    leads = cribdrag.search_corpus(c, words=cribdrag.DEFAULT_WORDS, min_len=4,
+                                   require_distinct=2, min_redundant=3, top=30)
+    strong = cribdrag.search_corpus(c, words=cribdrag.DEFAULT_WORDS, min_len=5,
+                                    require_distinct=3, min_redundant=4, top=5)
+    best = leads[0].redundant if leads else 0
+    chart = Chart("bar", "evidence (1/N coincidences) of top crib placements",
+                  [f"{c.labels[p.family[0]][:1]}{p.start}" for p in leads[:10]],
+                  [p.redundant for p in leads[:10]], baseline=4.0)
+    return HypothesisResult(
+        id="cribdrag", title="Crib-drag (Noita wordlist, unknown alphabet)",
+        group="Attack readiness",
+        question="Does a probable-word tuple fit a triplet consistently (a crib)?",
+        verdict="supported" if strong else "inconclusive",
+        strength=0.85 if strong else 0.2, leverage=5,
+        statistic=f"best evidence = {best} coincidences; "
+                  f"all-distinct L>=5 hits = {len(strong)}",
+        null_desc="random word-tuples (decoy) at matched lengths; injective σ",
+        formula="σ(wⱼ[o])−σ(wᵢ[o]) = (cⱼ−cᵢ)[o]; weighted union-find over Z_N; "
+                "evidence = independent 1/N coincidences (cycles + cross-word "
+                "letter matches)",
+        validated_by=ctx.badge("cribdrag"),
+        reproduce="cd eyecrack && python3 cribdrag.py",
+        interpretation="No confident crib from the candidate wordlist: the only "
+        "consistent placements are short (L=4) with interchangeable words "
+        "(tree↔free share a repeat-skeleton) and modest evidence; no long, "
+        "all-three-distinct tuple fits. A real crib needs more anchoring "
+        "(longer/repeat-rich words, or a language commitment).",
+        charts=[chart] if leads else [])
+
+
 def h_language(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
     msgs = ctx.messages
@@ -332,6 +365,6 @@ def h_integrity(ctx: Context) -> HypothesisResult:
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
     h_unigram, h_periodicity, h_coordinate,
     h_depth, h_grouping, h_scope, h_pairdiff, h_embedded,
-    h_language,
+    h_cribdrag, h_language,
     h_header, h_integrity,
 ]
