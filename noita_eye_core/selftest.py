@@ -14,6 +14,7 @@ import corpus
 import depth
 import embedded_key
 import grouping
+import keystream_scope
 import lm
 import null_model
 import oracle
@@ -34,6 +35,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("grouping", grouping.selftest),
     ("oracle", oracle.selftest),
     ("embedded_key", embedded_key.selftest),
+    ("keystream_scope", keystream_scope.selftest),
 ]
 
 

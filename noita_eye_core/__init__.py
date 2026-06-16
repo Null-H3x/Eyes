@@ -18,6 +18,7 @@ classify     cipher-type discriminator (narrow the search before recovery)
 grouping     message-grouping model selection (EyeWitness core)
 oracle       joint multi-message calibrated verification scorer (EyeCrack core)
 embedded_key intra-triplet embedded-key test (pair + key, Model B)
+keystream_scope  global vs per-triplet keystream test
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -27,5 +28,5 @@ Run ``python3 selftest.py`` (from this directory) to validate everything.
 __all__ = [
     "corpus", "cipher_ops", "stats", "lm", "null_model",
     "prng", "trigram", "depth", "classify", "grouping", "oracle",
-    "embedded_key",
+    "embedded_key", "keystream_scope",
 ]
