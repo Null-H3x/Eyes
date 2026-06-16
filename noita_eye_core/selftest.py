@@ -12,6 +12,7 @@ import cipher_ops
 import classify
 import corpus
 import depth
+import grouping
 import lm
 import null_model
 import prng
@@ -28,6 +29,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("trigram", trigram.selftest),
     ("depth", depth.selftest),
     ("classify", classify.selftest),
+    ("grouping", grouping.selftest),
 ]
 
 

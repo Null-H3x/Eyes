@@ -15,6 +15,7 @@ prng         faithful Noita NollaPRNG port (MINSTD core, position scrambler)
 trigram      base-5 trigram decomposition + per-digit statistics
 depth        depth confirmation, crib-drag, and Viterbi keystream recovery
 classify     cipher-type discriminator (narrow the search before recovery)
+grouping     message-grouping model selection (EyeWitness core)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -23,5 +24,5 @@ Run ``python3 selftest.py`` (from this directory) to validate everything.
 
 __all__ = [
     "corpus", "cipher_ops", "stats", "lm", "null_model",
-    "prng", "trigram", "depth", "classify",
+    "prng", "trigram", "depth", "classify", "grouping",
 ]
