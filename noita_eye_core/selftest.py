@@ -15,9 +15,11 @@ import depth
 import embedded_key
 import grouping
 import keystream_scope
+import langdetect
 import lm
 import null_model
 import oracle
+import pairdiff
 import prng
 import stats
 import trigram
@@ -36,6 +38,8 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("oracle", oracle.selftest),
     ("embedded_key", embedded_key.selftest),
     ("keystream_scope", keystream_scope.selftest),
+    ("pairdiff", pairdiff.selftest),
+    ("langdetect", langdetect.selftest),
 ]
 
 

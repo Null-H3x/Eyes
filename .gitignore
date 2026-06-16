@@ -5,3 +5,6 @@ __pycache__/
 # full-installer.py virtualenv
 .venv/
 venv/
+
+# report runtime ledger
+report/ledger.json
