@@ -168,6 +168,100 @@ def crib_ok(messages: Sequence[Sequence[int]], member: int, seed: int,
     return all(dec[start + o] == crib[o] for o in range(len(crib)))
 
 
+# ---------------------------------------------------------------------------
+# Crib -> seed-filter bridge
+# ---------------------------------------------------------------------------
+# Two power levels, both per-triplet:
+#
+#   * MAPPING-FREE (a word's repeat pattern).  We do NOT know which symbol is
+#     which letter, but a repeated letter forces equal plaintext at those
+#     positions, which under an additive keystream forces
+#         K[p+i] - K[p+j] == c[p+i] - c[p+j]   (a known value).
+#     Each repeated-letter pair is one mod-N constraint => filters seeds by ~1/N.
+#     "eye" (e..e) and "see" (.ee) each give ONE constraint (1/83) — weak, but
+#     free.  A word with several repeats (e.g. "sisaltaa", "muna") gives several.
+#
+#   * MAPPING-COMMITTED (exact symbols).  If you commit the crib's letters to
+#     specific symbols, every position is a constraint => ~1/N^L (use ``crib=``).
+#
+# Survivors are then scored with the decoy-calibrated structure gate, so the
+# bridge is a *calibrated* seed scan that any confident word sharpens.
+
+def repeat_constraints(word: str) -> List[Tuple[int, int]]:
+    """Equal-letter position pairs ``(i, j)`` (i<j) — the mapping-free
+    constraints a word imposes.  Empty if the word has no repeated letter."""
+    first: Dict[str, int] = {}
+    cons: List[Tuple[int, int]] = []
+    for i, ch in enumerate(word):
+        if ch in first:
+            cons.append((first[ch], i))
+        else:
+            first[ch] = i
+    return cons
+
+
+def crib_power(word: str, N: int) -> Tuple[int, float]:
+    """(number of mapping-free constraints, expected survivor fraction ~1/N^k)."""
+    k = len(repeat_constraints(word))
+    return k, (1.0 / (N ** k) if k else 1.0)
+
+
+def crib_seed_bridge(messages: Sequence[Sequence[int]], triplet: Sequence[int],
+                     word: str, position: int, member: int, generator: str,
+                     combiner: str, seed_start: int, count: int,
+                     N: int = N_DEFAULT, body_start: int = 25,
+                     decoy_batches: int = 8, topk: int = 10) -> TripletScan:
+    """Mapping-free repeat-pattern crib filter + calibrated survivor scoring.
+
+    Keeps seeds whose keystream is consistent with ``word`` sitting at
+    ``position`` in ``member`` (additive combiner), then scores the survivors'
+    joint decrypt against a decoy null.  With no repeated letters this degrades
+    to a calibrated full scan (and says so via ``crib_power``).
+    """
+    if combiner not in ("add", "sub", "beaufort"):
+        raise ValueError("repeat-pattern bridge is for scalar/additive combiners")
+    msgs = [list(messages[i]) for i in triplet]
+    m = msgs[member]
+    L = len(word)
+    if position + L > len(m):
+        raise ValueError("crib runs past the end of the member message")
+    cons = repeat_constraints(word)
+    # required keystream differences (== ciphertext differences at equal letters)
+    req = [(i, j, (m[position + i] - m[position + j]) % N) for (i, j) in cons]
+    Lmax = max(len(x) for x in msgs)
+
+    survivors: List[int] = []
+    for s in range(count):
+        seed = seed_start + s
+        ks = SCALAR_GENERATORS[generator](seed, N, Lmax)
+        if all((ks[position + i] - ks[position + j]) % N == d for (i, j, d) in req):
+            survivors.append(seed)
+
+    scored = [ScanHit(seed, structure_score(
+        decrypt_triplet(msgs, seed, generator, combiner, N), body_start))
+        for seed in survivors]
+    scored.sort(key=lambda h: -h.score)
+    best = scored[:topk]
+
+    rng = np.random.default_rng(0)
+    decoy_max = []
+    for b in range(decoy_batches):
+        base = 1_000_000_000 + b * max(count, 1)
+        vals = [structure_score(decrypt_triplet(msgs, base + s, generator,
+                combiner, N), body_start) for s in range(max(count, 1))]
+        decoy_max.append(max(vals))
+    dm = np.array(decoy_max, dtype=float)
+    mu, sd = float(dm.mean()), float(dm.std(ddof=1) or 1e-9)
+    for h in best:
+        h.z = (h.score - mu) / sd
+        h.trustworthy = bool(h.z > 5 and h.score > dm.max())
+
+    sc = TripletScan(tuple(triplet), generator, combiner, seed_start, count,
+                     best, mu, sd)
+    sc.crib_matches = survivors
+    return sc
+
+
 @dataclass
 class ScanHit:
     seed: int
@@ -305,6 +399,35 @@ def selftest() -> List[tuple[str, bool]]:
                        decoy_batches=6)
     out.append(("injective scan: true deck seed is the top hit",
                 sc2.hits[0].seed == seed2))
+
+    # Crib->seed bridge (mapping-free repeat pattern). Plant a word with several
+    # repeats so the filter is tight enough to recover the seed in a small range.
+    word = "sisaltaa"                       # s,i repeats -> 3 constraints
+    cons = repeat_constraints(word)
+    out.append(("repeat_constraints finds equal-letter pairs", len(cons) == 3))
+    # symbols: distinct symbol per distinct letter
+    letters = sorted(set(word))
+    sigma = {ch: (i * 7 + 5) % N for i, ch in enumerate(letters)}
+    pos = 40
+    plant = [_markov(N, T, rng) for _ in range(3)]
+    for o, ch in enumerate(word):
+        plant[0][pos + o] = sigma[ch]       # embed the word in member 0
+    bseed = 7654321
+    ksb = gen_nolla(bseed, N, T)
+    cipherb = [[(plant[i][t] + ksb[t]) % N for t in range(T)] for i in range(3)]
+    scb = crib_seed_bridge(cipherb, (0, 1, 2), word, position=pos, member=0,
+                           generator="nolla", combiner="add",
+                           seed_start=bseed - 4000, count=8000, N=N,
+                           body_start=0, decoy_batches=6)
+    out.append(("repeat-pattern bridge keeps the true seed",
+                bseed in scb.crib_matches))
+    out.append(("repeat-pattern bridge filters most seeds (~1/N^k)",
+                len(scb.crib_matches) < 8000 // 10))
+    out.append(("repeat-pattern bridge: true seed tops survivors",
+                scb.hits and scb.hits[0].seed == bseed))
+    _, frac = crib_power("eye", N)
+    out.append(("crib_power flags a 3-letter single-repeat word as weak",
+                abs(frac - 1.0 / N) < 1e-12))
 
     # Null: uniform ciphertext -> no trustworthy additive hit.
     rnd = [rng.integers(0, N, size=T).tolist() for _ in range(3)]

@@ -48,6 +48,20 @@ def _chunk_worker(spec):
     return ("score", best[:TOPK])
 
 
+def _word_filter_worker(spec):
+    """Mapping-free repeat-pattern filter over [lo,hi): keep seeds whose
+    keystream reproduces the crib word's equal-letter differences."""
+    (lo, hi, msgs, gen, N, member, pos, req, Lmax) = spec
+    out = []
+    genfn = ks.SCALAR_GENERATORS[gen]
+    for seed in range(lo, hi):
+        kstream = genfn(seed, N, Lmax)
+        if all((kstream[pos + i] - kstream[pos + j]) % N == d
+               for (i, j, d) in req):
+            out.append(seed)
+    return out
+
+
 def _chunks(start, count, n):
     step = max(1, count // n)
     s = start
@@ -90,6 +104,9 @@ def render_html(results: List[dict], meta: dict) -> str:
             rows.append(f"<p class='{'hit' if m else 'no'}'>crib {r['crib']}: "
                         f"{'matches '+str(m) if m else 'NO match in range'}</p>")
             continue
+        if r.get("crib_word"):
+            rows.append(f"<p class='meta'>crib-word <code>{html.escape(r['crib_word'])}</code>"
+                        f" (repeat-pattern filter) · {r['survivors']:,} survivors</p>")
         rows.append(f"<p class='meta'>decoy best-of-N null: "
                     f"{r['decoy_mean']:.3f} +/- {r['decoy_std']:.3f}</p>")
         tr = ["<tr><th>seed</th><th>structure</th><th>z</th><th>trustworthy</th></tr>"]
@@ -117,6 +134,78 @@ predictability of the triplet's decrypts vs a random-seed best-of-N null.</p>
 </body></html>"""
 
 
+def _run_crib_word(args, c, N, jobs, gens, triplets, cmember_global) -> int:
+    """Crib -> seed-filter bridge: mapping-free repeat-pattern filter (parallel)
+    + decoy-calibrated scoring of the survivors."""
+    import numpy as np
+    word = args.crib_word.strip().lower()
+    k, frac = ks.crib_power(word, N)
+    print(f"crib word '{word}': {k} mapping-free constraint(s) "
+          f"(repeat letters) -> ~{frac:.2e} of seeds survive "
+          f"({'STRONG' if k >= 3 else 'WEAK — short/low-repeat word' if k >= 1 else 'NONE — no repeated letter, degrades to a full scan'})")
+    cons = ks.repeat_constraints(word)
+    results = []
+    for trip in triplets:
+        msgs = [list(c.ciphertexts[i]) for i in trip]
+        member = trip.index(cmember_global) if cmember_global in trip else 0
+        Lmax = max(len(m) for m in msgs)
+        m = msgs[member]
+        if args.crib_pos + len(word) > len(m):
+            print(f"  triplet {trip}: word runs past member end; skipping")
+            continue
+        req = [(i, j, (m[args.crib_pos + i] - m[args.crib_pos + j]) % N)
+               for (i, j) in cons]
+        for gen in gens:
+            t0 = time.time()
+            print(f"\nfiltering triplet {trip} · {gen} · word@{args.crib_pos} ...",
+                  flush=True)
+            survivors: List[int] = []
+            if req:
+                specs = [(lo, hi, msgs, gen, N, member, args.crib_pos, req, Lmax)
+                         for (lo, hi) in _chunks(args.seed_start, args.count,
+                                                 jobs * 4)]
+                with ProcessPoolExecutor(max_workers=jobs) as ex:
+                    for got in ex.map(_word_filter_worker, specs):
+                        survivors.extend(got)
+            else:
+                survivors = list(range(args.seed_start,
+                                       args.seed_start + args.count))
+            survivors.sort()
+            # Score survivors (few, unless WEAK/NONE) with the calibrated gate.
+            scored = sorted(((ks.structure_score(
+                ks.decrypt_triplet(msgs, s, gen, args.combiner, N),
+                args.body_start), s) for s in survivors), reverse=True)[:TOPK]
+            dmax = []
+            for b in range(args.decoy_batches):
+                base = 1_000_000_000 + b * max(args.count, 1)
+                bb, _ = _run_range(msgs, gen, args.combiner, N, args.body_start,
+                                   base, args.count, jobs)
+                dmax.append(bb[0][0] if bb else 0.0)
+            dm = np.array(dmax, dtype=float)
+            mu, sd = float(dm.mean()), float(dm.std(ddof=1) or 1e-9)
+            hits = [{"seed": s, "score": sc, "z": (sc - mu) / sd,
+                     "trustworthy": bool((sc - mu) / sd > 5 and sc > dm.max())}
+                    for sc, s in scored]
+            entry = {"triplet": trip, "generator": gen, "combiner": args.combiner,
+                     "seed_start": args.seed_start, "count": args.count,
+                     "elapsed": time.time() - t0, "hits": hits,
+                     "decoy_mean": mu, "decoy_std": sd,
+                     "crib_word": word, "survivors": len(survivors)}
+            print(f"  {len(survivors):,} survivors; best seed "
+                  f"{hits[0]['seed'] if hits else '-'} z="
+                  f"{hits[0]['z']:.2f} trustworthy="
+                  f"{hits[0]['trustworthy'] if hits else False}")
+            results.append(entry)
+
+    if args.html:
+        meta = {"corpus_N": N, "mode": f"crib-word '{word}'",
+                "constraints": k, "seeds":
+                f"{args.seed_start:,}..{args.seed_start+args.count:,}", "jobs": jobs}
+        Path(args.html).write_text(render_html(results, meta), encoding="utf-8")
+        print(f"\nwrote {args.html}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="keystream seed-scan")
     ap.add_argument("--generators", default="nolla,minstd,xorshift32,lfsr32")
@@ -132,6 +221,12 @@ def main() -> int:
     ap.add_argument("--crib", default="")
     ap.add_argument("--crib-msg", default="East 1")
     ap.add_argument("--crib-start", type=int, default=0)
+    ap.add_argument("--crib-word", default="",
+                    help="mapping-free repeat-pattern crib (e.g. a guessed word "
+                         "in letters); filters seeds by equal-letter keystream "
+                         "differences, then calibrated-scores survivors")
+    ap.add_argument("--crib-pos", type=int, default=3,
+                    help="position where --crib-word is hypothesised to start")
     ap.add_argument("--html", default="")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
@@ -144,6 +239,9 @@ def main() -> int:
     triplets = [ks.TRIPLETS[i] for i in trip_idx]
     crib = [int(x) for x in args.crib.split(",")] if args.crib else None
     cmember_global = c.labels.index(args.crib_msg) if args.crib_msg in c.labels else 0
+
+    if args.crib_word:
+        return _run_crib_word(args, c, N, jobs, gens, triplets, cmember_global)
 
     # Runtime projection.
     sample_msgs = [list(c.ciphertexts[i]) for i in triplets[0]]
