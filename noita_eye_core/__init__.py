@@ -21,6 +21,7 @@ embedded_key intra-triplet embedded-key test (pair + key, Model B)
 keystream_scope  global vs per-triplet keystream test
 header_test  is the (66,5) header keystreamed or a literal/shared marker?
 depthmap     keystream-sharing / true-depth map (what is provable vs undetermined)
+globality    crib->seed->decrypt-all test: is the keystream global or local?
 pairdiff     near-duplicate pair / edit-structure analysis
 langdetect   key-free structure / language profiler
 cribdrag     two-time-pad crib-drag over an unknown alphabet (constraint solver)
@@ -36,6 +37,7 @@ Run ``python3 selftest.py`` (from this directory) to validate everything.
 __all__ = [
     "corpus", "cipher_ops", "stats", "lm", "null_model",
     "prng", "trigram", "depth", "classify", "grouping", "oracle",
-    "embedded_key", "keystream_scope", "header_test", "depthmap", "pairdiff",
-    "langdetect", "cribdrag", "cipher_fingerprint", "keyscan", "calibrate",
+    "embedded_key", "keystream_scope", "header_test", "depthmap", "globality",
+    "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint", "keyscan",
+    "calibrate",
 ]

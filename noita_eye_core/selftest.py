@@ -16,6 +16,7 @@ import corpus
 import cribdrag
 import depth
 import depthmap
+import globality
 import embedded_key
 import grouping
 import header_test
@@ -46,6 +47,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("keystream_scope", keystream_scope.selftest),
     ("header_test", header_test.selftest),
     ("depthmap", depthmap.selftest),
+    ("globality", globality.selftest),
     ("pairdiff", pairdiff.selftest),
     ("langdetect", langdetect.selftest),
     ("cribdrag", cribdrag.selftest),
