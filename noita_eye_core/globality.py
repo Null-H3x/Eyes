@@ -65,6 +65,8 @@ class GlobalityResult:
     n_structured: int
     verdict: str                    # "global" | "local" | "partial" | "none"
     crib_triplet: Tuple[int, ...] = ()
+    generator: str = ""             # tagged by the sweep
+    position: int = -1              # tagged by the sweep
 
 
 def score_seed(messages: Sequence[Sequence[int]], seed: int, generator: str,
@@ -89,30 +91,47 @@ def score_seed(messages: Sequence[Sequence[int]], seed: int, generator: str,
     return GlobalityResult(seed, structured, z, n, verdict, crib_trip)
 
 
+def decoy_null(messages: Sequence[Sequence[int]], generator: str, combiner: str,
+               N: int, body_start: int, decoy_seeds: int = 200, seed: int = 0
+               ) -> Tuple[List[float], List[float]]:
+    """Per-message structure-score null over random seeds (depends only on the
+    generator/combiner, not on the crib position) -> (mu, sd)."""
+    msgs = [list(m) for m in messages]
+    rng = np.random.default_rng(seed)
+    decoy = rng.integers(1_000_000_000, 2_000_000_000, size=decoy_seeds)
+    cols = [[] for _ in msgs]
+    for s in decoy:
+        dec = keyscan.decrypt_triplet(msgs, int(s), generator, combiner, N)
+        for i, v in enumerate(per_message_structure(dec, body_start)):
+            cols[i].append(v)
+    mu = [float(np.mean(c)) for c in cols]
+    sd = [float(np.std(c, ddof=1) or 1e-9) for c in cols]
+    return mu, sd
+
+
+def scan_global(messages: Sequence[Sequence[int]], word: str, position: int,
+                member: int, generator: str, combiner: str, seed_start: int,
+                count: int, N: int, body_start: int, mu: Sequence[float],
+                sd: Sequence[float], z_thr: float = 3.0) -> List[GlobalityResult]:
+    """Crib-filter seeds at one (generator, position) and score across all nine,
+    given a precomputed decoy null (mu, sd)."""
+    msgs = [list(m) for m in messages]
+    Lmax = max(len(m) for m in msgs)
+    seeds = repeat_filter_seeds(msgs[member], word, position, generator,
+                                seed_start, count, N, Lmax)
+    return [score_seed(msgs, s, generator, combiner, N, body_start, mu, sd,
+                       member, z_thr) for s in seeds]
+
+
 def crib_globality_test(messages: Sequence[Sequence[int]], word: str,
                         position: int, member: int, generator: str,
                         combiner: str, seed_start: int, count: int,
                         N: int = N_DEFAULT, body_start: int = 0,
                         decoy_seeds: int = 200, z_thr: float = 3.0
                         ) -> List[GlobalityResult]:
-    msgs = [list(m) for m in messages]
-    Lmax = max(len(m) for m in msgs)
-    # Per-message decoy null over random seeds.
-    rng = np.random.default_rng(0)
-    decoy = rng.integers(1_000_000_000, 2_000_000_000, size=decoy_seeds)
-    cols = [[] for _ in msgs]
-    for s in decoy:
-        dec = keyscan.decrypt_triplet(msgs, int(s), generator, combiner, N)
-        sc = per_message_structure(dec, body_start)
-        for i, v in enumerate(sc):
-            cols[i].append(v)
-    mu = [float(np.mean(c)) for c in cols]
-    sd = [float(np.std(c, ddof=1) or 1e-9) for c in cols]
-    # Crib-filtered candidate seeds, scored across ALL messages.
-    seeds = repeat_filter_seeds(msgs[member], word, position, generator,
-                                seed_start, count, N, Lmax)
-    results = [score_seed(msgs, s, generator, combiner, N, body_start, mu, sd,
-                          member, z_thr) for s in seeds]
+    mu, sd = decoy_null(messages, generator, combiner, N, body_start, decoy_seeds)
+    results = scan_global(messages, word, position, member, generator, combiner,
+                          seed_start, count, N, body_start, mu, sd, z_thr)
     results.sort(key=lambda r: (-r.n_structured, -max(r.z, default=0)))
     return results
 
