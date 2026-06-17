@@ -29,6 +29,7 @@ import null_model
 import oracle
 import pairdiff
 import prng
+import repeats
 import salakieli
 import stats
 import trigram
@@ -58,6 +59,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("keyscan", keyscan.selftest),
     ("calibrate", calibrate.selftest),
     ("salakieli", salakieli.selftest),
+    ("repeats", repeats.selftest),
 ]
 
 

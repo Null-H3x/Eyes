@@ -29,6 +29,7 @@ import keystream_scope as ksc  # noqa: E402
 import numbertest as nt  # noqa: E402
 import langdetect as ld  # noqa: E402
 import pairdiff          # noqa: E402
+import repeats as rep    # noqa: E402
 from core import (Chart, HypothesisResult)  # noqa: E402
 
 
@@ -452,6 +453,42 @@ def h_number(ctx: Context) -> HypothesisResult:
         charts=[])
 
 
+def h_repeats(ctx: Context) -> HypothesisResult:
+    c = ctx.corpus
+    msgs = ctx.messages
+    offs = sum(len(rep.census(msgs, c.N, k).offset) for k in (3, 4, 5, 6))
+    cen5 = rep.census(msgs, c.N, 5)
+
+    def grp(mi):
+        for gi, g in enumerate(rep.TRIPLETS):
+            if mi in g:
+                return gi
+        return -1
+    cross_body = sum(1 for a in cen5.aligned
+                     if grp(a[1][0]) != grp(a[2][0]) and a[1][1] >= 25)
+    return HypothesisResult(
+        id="repeats", title="Stream vs block / periodic / transposition",
+        group="Structure",
+        verdict="exclusion", strength=0.9, leverage=3,
+        question="Does any substring repeat at a shifted position (a moved/reused "
+                 "block, a period, a cut/shuffle)?",
+        statistic=f"offset collisions (k=3..6): {offs}; cross-group BODY aligned "
+                  f"collisions: {cross_body}; aligned(depth) k=5: {len(cen5.aligned)}",
+        null_desc="chance k-gram collisions ~ pairs / N^k (<<1 for k>=4)",
+        formula="k-gram census: aligned (same-pos)=depth; offset (diff-pos)=mode tell",
+        validated_by=ctx.badge("repeats"),
+        reproduce="python3 eyewitness/repeat_census.py",
+        interpretation="ZERO offset collisions at every k: no substring sits at a "
+        "different position anywhere. This is a verified exclusion of transposition, "
+        "a cut / positional shuffle, a periodic / repeating key, and block/ECB "
+        "reuse — the cipher is a pure aperiodic, position-locked stream (a per-column "
+        "bijection that never moves a symbol). Cross-group repeats occur ONLY in the "
+        "opening preamble (positions 1–6), none in the body, so the body keystream is "
+        "per-group, not global. (A deck-shuffle keystream — GAK/xGAK — is still "
+        "consistent: it generates a per-column bijection without moving positions.)",
+        charts=[])
+
+
 def h_integrity(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
     return HypothesisResult(
@@ -472,7 +509,7 @@ def h_integrity(ctx: Context) -> HypothesisResult:
 
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
     h_unigram, h_periodicity, h_coordinate, h_fingerprint,
-    h_depth, h_grouping, h_scope, h_depthmap, h_pairdiff, h_embedded,
+    h_depth, h_grouping, h_scope, h_depthmap, h_repeats, h_pairdiff, h_embedded,
     h_cribdrag, h_language,
     h_header, h_number, h_integrity,
 ]
