@@ -60,6 +60,8 @@ WORKFLOWS = [
      "eyecrack", ["cipher_fingerprint.py"]),
     ("EyeCrack — crib-drag (Noita wordlist, unknown alphabet)", "Attack",
      "eyecrack", ["cribdrag.py"]),
+    ("EyeCrack — salakieli crib battery (register + globality commands)", "Attack",
+     "eyecrack", ["salakieli_crib.py"]),
     ("EyeCrack — keystream seed-scan (structure, additive, writes HTML)", "Attack",
      "eyecrack", ["keyscan.py", "--count", "1000000",
                   "--html", "../keyscan_report.html"]),

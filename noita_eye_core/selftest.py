@@ -29,6 +29,7 @@ import null_model
 import oracle
 import pairdiff
 import prng
+import salakieli
 import stats
 import trigram
 
@@ -56,6 +57,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("cipher_fingerprint", cipher_fingerprint.selftest),
     ("keyscan", keyscan.selftest),
     ("calibrate", calibrate.selftest),
+    ("salakieli", salakieli.selftest),
 ]
 
 
