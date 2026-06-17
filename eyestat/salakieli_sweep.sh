@@ -91,8 +91,12 @@ while IFS= read -r crib; do
             --crib-pos "$POS_START" --crib-pos-end "$POS_END" \
             --generators "$GENERATORS" --seed-end "$SEED_END" \
             --require-gpu --html "$html" 2>&1 | tee "$log"
-        if grep -q "GLOBAL keystream candidate" "$log"; then
-            echo "*** GLOBAL HIT  crib='$crib'  msg='$msg'  ($log)" | tee -a "$SUMMARY"
+        # Flag BOTH a structure-confirmed global AND any strong-crib survivor
+        # (the latter is decisive on survival alone; structure is underpowered).
+        if grep -qE "GLOBAL keystream candidate|CANDIDATE KEY" "$log"; then
+            echo "*** HIT  crib='$crib'  msg='$msg'  ($log)" | tee -a "$SUMMARY"
+            grep -E "GLOBAL keystream candidate|CANDIDATE KEY|gen=.* seed=" "$log" \
+                | sed 's/^/      /' | tee -a "$SUMMARY"
         fi
     done
 done <<< "$CRIBS"
@@ -102,12 +106,15 @@ echo
 echo "=================================================================="
 echo " sweep complete in ${dt}s — $total cells, results in $OUTDIR/"
 if [ -s "$SUMMARY" ]; then
-    echo " GLOBAL HIT(S) FOUND:"
+    echo " HIT(S) FOUND — decrypt these by hand (survival of a strong crib is"
+    echo " decisive even if the structure score is null at this corpus size):"
     cat "$SUMMARY"
 else
-    echo " No global hit across the sweep. If every crib/message/generator is"
-    echo " null over this seed range, the eye keystream is very likely NOT a"
-    echo " small-seed PRNG from this set — pointing at the salakieli/in-game key"
-    echo " derivation as the next thing to pin down."
+    echo " No crib survivor across the sweep. With strong cribs (k>=8) a survivor"
+    echo " would be near-impossible by chance, so a clean null is strong evidence"
+    echo " the eye keystream is NOT a small-seed PRNG from these generators —"
+    echo " pointing at the salakieli/in-game key derivation as what to pin down."
+    echo " (Note: this campaign is exact crib-matching + exclusion, NOT statistical"
+    echo "  decryption — the 9-message corpus is too small to confirm by structure.)"
 fi
 echo "=================================================================="

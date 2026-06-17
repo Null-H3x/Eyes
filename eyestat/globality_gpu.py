@@ -400,12 +400,33 @@ if __name__ == "__main__":
     all_res.sort(key=lambda d: (-d["n_structured"], -max(d["z"])))
     dt = time.time() - t0
     glob = [r for r in all_res if r["verdict"] == "global"]
-    print(f"\nscanned in {dt:.1f}s; {len(all_res)} crib survivors")
+    # Expected crib-survivors by CHANCE across the whole scan (cells / N^k).
+    cells = (args.seed_end - args.seed_start) * max(1, len(positions)) * len(gens)
+    exp_false = cells / (N ** k) if k else float(cells)
+    print(f"\nscanned in {dt:.1f}s; {len(all_res)} crib survivor(s)")
+    print(f"  expected survivors by chance over this scan: ~{exp_false:.2e}")
     for r in all_res[:10]:
         print(f"  {r['generator']:10} pos {r['position']:>3} seed {r['seed']:>12} "
               f"{r['verdict']:8} {r['n_structured']}/9")
-    print("\nVERDICT:", "GLOBAL keystream candidate!" if glob else
-          "no global hit (local/none in range)")
+    # For a strong crib, survival ALONE is decisive — do NOT gate on the
+    # (underpowered, short-message) structure score.
+    print("\nVERDICT:")
+    if glob:
+        print("  GLOBAL keystream candidate (a seed decrypts ~all nine to structure).")
+    elif all_res and k >= 8 and exp_false < 0.01:
+        print(f"  CANDIDATE KEY(S) — {len(all_res)} survivor(s) of a strong crib "
+              f"(k={k}); only ~{exp_false:.1e} expected by chance. This is a")
+        print("  near-certain key identification regardless of the structure score")
+        print("  (the corpus is too small to confirm by structure). DECRYPT and")
+        print("  read the top survivors by hand:")
+        for r in all_res[:5]:
+            print(f"    gen={r['generator']} seed={r['seed']} pos={r['position']}")
+    elif all_res:
+        print(f"  {len(all_res)} survivor(s), but the crib is weak (k={k}; "
+              f"~{exp_false:.1e} expected by chance) — not decisive on survival "
+              f"alone, and the structure score is underpowered at this corpus size.")
+    else:
+        print("  no crib survivor in range (exclusion for these generators/seeds).")
     if args.html:
         rows = "".join(
             "<tr><td>{generator}</td><td>{position}</td><td>{seed}</td>"
