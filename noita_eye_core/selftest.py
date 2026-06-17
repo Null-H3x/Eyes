@@ -17,6 +17,7 @@ import cribdrag
 import depth
 import embedded_key
 import grouping
+import header_test
 import keyscan
 import keystream_scope
 import langdetect
@@ -42,6 +43,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("oracle", oracle.selftest),
     ("embedded_key", embedded_key.selftest),
     ("keystream_scope", keystream_scope.selftest),
+    ("header_test", header_test.selftest),
     ("pairdiff", pairdiff.selftest),
     ("langdetect", langdetect.selftest),
     ("cribdrag", cribdrag.selftest),

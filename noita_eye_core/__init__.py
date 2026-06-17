@@ -19,6 +19,7 @@ grouping     message-grouping model selection (EyeWitness core)
 oracle       joint multi-message calibrated verification scorer (EyeCrack core)
 embedded_key intra-triplet embedded-key test (pair + key, Model B)
 keystream_scope  global vs per-triplet keystream test
+header_test  is the (66,5) header keystreamed or a literal/shared marker?
 pairdiff     near-duplicate pair / edit-structure analysis
 langdetect   key-free structure / language profiler
 cribdrag     two-time-pad crib-drag over an unknown alphabet (constraint solver)
@@ -34,6 +35,6 @@ Run ``python3 selftest.py`` (from this directory) to validate everything.
 __all__ = [
     "corpus", "cipher_ops", "stats", "lm", "null_model",
     "prng", "trigram", "depth", "classify", "grouping", "oracle",
-    "embedded_key", "keystream_scope", "pairdiff", "langdetect", "cribdrag",
-    "cipher_fingerprint", "keyscan", "calibrate",
+    "embedded_key", "keystream_scope", "header_test", "pairdiff", "langdetect",
+    "cribdrag", "cipher_fingerprint", "keyscan", "calibrate",
 ]

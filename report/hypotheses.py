@@ -23,6 +23,7 @@ import corpus as corpus_mod  # noqa: E402
 import cribdrag           # noqa: E402
 import depth as depth_mod    # noqa: E402
 import grouping          # noqa: E402
+import header_test as ht  # noqa: E402
 import keystream_scope as ksc  # noqa: E402
 import langdetect as ld  # noqa: E402
 import pairdiff          # noqa: E402
@@ -356,24 +357,36 @@ def h_language(ctx: Context) -> HypothesisResult:
 
 def h_header(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
-    uni = dict(corpus_mod.universal_positions(c))
+    msgs = ctx.messages
+    cls = ht.classify_positions(msgs, c.N)
+    literal = [pc.pos for pc in cls if pc.kind == "literal/shared"]
+    p = ht.independent_keystream_pvalue(msgs, c.N, literal) if literal else 1.0
+    prof = [(pc.pos, round(pc.cross_agree, 2)) for pc in cls[:6]]
     return HypothesisResult(
-        id="header", title="Universal header (66, 5)",
+        id="header", title="Header (66, 5) — literal vs keystreamed",
         group="Foundations",
-        question="Is there content shared across all nine messages?",
-        verdict="supported", strength=0.95, leverage=3,
-        statistic=f"positions identical across all 9: {uni}",
-        null_desc="n/a (exact structural fact over the corpus)",
-        formula="positions t where cᵢ[t] is constant over all messages i",
-        validated_by=ctx.badge("grouping"),
-        reproduce="python3 -c \"import sys;sys.path.insert(0,'noita_eye_core');"
-                  "import corpus;print(corpus.universal_positions(corpus.load()))\"",
-        interpretation="Positions 1–2 are (66,5) for ALL nine messages — even "
-        "across triplets with different keystreams. The only way a 2-symbol block "
-        "stays constant under different keys is a LITERAL un-keyed header. This is "
-        "the most crib-like object in the corpus; identifying what 66,5 spells is "
-        "the highest-value guess.",
-        charts=[])
+        question="Is (66,5) under the body keystream, or a literal/shared marker?",
+        verdict="supported", strength=0.97, leverage=3,
+        statistic=f"literal/shared positions {literal}; cross-triplet agreement "
+                  f"= 1.00 there vs uniform 1/N={1.0/c.N:.3f}; "
+                  f"P(independent keystream)≈{p:.1e}",
+        null_desc="independent per-triplet keystreams (cross-triplet agreement≈1/N)",
+        formula="per-position cross-triplet ciphertext agreement vs 1/N",
+        validated_by=ctx.badge("header_test"),
+        reproduce="python3 eyewitness/header_test.py",
+        interpretation="Positions 1–2 are (66,5) across all nine — and the three "
+        "triplets have INDEPENDENT keystreams, so a 2-symbol block agreeing across "
+        "them has probability ~3e-12 by chance. It is therefore a LITERAL / shared "
+        "marker, NOT part of the per-triplet body keystream. Consequence: guessing "
+        "what 66,5 spells does NOT pin the body keystream — the header is not a "
+        "usable body crib. Position 0 is per-message; positions 3+ are the "
+        "per-triplet keystreamed body.",
+        charts=[Chart(
+            kind="bar", title="cross-triplet agreement by position (first 6)",
+            labels=[str(p_) for p_, _ in prof],
+            values=[v for _, v in prof],
+            baseline=1.0 / c.N,
+            note="1.00 = literal/shared; ~1/N = independently keystreamed")])
 
 
 def h_integrity(ctx: Context) -> HypothesisResult:
