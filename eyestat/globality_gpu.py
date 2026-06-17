@@ -31,13 +31,16 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 
+_GPU_ERR = ""
 try:
     import cupy as _cp
-    xp = _cp
-    GPU = True
-except Exception:                       # pragma: no cover - depends on host
+    _cp.zeros(1) + 1                     # force CUDA context init: surfaces
+    xp = _cp                            # driver/runtime errors that a bare
+    GPU = True                          # `import cupy` would not.
+except Exception as _e:                 # pragma: no cover - depends on host
     xp = np
     GPU = False
+    _GPU_ERR = f"{type(_e).__name__}: {_e}"
 
 CORE = Path(__file__).resolve().parent.parent / "noita_eye_core"
 if str(CORE) not in sys.path:
@@ -340,10 +343,25 @@ if __name__ == "__main__":
     ap.add_argument("--z-thr", type=float, default=3.0)
     ap.add_argument("--chunk", type=int, default=1 << 21,
                     help="seeds per GPU batch (lower if you hit OOM)")
+    ap.add_argument("--require-gpu", action="store_true",
+                    help="abort (don't silently fall back to CPU) if CuPy/GPU "
+                         "is unavailable")
     ap.add_argument("--html", default="")
     args = ap.parse_args()
 
     print(f"backend: {'CuPy (GPU)' if GPU else 'NumPy (CPU)'}")
+    if not GPU:
+        print(f"  python : {sys.executable}")
+        print(f"  reason : {_GPU_ERR or 'cupy not installed in this interpreter'}")
+        print("  The working GPU CuPy lives in the EyeStat venv. Run this with it:")
+        print("    ~/.venvs/eyestat/bin/python3 globality_gpu.py "
+              + " ".join(sys.argv[1:] if len(sys.argv) > 1 else
+                         ["--crib-word", "messages", "--crib-pos", "3"]))
+        print("    (or:  source ~/.venvs/eyestat/bin/activate; "
+              "python3 globality_gpu.py ... )")
+        if args.require_gpu:
+            print("\n--require-gpu set; aborting rather than scanning on CPU.")
+            sys.exit(3)
     if not args.crib_word:
         results = selftest()
         for label, ok in results:
