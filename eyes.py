@@ -46,6 +46,8 @@ WORKFLOWS = [
      "eyewitness", ["number_test.py", "--target", "34"]),
     ("Depth map — how much shared keystream is provable?", "Map the structure",
      "eyewitness", ["depth_map.py"]),
+    ("Salakieli AES test — is the eye cipher AES-128-CTR?", "Map the structure",
+     "eyewitness", ["salakieli_aes.py"]),
     ("Triplet embedded-key test (pair + key)", "Map the structure",
      "eyewitness", ["triplet_keytest.py"]),
     ("Structural fingerprint (EyeWitness)", "Map the structure",
