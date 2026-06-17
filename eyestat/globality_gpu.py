@@ -200,6 +200,35 @@ def _decrypt_all_scores(messages: List, seeds, generator: str, combiner: str,
 # Driver
 # ---------------------------------------------------------------------------
 
+def census(messages: List, word: str, member: int, generator: str,
+           positions: List[int], seed_start: int, seed_end: int, N: int,
+           chunk: int = 1 << 21) -> List[int]:
+    """Pure repeat-pattern filter over [seed_start, seed_end) for one generator,
+    pooled over ``positions``.  No scoring — returns the surviving seeds (with
+    their winning position interleaved is not needed; survival is the signal).
+
+    The crib-census metric: compare len(survivors) to the Poisson null
+    lambda = (seeds * positions) / N^k.  observed >> lambda  =>  the crib's exact
+    repeat pattern is reproduced by a real keystream (a key candidate); observed
+    ~= lambda  =>  noise.  This is corpus-size-independent (exact algebra), unlike
+    the structure score.
+    """
+    member_ct = list(messages[member])
+    survivors: List[int] = []
+    for lo in range(seed_start, seed_end, chunk):
+        hi = min(lo + chunk, seed_end)
+        seeds = xp.arange(lo, hi, dtype=xp.int64)
+        keep = xp.zeros(seeds.shape[0], dtype=bool)
+        for p in positions:
+            if p + len(word) > len(member_ct):
+                continue
+            keep |= repeat_filter(member_ct, word, p, generator, seeds, N)
+        if bool(keep.any()):
+            got = seeds[keep]
+            survivors.extend(int(x) for x in (got.get() if GPU else got))
+    return sorted(set(survivors))
+
+
 def decoy_null(messages: List, generator: str, combiner: str, N: int,
                body_start: int, Lmax: int, decoy_seeds: int = 200):
     seeds = xp.arange(1_000_000_000, 1_000_000_000 + decoy_seeds, dtype=xp.int64)
@@ -346,6 +375,12 @@ if __name__ == "__main__":
     ap.add_argument("--require-gpu", action="store_true",
                     help="abort (don't silently fall back to CPU) if CuPy/GPU "
                          "is unavailable")
+    ap.add_argument("--census", action="store_true",
+                    help="pure full-range repeat-filter census (no scoring): "
+                         "report observed survivors vs the Poisson null and dump "
+                         "survivor seeds. The robust, corpus-size-independent test.")
+    ap.add_argument("--survivors-out", default="",
+                    help="write census survivor seeds here (default: stdout only)")
     ap.add_argument("--html", default="")
     args = ap.parse_args()
 
@@ -386,6 +421,51 @@ if __name__ == "__main__":
     print(f"crib '{args.crib_word}' in {c.labels[member]}: {k} constraint(s) "
           f"~{frac:.2e} survive | {len(gens)} gen x {len(positions)} pos x "
           f"{args.seed_end-args.seed_start:,} seeds")
+
+    if args.census:
+        seeds_n = args.seed_end - args.seed_start
+        lam = seeds_n * len(positions) / (N ** k) if k else float(seeds_n)
+        print(f"\nCENSUS (pure filter, no scoring) — Poisson null lambda="
+              f"{lam:.2e} per generator (k={k}):")
+        signal_surv = []     # survivors from generators where lambda << 1
+        noise_surv = 0
+        t0 = time.time()
+        for gen in gens:
+            surv = census(messages, args.crib_word, member, gen, positions,
+                          args.seed_start, args.seed_end, N, chunk=args.chunk)
+            obs = len(surv)
+            is_signal = lam < 0.05            # decisive only when chance ~ 0
+            verdict = ("SIGNAL — survival is decisive (lambda<<1)" if is_signal and obs
+                       else ("null (no survivor)" if obs == 0 else
+                             "NOT decisive — observed ~ chance (crib too weak / "
+                             "too many positions×gens); raise k or narrow the sweep"))
+            print(f"  {gen:10}: observed {obs:>6}   -> {verdict}")
+            if is_signal:
+                signal_surv.extend((gen, s) for s in surv)
+            else:
+                noise_surv += obs
+        dt = time.time() - t0
+        print(f"\n  done in {dt:.1f}s. decisive survivors: {len(signal_surv)}; "
+              f"chance-level survivors (ignored): {noise_surv}")
+        if signal_surv:
+            print("  *** KEY CANDIDATE(S) — each survivor's keystream reduces the")
+            print("  corpus to a MONOALPHABETIC substitution (1036 symbols + the crib")
+            print("  as anchor), classically solvable. (generator, seed):")
+            for gen, s in signal_surv[:20]:
+                print(f"    {gen} {s}")
+            if args.survivors_out:
+                Path(args.survivors_out).write_text(
+                    "\n".join(f"{g}\t{s}" for g, s in signal_surv), encoding="utf-8")
+                print(f"  wrote -> {args.survivors_out}")
+        elif lam >= 0.05:
+            print("  This crib is too weak for decisive census at this coverage "
+                  f"(lambda={lam:.1e}). Use k>=8 (a longer repeat-rich fragment) or "
+                  "scan one generator + a narrow position window.")
+        else:
+            print("  Clean null: the crib's exact pattern is not reproduced by any "
+                  "seed in range for these generators — a real exclusion.")
+        sys.exit(0)
+
     all_res = []
     t0 = time.time()
     for gen in gens:
