@@ -32,7 +32,7 @@ _GATE_MODULES = ["corpus", "cipher_ops", "stats", "lm", "null_model", "prng",
                  "trigram", "depth", "classify", "grouping", "oracle",
                  "embedded_key", "keystream_scope", "header_test", "numbertest",
                  "depthmap", "pairdiff", "langdetect", "cribdrag",
-                 "cipher_fingerprint"]
+                 "cipher_fingerprint", "repeats", "isomorph"]
 
 
 def run_gate():
