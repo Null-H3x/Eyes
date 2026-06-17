@@ -30,8 +30,9 @@ import hypotheses as H               # noqa: E402
 # Module selftests we surface as validation badges.
 _GATE_MODULES = ["corpus", "cipher_ops", "stats", "lm", "null_model", "prng",
                  "trigram", "depth", "classify", "grouping", "oracle",
-                 "embedded_key", "keystream_scope", "header_test", "depthmap",
-                 "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint"]
+                 "embedded_key", "keystream_scope", "header_test", "numbertest",
+                 "depthmap", "pairdiff", "langdetect", "cribdrag",
+                 "cipher_fingerprint"]
 
 
 def run_gate():

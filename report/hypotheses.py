@@ -26,6 +26,7 @@ import grouping          # noqa: E402
 import depthmap as dmap  # noqa: E402
 import header_test as ht  # noqa: E402
 import keystream_scope as ksc  # noqa: E402
+import numbertest as nt  # noqa: E402
 import langdetect as ld  # noqa: E402
 import pairdiff          # noqa: E402
 from core import (Chart, HypothesisResult)  # noqa: E402
@@ -423,6 +424,34 @@ def h_depthmap(ctx: Context) -> HypothesisResult:
         charts=[])
 
 
+def h_number(ctx: Context) -> HypothesisResult:
+    c = ctx.corpus
+    sym = [v for _, v in corpus_mod.universal_positions(c)]
+    vals = nt.decode_header(sym, c.N)
+    lk = nt.luck_baseline(c.N, sym)
+    is34 = 34 in vals.values()
+    return HypothesisResult(
+        id="number", title="Header is a literal number (e.g. 34)",
+        group="Foundations",
+        question="Does the literal header (66,5) encode a specific number such as 34?",
+        verdict="exclusion", strength=0.82, leverage=2,
+        statistic=f"(66,5) -> {sorted(set(vals.values()))}; 34 reachable: {is34}; "
+                  f"small ints reachable {lk['reachable_small']}; "
+                  f"p(random 1–166 target reachable)={lk['p_random_target_hit']:.3f}",
+        null_desc="pre-registered principled encoding family (no free parameters)",
+        formula="base-N / base-5-trigram place value, digit sums, per-symbol reads",
+        validated_by=ctx.badge("numbertest"),
+        reproduce="python3 eyewitness/number_test.py --target 34",
+        interpretation="The header is literal (see the header card), so it COULD be "
+        "a literal number — but under every principled encoding (66,5) is one of "
+        f"{sorted(set(vals.values()))}, and 34 is NOT among them (nor 33/11). Only "
+        f"{lk['n_reachable_small']} small integers are reachable at all, so even a "
+        "match would be weak. Reading (66,5) as 34 requires a bespoke parameter-fit "
+        "map, which two symbols cannot justify. Refuted as stated; a longer literal "
+        "run or an independent corroborator would be needed to pin any number.",
+        charts=[])
+
+
 def h_integrity(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
     return HypothesisResult(
@@ -445,5 +474,5 @@ HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
     h_unigram, h_periodicity, h_coordinate, h_fingerprint,
     h_depth, h_grouping, h_scope, h_depthmap, h_pairdiff, h_embedded,
     h_cribdrag, h_language,
-    h_header, h_integrity,
+    h_header, h_number, h_integrity,
 ]

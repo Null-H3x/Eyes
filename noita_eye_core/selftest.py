@@ -24,6 +24,7 @@ import keyscan
 import keystream_scope
 import langdetect
 import lm
+import numbertest
 import null_model
 import oracle
 import pairdiff
@@ -46,6 +47,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("embedded_key", embedded_key.selftest),
     ("keystream_scope", keystream_scope.selftest),
     ("header_test", header_test.selftest),
+    ("numbertest", numbertest.selftest),
     ("depthmap", depthmap.selftest),
     ("globality", globality.selftest),
     ("pairdiff", pairdiff.selftest),
