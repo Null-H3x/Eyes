@@ -24,6 +24,7 @@ langdetect   key-free structure / language profiler
 cribdrag     two-time-pad crib-drag over an unknown alphabet (constraint solver)
 cipher_fingerprint  keyless transform-stack fingerprint (does a stack reveal structure?)
 keyscan      keystream seed-scan engine (combiner- + generator-pluggable)
+calibrate    calibrated language scoring (decoy/shuffle null + char-LM) — the seed-scan trust gate
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -34,5 +35,5 @@ __all__ = [
     "corpus", "cipher_ops", "stats", "lm", "null_model",
     "prng", "trigram", "depth", "classify", "grouping", "oracle",
     "embedded_key", "keystream_scope", "pairdiff", "langdetect", "cribdrag",
-    "cipher_fingerprint", "keyscan",
+    "cipher_fingerprint", "keyscan", "calibrate",
 ]

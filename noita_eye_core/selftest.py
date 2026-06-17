@@ -8,6 +8,7 @@ from __future__ import annotations
 import sys
 from typing import Callable, List, Tuple
 
+import calibrate
 import cipher_fingerprint
 import cipher_ops
 import classify
@@ -46,6 +47,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("cribdrag", cribdrag.selftest),
     ("cipher_fingerprint", cipher_fingerprint.selftest),
     ("keyscan", keyscan.selftest),
+    ("calibrate", calibrate.selftest),
 ]
 
 
