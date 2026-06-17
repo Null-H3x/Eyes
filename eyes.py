@@ -42,6 +42,8 @@ WORKFLOWS = [
      "eyewitness", ["keystream_scope_test.py"]),
     ("Header test — is (66,5) keystreamed or a literal marker?", "Map the structure",
      "eyewitness", ["header_test.py"]),
+    ("Depth map — how much shared keystream is provable?", "Map the structure",
+     "eyewitness", ["depth_map.py"]),
     ("Triplet embedded-key test (pair + key)", "Map the structure",
      "eyewitness", ["triplet_keytest.py"]),
     ("Structural fingerprint (EyeWitness)", "Map the structure",

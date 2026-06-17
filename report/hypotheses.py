@@ -23,6 +23,7 @@ import corpus as corpus_mod  # noqa: E402
 import cribdrag           # noqa: E402
 import depth as depth_mod    # noqa: E402
 import grouping          # noqa: E402
+import depthmap as dmap  # noqa: E402
 import header_test as ht  # noqa: E402
 import keystream_scope as ksc  # noqa: E402
 import langdetect as ld  # noqa: E402
@@ -389,6 +390,39 @@ def h_header(ctx: Context) -> HypothesisResult:
             note="1.00 = literal/shared; ~1/N = independently keystreamed")])
 
 
+def h_depthmap(ctx: Context) -> HypothesisResult:
+    c = ctx.corpus
+    msgs = ctx.messages
+    d = dmap.build(msgs, c.N)
+    body = [comp for comp in d.body_components if len(comp) > 1]
+    body_str = "; ".join("{" + ", ".join(c.labels[i] for i in comp) + "}"
+                         for comp in body) or "none beyond pairs"
+    return HypothesisResult(
+        id="depthmap", title="True depth — how much shared keystream is provable?",
+        group="Structure",
+        question="How many messages provably share a keystream, and where?",
+        verdict="supported", strength=0.8, leverage=4,
+        statistic=f"opening shared-K clades: {len(d.opening_components)}; "
+                  f"body-persistent shared-K: {body_str}; "
+                  f"exploitable (2-deep) positions: {d.exploitable_total}; "
+                  f"undetermined pairs: {d.undetermined}/{len(d.pairs)}",
+        null_desc="per-pair binomial vs 1/N equality; identical-run proof",
+        formula="equal-ciphertext run / equality-rate z; union-find components",
+        validated_by=ctx.badge("depthmap"),
+        reproduce="python3 eyewitness/depth_map.py",
+        interpretation="Shared keystream is only PROVABLE where ciphertext "
+        "coincides (identical runs or equality ≫ 1/N); where plaintexts differ it "
+        "is invisible, and independence can NEVER be proven. The openings share a "
+        "keystream across triplets (refuting strictly-independent per-triplet "
+        "keys), but that region is shared plaintext — no decryption leverage. "
+        "Body-persistent shared keystream is proven for only TWO near-duplicate "
+        "pairs (E1~W1, E4~E5), giving ~136 key-free 2-deep difference positions — "
+        "exactly the crib-drag surface. We do NOT have free 3+ depth in the body. "
+        "Whether the body keystream is global (which would unlock deep depth) is "
+        "undetermined from ciphertext and must be tested with a crib.",
+        charts=[])
+
+
 def h_integrity(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
     return HypothesisResult(
@@ -409,7 +443,7 @@ def h_integrity(ctx: Context) -> HypothesisResult:
 
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
     h_unigram, h_periodicity, h_coordinate, h_fingerprint,
-    h_depth, h_grouping, h_scope, h_pairdiff, h_embedded,
+    h_depth, h_grouping, h_scope, h_depthmap, h_pairdiff, h_embedded,
     h_cribdrag, h_language,
     h_header, h_integrity,
 ]
