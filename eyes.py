@@ -50,6 +50,8 @@ WORKFLOWS = [
      "eyewitness", ["salakieli_aes.py"]),
     ("Repeat census — stream vs block/periodic/transposition", "Map the structure",
      "eyewitness", ["repeat_census.py"]),
+    ("Isomorph chaining — interrelated alphabets / progressive test", "Map the structure",
+     "eyewitness", ["isomorph_chain.py"]),
     ("Triplet embedded-key test (pair + key)", "Map the structure",
      "eyewitness", ["triplet_keytest.py"]),
     ("Structural fingerprint (EyeWitness)", "Map the structure",

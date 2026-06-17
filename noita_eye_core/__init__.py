@@ -31,6 +31,7 @@ keyscan      keystream seed-scan engine (combiner- + generator-pluggable)
 calibrate    calibrated language scoring (decoy/shuffle null + char-LM) — the seed-scan trust gate
 salakieli    curated salakieli plaintext-crib register (phrases/sub-phrases/words)
 repeats      repeated-substring census (stream vs block/periodic/transposition)
+isomorph     isomorph census + alphabet-chaining (interrelated-alphabet test)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -42,5 +43,5 @@ __all__ = [
     "prng", "trigram", "depth", "classify", "grouping", "oracle",
     "embedded_key", "keystream_scope", "header_test", "numbertest", "depthmap",
     "globality", "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint",
-    "keyscan", "calibrate", "salakieli", "repeats",
+    "keyscan", "calibrate", "salakieli", "repeats", "isomorph",
 ]
