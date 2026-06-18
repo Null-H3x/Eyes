@@ -73,20 +73,44 @@ Each is a calibrated test, not an impression.
 | Monoalphabetic / transposition / periodic / block / AES / keyless-stack | **excluded** | see table above |
 | Independent-column substitution (general GAK) | **excluded** | isomorphs forbid it |
 | **Interrelated alphabets** (sliding/autokey/clock family) | **confirmed** | abundant isomorphs, z>100 vs shuffle null (`isomorph`) |
-| **Progressive-alphabet** (offset = position) | **refuted** | progressive (fixed-δ) chaining contradicts, whereas a planted progressive chains consistently (`isomorph`) |
+| **Progressive-alphabet** (offset = position) | **OPEN (correction)** | earlier "refuted" was a *contamination artifact*: on contamination-filtered CLEAN isomorphs pure-progressive has 0 contradictions (raw mr=3 had 121); two solvers agree. Consistent but under-determined — not confirmed either (`headerbase`) |
 | **Ciphertext-autokey / clock** (specific interrelation) | **open** | free-δ chaining is *permissive* — consistent even on two-alphabet and random nulls, so it does NOT identify autokey; needs indirect-symmetry recovery (`isomorph`) |
 | Affine vs additive sub-type | **open** | crib-activated `a_t`-solve (needs an anchor) |
+| Trifid / fractionation on the 3 base-5 eye-marks | **disfavored** | per-eye-mark streams near-uniform; only assoc (d0,d1) is a 0..82-compaction artifact; inverse digit-transpose at every period 2..24 lowers IoC (no anomaly) — structure is glyph-level, not digit-level (`trifid`) |
 | Small-seed PRNG keystream (any combiner) | **disfavored** | additive + GAK seed scans to 100M null; if autokey, no seed exists |
 | Key from a salakieli-style passphrase | **open** | needs the in-game key-derivation |
 
 **Leading model:** a polyalphabetic cipher over **interrelated alphabets** with an
-**aperiodic, position-locked, per-group key schedule**. The interrelation is
-**non-positional** (positional progressive is refuted), consistent with the
-**sliding / autokey / clock** family — but we have **not** pinned the specific
-member: the free-δ chaining test that would suggest autokey is **permissive**
-(it stays consistent on two-alphabet and random controls), so it is *not* an
-identification. The key is **not a small PRNG seed** (every additive/GAK seed
-scan to 100M is null).
+**aperiodic, position-locked key schedule**, in the **sliding / progressive /
+autokey / clock** family. We have **not** pinned the specific member. Two live
+candidates remain:
+- **Pure progressive** (single global sliding alphabet, offset = position). The
+  literal universal `(66,5)` header *forces* this within the per-message-
+  progressive family: a literal header makes every per-message base equal, which
+  collapses per-message-progressive to pure progressive (`headerbase`, proven on
+  plants). And — correcting an earlier over-claim — progressive is **not** refuted:
+  the contradictions that suggested refutation came from **contaminated** isomorphs;
+  the clean set is consistent with it.
+- **Ciphertext-autokey / clock**, which also reads the universal header naturally
+  (p[2] constant, p[1] varying with the per-message position-0 symbol).
+
+Deciding between them needs more clean repeated structure or a mapping anchor; the
+free-δ chaining test is **permissive** (consistent on two-alphabet and random
+controls), so it does not identify the member. The key is **not a small PRNG
+seed** (every additive/GAK seed scan to 100M is null).
+
+**Pure-progressive decryption attempt (`pureprog` / `pure_progressive`).** Under
+pure progressive the whole corpus decrypts up to a single monoalphabetic relabel
+once the alphabet `x=C⁻¹` is recovered, and IoC (relabel-invariant) tests whether
+the result is language. The machinery is validated (selftest 6/6: recovers a
+planted alphabet up to rotation, decrypts to plaintext+constant, IoC separates
+language from uniform). On the **real corpus** it is **under-determined**: the
+clean isomorphs are essentially one repeated passage, so `x` is pinned for too few
+symbols (37 linked → 22 distinct) and the decrypted-stream IoC is **0.014
+(z ≈ 2.2, far below language ~0.06)** — and that faint bump is the known 4× repeat,
+not readable text. **Wall: too few independent clean repeated structures to
+recover a usable alphabet.** This is the re-runnable gate — more clean isomorphs or
+an external glyph→letter anchor would move the IoC if the model holds.
 
 **Contamination-resistant extraction (`chain_extract` / `iso_extract`).** Skeleton
 matching returns partial/misaligned pairs (same pattern, different plaintext at
@@ -128,6 +152,9 @@ python3 noita_eye_core/selftest.py
 # structure (run from eyewitness/)
 python3 eyewitness/repeat_census.py        # stream vs block/periodic/transposition
 python3 eyewitness/isomorph_chain.py       # interrelated alphabets + progressive test
+python3 eyewitness/header_base.py          # header => pure-progressive + progressive contamination correction
+python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
+python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed

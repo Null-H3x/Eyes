@@ -59,16 +59,18 @@ def main() -> int:
     print("READ (what is solid vs not):")
     print("  SOLID: abundant isomorphs => INTERRELATED alphabets (rules out")
     print("    independent-column substitution and unrelated-alphabet OTP/running-key).")
-    print("  SOLID exclusion: PROGRESSIVE (offset = position) is refuted — fixed-δ")
-    print("    chaining CONTRADICTS, whereas a true progressive cipher chains")
-    print("    consistently (validated on a planted progressive corpus).")
+    print("  CORRECTION: the PROGRESSIVE contradictions ABOVE are driven by")
+    print("    CONTAMINATED isomorphs. On the contamination-filtered CLEAN set")
+    print("    (see header_base.py) pure progressive has ~0 contradictions, so it is")
+    print("    NOT refuted — status OPEN (consistent but under-determined).")
     print("  NOT a strong result: free-δ CONSISTENCY is permissive — it stays")
     print("    consistent even on a corpus built from TWO different alphabets, and")
     print("    on random skeleton-matches. So free-δ consistency does NOT by itself")
     print("    identify ciphertext-autokey or a single alphabet; it mainly reflects")
     print("    that isomorphs admit per-pair offsets (near-automatic).")
-    print("  => Established: interrelated + non-positional. NOT established: autokey")
-    print("     specifically. Ordering the alphabet (indirect symmetry) is the open step.")
+    print("  => Established: interrelated alphabets. Live candidates: PURE")
+    print("     PROGRESSIVE (the literal header forces it within the family) and")
+    print("     autokey/clock. Ordering the alphabet is the open step.")
     return 0
 
 

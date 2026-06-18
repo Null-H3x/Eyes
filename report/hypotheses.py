@@ -31,6 +31,9 @@ import langdetect as ld  # noqa: E402
 import pairdiff          # noqa: E402
 import repeats as rep    # noqa: E402
 import isomorph as iso   # noqa: E402
+import chain_extract as ce  # noqa: E402
+import chain_models as cm  # noqa: E402
+import headerbase as hb   # noqa: E402
 from core import (Chart, HypothesisResult)  # noqa: E402
 
 
@@ -458,35 +461,40 @@ def h_isomorph(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
     msgs = ctx.messages
     sig = iso.significance(msgs, 12, 3, n_null=120)
-    pairs12 = iso.find_isomorphs(msgs, 12, 3)
-    pc12 = iso.progressive_chain(msgs, pairs12, c.N)
-    fc12 = iso.chain_free_delta(msgs, pairs12, c.N, recover_threshold=15)
+    pairs13 = iso.find_isomorphs(msgs, 13, 3)
+    pc_raw = iso.progressive_chain(msgs, pairs13, c.N)
+    # contamination-filtered clean set (clean anchor mr=4) vs raw
+    res = ce.extract(msgs, 13, broad_repeats=3, anchor_repeats=4, N=c.N)
+    clean = [pr for pr in pairs13
+             if ce._redundant(res._gf, pr, msgs, cm.per_msg_prog_rows, c.N)]
+    pc_clean = iso.progressive_chain(msgs, clean, c.N)
     return HypothesisResult(
-        id="isomorph", title="Interrelated alphabets; positional progressive refuted",
+        id="isomorph",
+        title="Interrelated alphabets; progressive NOT refuted (contamination corrected)",
         group="Structure",
         verdict="supported", strength=0.85, leverage=4,
         question="Are the per-position alphabets interrelated, and is the "
                  "interrelation positional (progressive)?",
         statistic=f"true isomorphs (L=12): {sig['observed']} vs null "
                   f"{sig['null_mean']:.1f} (z={sig['z']:.0f}); progressive "
-                  f"(offset=position): {pc12.contradictions} contradictions "
-                  f"(refuted); free-δ: permissive (consistent even on 2-alphabet "
-                  f"and random nulls — not an identification)",
+                  f"contradictions RAW={pc_raw.contradictions} vs CLEAN="
+                  f"{pc_clean.contradictions} (the refutation was contamination); "
+                  f"free-δ: permissive",
         null_desc="within-message shuffle null; planted progressive/2-alphabet controls",
         formula="repeat-skeleton matches (diff values); Z_N offset union-find + GF(N) solve",
         validated_by=ctx.badge("isomorph"),
-        reproduce="python3 eyewitness/isomorph_chain.py",
+        reproduce="python3 eyewitness/header_base.py",
         interpretation="Abundant isomorphs (same repeated-letter pattern, different "
         "values) at z>100 confirm INTERRELATED alphabets — ruling out independent-"
         "column substitution (general GAK) and unrelated-alphabet running-key/OTP. "
-        "PROGRESSIVE (offset = position) is REFUTED: fixed-δ chaining contradicts, "
-        "whereas a true progressive cipher chains consistently (validated on a "
-        "plant). HONEST LIMIT: the free-δ (free per-pair offset) model is "
-        "PERMISSIVE — it stays consistent even on a two-different-alphabet corpus "
-        "and on random skeleton-matches, so its consistency does NOT identify "
-        "ciphertext-autokey or a single alphabet. Established: interrelated + "
-        "non-positional. Open: the specific interrelation, and ordering the "
-        "alphabet (indirect symmetry).",
+        "CORRECTION: PROGRESSIVE (offset = position) is NOT refuted — the earlier "
+        "contradictions came from CONTAMINATED isomorphs; on the contamination-"
+        "filtered CLEAN set pure progressive is consistent (two solvers agree). The "
+        "literal universal (66,5) header further FORCES pure progressive within the "
+        "per-message-progressive family (equal bases). HONEST LIMITS: the clean set "
+        "is under-determined (one repeated passage), and free-δ is permissive — so "
+        "progressive is a live CANDIDATE, not confirmed; autokey/clock is the "
+        "alternative. Open: the specific member, and ordering the alphabet.",
         charts=[])
 
 
