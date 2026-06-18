@@ -33,6 +33,7 @@ import chain_extract
 import cribfit
 import headerbase
 import pureprog
+import trifid
 import isomorph
 import prng
 import repeats
@@ -72,6 +73,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("cribfit", cribfit.selftest),
     ("headerbase", headerbase.selftest),
     ("pureprog", pureprog.selftest),
+    ("trifid", trifid.selftest),
 ]
 
 

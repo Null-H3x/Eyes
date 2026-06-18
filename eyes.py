@@ -66,6 +66,8 @@ WORKFLOWS = [
      "eyewitness", ["header_base.py"]),
     ("Pure-progressive recovery + decryption attempt (IoC test)", "Map the structure",
      "eyewitness", ["pure_progressive.py"]),
+    ("Digit-level / fractionation (Trifid) analysis of eye-marks", "Map the structure",
+     "eyewitness", ["trifid_scan.py"]),
     ("Depth / crib-drag analysis", "Map the structure",
      "noita_eye_core", ["analyze.py"]),
     ("Cipher fingerprint — keyless transform-stack test", "Map the structure",

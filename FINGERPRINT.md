@@ -76,6 +76,7 @@ Each is a calibrated test, not an impression.
 | **Progressive-alphabet** (offset = position) | **OPEN (correction)** | earlier "refuted" was a *contamination artifact*: on contamination-filtered CLEAN isomorphs pure-progressive has 0 contradictions (raw mr=3 had 121); two solvers agree. Consistent but under-determined — not confirmed either (`headerbase`) |
 | **Ciphertext-autokey / clock** (specific interrelation) | **open** | free-δ chaining is *permissive* — consistent even on two-alphabet and random nulls, so it does NOT identify autokey; needs indirect-symmetry recovery (`isomorph`) |
 | Affine vs additive sub-type | **open** | crib-activated `a_t`-solve (needs an anchor) |
+| Trifid / fractionation on the 3 base-5 eye-marks | **disfavored** | per-eye-mark streams near-uniform; only assoc (d0,d1) is a 0..82-compaction artifact; inverse digit-transpose at every period 2..24 lowers IoC (no anomaly) — structure is glyph-level, not digit-level (`trifid`) |
 | Small-seed PRNG keystream (any combiner) | **disfavored** | additive + GAK seed scans to 100M null; if autokey, no seed exists |
 | Key from a salakieli-style passphrase | **open** | needs the in-game key-derivation |
 
@@ -153,6 +154,7 @@ python3 eyewitness/repeat_census.py        # stream vs block/periodic/transposit
 python3 eyewitness/isomorph_chain.py       # interrelated alphabets + progressive test
 python3 eyewitness/header_base.py          # header => pure-progressive + progressive contamination correction
 python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
+python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed
