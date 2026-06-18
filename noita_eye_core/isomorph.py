@@ -405,12 +405,35 @@ def selftest() -> List[tuple[str, bool]]:
     fc = chain_free_delta(mk, iso_k, N, recover_threshold=10)
     out.append(("autokey: FREE-DELTA chaining is consistent (where progressive fails)",
                 fc.consistent))
-    out.append(("autokey: free-delta is OVER-DETERMINED + consistent (real signal)",
-                fc.redundant >= 10 and fc.recoverable))
+    out.append(("autokey: free-delta consistent + over-determined (necessary, "
+                "NOT sufficient — see limit below)", fc.redundant >= 10))
     # progressive (fixed delta) should NOT be consistent on this autokey corpus
     pc = progressive_chain(mk, iso_k, N)
     out.append(("autokey: progressive (fixed-delta) chaining contradicts here",
                 pc.contradictions > 0))
+
+    # (4b) HONEST LIMIT: free-delta is PERMISSIVE. Build a corpus from TWO
+    #      DIFFERENT cipher alphabets (which a single-alphabet identification
+    #      should reject) — free-delta is STILL consistent, because per-pair free
+    #      offsets absorb the mismatch. So free-delta CONSISTENCY does NOT by
+    #      itself identify autokey or a single alphabet; only the PROGRESSIVE
+    #      (fixed-offset) CONTRADICTION is an informative exclusion.
+    C1 = list(rng.permutation(N)); C2 = list(rng.permutation(N))
+    wlim = [int(x) for x in rng.integers(0, N, size=12)]
+    for j in (0, 3, 5, 8):
+        wlim[j] = (base - j) % N
+    two = []
+    for g in range(6):
+        Cg = C1 if g < 3 else C2
+        p = list(rng.integers(0, N, size=T))
+        for pos in (10, 40):
+            p[pos:pos + 12] = wlim
+        two.append([Cg[(p[t] + t) % N] for t in range(T)])
+    iso_two = find_isomorphs(two, 12, 3)
+    fc_two = chain_free_delta(two, iso_two, N, recover_threshold=10)
+    out.append(("LIMIT: free-delta is permissive — TWO different alphabets are "
+                "ALSO consistent (so consistency != single alphabet/autokey)",
+                fc_two.consistent))
 
     # (5) GF solver KATs: it must catch a genuine linear contradiction, and must
     #     NOT over-claim — sparse non-interlocking pairs are underdetermined

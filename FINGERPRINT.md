@@ -72,23 +72,25 @@ Each is a calibrated test, not an impression.
 |---|---|---|
 | Monoalphabetic / transposition / periodic / block / AES / keyless-stack | **excluded** | see table above |
 | Independent-column substitution (general GAK) | **excluded** | isomorphs forbid it |
-| **Ciphertext-autokey / clock** (constant offset per pair) | **confirmed (structure)** | free-δ isomorph chaining: consistent + over-determined (redundant 278–895), 60–68/83 symbols linked, at every threshold (`isomorph`) |
-| **Progressive-alphabet** (offset = position) | **refuted** | progressive (fixed-δ) chaining contradicts where free-δ is consistent (`isomorph`) |
+| **Interrelated alphabets** (sliding/autokey/clock family) | **confirmed** | abundant isomorphs, z>100 vs shuffle null (`isomorph`) |
+| **Progressive-alphabet** (offset = position) | **refuted** | progressive (fixed-δ) chaining contradicts, whereas a planted progressive chains consistently (`isomorph`) |
+| **Ciphertext-autokey / clock** (specific interrelation) | **open** | free-δ chaining is *permissive* — consistent even on two-alphabet and random nulls, so it does NOT identify autokey; needs indirect-symmetry recovery (`isomorph`) |
 | Affine vs additive sub-type | **open** | crib-activated `a_t`-solve (needs an anchor) |
 | Small-seed PRNG keystream (any combiner) | **disfavored** | additive + GAK seed scans to 100M null; if autokey, no seed exists |
 | Key from a salakieli-style passphrase | **open** | needs the in-game key-derivation |
 
 **Leading model:** a polyalphabetic cipher over **interrelated alphabets** with an
-**aperiodic, position-locked, per-group key schedule** whose alphabets are related
-by a **constant offset per isomorph pair** — the signature of **ciphertext-autokey
-(offset 1) or a clock cipher**, **not** a positional progressive (which the free-δ
-vs fixed-δ chaining test refutes). The key is **not a small PRNG seed** (every
-additive/GAK seed scan to 100M is null; under autokey there is no seed).
+**aperiodic, position-locked, per-group key schedule**. The interrelation is
+**non-positional** (positional progressive is refuted), consistent with the
+**sliding / autokey / clock** family — but we have **not** pinned the specific
+member: the free-δ chaining test that would suggest autokey is **permissive**
+(it stays consistent on two-alphabet and random controls), so it is *not* an
+identification. The key is **not a small PRNG seed** (every additive/GAK seed
+scan to 100M is null).
 
-Two stages remain: (1) **order the cipher alphabet** via indirect-symmetry-of-
-position chaining (free-δ proves the constant-offset interrelation and links most
-of the 83 symbols, but does not by itself *order* them — the unknown per-pair
-offsets couple symbols without ordering); (2) a **mapping anchor** for the
+Open stages: (1) **identify the specific interrelation** and **order the cipher
+alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
+free-δ consistency alone is insufficient); (2) a **mapping anchor** for the
 plaintext side — the flat unigram denies frequency analysis, so the anchor must
 come from a crib, a confirmed acrostic, or external glyph→letter data.
 

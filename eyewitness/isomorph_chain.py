@@ -56,15 +56,19 @@ def main() -> int:
               f"{fc.contradictions:>12} {fc.redundant:>11} {fc.symbols_linked:>6}")
 
     print("\n" + "-" * 70)
-    print("READ: isomorphs confirm INTERRELATED alphabets. The free-δ (autokey/")
-    print("clock, constant unknown offset per pair) model is CONSISTENT at every")
-    print("threshold with heavy over-determination and links most of the 83-symbol")
-    print("alphabet — while PROGRESSIVE (offset = position) CONTRADICTS. So the")
-    print("interrelation is constant-offset-per-pair (ciphertext-autokey / clock),")
-    print("NOT positional progressive. Caveat: this IDENTIFIES the structure; it")
-    print("does not by itself ORDER the alphabet (indirect-symmetry recovery is the")
-    print("next, harder step — unknown per-pair offsets couple symbols without")
-    print("ordering them).")
+    print("READ (what is solid vs not):")
+    print("  SOLID: abundant isomorphs => INTERRELATED alphabets (rules out")
+    print("    independent-column substitution and unrelated-alphabet OTP/running-key).")
+    print("  SOLID exclusion: PROGRESSIVE (offset = position) is refuted — fixed-δ")
+    print("    chaining CONTRADICTS, whereas a true progressive cipher chains")
+    print("    consistently (validated on a planted progressive corpus).")
+    print("  NOT a strong result: free-δ CONSISTENCY is permissive — it stays")
+    print("    consistent even on a corpus built from TWO different alphabets, and")
+    print("    on random skeleton-matches. So free-δ consistency does NOT by itself")
+    print("    identify ciphertext-autokey or a single alphabet; it mainly reflects")
+    print("    that isomorphs admit per-pair offsets (near-automatic).")
+    print("  => Established: interrelated + non-positional. NOT established: autokey")
+    print("     specifically. Ordering the alphabet (indirect symmetry) is the open step.")
     return 0
 
 
