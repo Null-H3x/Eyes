@@ -1,21 +1,36 @@
 ﻿# install-ghidra.ps1 - Install Ghidra and launch it on Windows 10/11.
-#
-# What it does (in order):
-#   0. Pre-flight        verify Windows/arch, network
-#   1. JDK 21            install via winget if missing (or use an existing JDK 21+)
-#   2. Download          fetch the official PUBLIC release zip from GitHub
-#   3. Install           extract under %LOCALAPPDATA%\Ghidra and create shortcuts
-#   4. Launch            run ghidraRun.bat
-#
-# USAGE (PowerShell)
-#   .\install-ghidra.ps1                     # install (if needed) and launch GUI
-#   .\install-ghidra.ps1 -InstallOnly        # install only, do not launch
-#   .\install-ghidra.ps1 -RunOnly            # launch an existing install
-#   .\install-ghidra.ps1 -Version 12.1.2     # pin a specific Ghidra release
-#   .\install-ghidra.ps1 -Force              # re-download and reinstall
-#   .\install-ghidra.ps1 -DesktopShortcut    # also place a Desktop shortcut
-#
-# Safe to re-run - skips work that is already done unless -Force is passed.
+# Linux: use install-ghidra.sh (see GHIDRA.md)
+# Installer version: 1.1.0
+<#
+.SYNOPSIS
+  Download, install, and launch Ghidra on Windows.
+
+.DESCRIPTION
+  Installs JDK 21 via winget when needed, downloads the official Ghidra PUBLIC
+  release from GitHub, verifies SHA-256, extracts under %LOCALAPPDATA%\Ghidra,
+  creates Start Menu and PATH launchers, and runs ghidraRun.bat.
+
+.PARAMETER InstallOnly
+  Install without launching Ghidra.
+
+.PARAMETER RunOnly
+  Launch an existing install without downloading or installing.
+
+.PARAMETER Version
+  Pin a Ghidra release, e.g. 12.1.2
+
+.PARAMETER Force
+  Re-download and reinstall even if Ghidra is already present.
+
+.PARAMETER DesktopShortcut
+  Also create a Desktop shortcut.
+
+.EXAMPLE
+  .\install-ghidra.ps1
+
+.EXAMPLE
+  .\install-ghidra.ps1 -InstallOnly -DesktopShortcut
+#>
 
 #Requires -Version 5.1
 [CmdletBinding()]
@@ -61,7 +76,7 @@ if (-not $CacheDir) {
 
 Write-Host ''
 Write-Host '===============================================================' -ForegroundColor Cyan
-Write-Host '           Ghidra installer // Windows 10/11                  ' -ForegroundColor Cyan
+Write-Host '     Ghidra installer v1.1.0 // Windows 10/11                  ' -ForegroundColor Cyan
 Write-Host '===============================================================' -ForegroundColor Cyan
 
 function Test-Java21Plus {
