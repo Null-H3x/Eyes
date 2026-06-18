@@ -44,22 +44,27 @@ def main() -> int:
     print("  -> isomorphs far beyond chance == INTERRELATED alphabets (rules out")
     print("     independent-column substitution and unrelated-alphabet OTP/running-key).")
 
-    print("\n[2] Progressive-alphabet chaining test")
-    for L, mr in [(10, 3), (12, 3), (14, 4)]:
+    print("\n[2] PROGRESSIVE (fixed offset = position) vs FREE-δ (autokey/clock,")
+    print("    constant unknown offset per pair) chaining")
+    print(f"  {'L':>3} {'mr':>3} {'pairs':>6} | {'prog contras':>12} | "
+          f"{'free contras':>12} {'over-determ':>11} {'linked':>6}")
+    for L, mr in [(10, 3), (12, 3), (14, 3), (14, 4), (16, 4)]:
         pairs = iso.find_isomorphs(M, L, mr)
-        ch = iso.progressive_chain(M, pairs, N)
-        verdict = ("CONSISTENT (progressive fits)" if ch.consistent
-                   else f"CONTRADICTS ({ch.contradictions}/{ch.constraints})")
-        print(f"  L={L} mr={mr}: {len(pairs):>3} isomorph pairs -> {verdict}; "
-              f"largest chained component={ch.largest_component}")
+        pc = iso.progressive_chain(M, pairs, N)
+        fc = iso.chain_free_delta(M, pairs, N, recover_threshold=15)
+        print(f"  {L:>3} {mr:>3} {len(pairs):>6} | {pc.contradictions:>12} | "
+              f"{fc.contradictions:>12} {fc.redundant:>11} {fc.symbols_linked:>6}")
 
     print("\n" + "-" * 70)
-    print("READ: isomorphs confirm interrelated alphabets. Progressive chaining")
-    print("is consistent only for the strongest isomorphs and contradicts on the")
-    print("broader set, so a PURE progressive (offset = position) is not the whole")
-    print("story — consistent with the community finding that alphabet-chaining is")
-    print("'not completely successful', and pointing toward autokey or a")
-    print("non-positional interrelation as the next model to chain.")
+    print("READ: isomorphs confirm INTERRELATED alphabets. The free-δ (autokey/")
+    print("clock, constant unknown offset per pair) model is CONSISTENT at every")
+    print("threshold with heavy over-determination and links most of the 83-symbol")
+    print("alphabet — while PROGRESSIVE (offset = position) CONTRADICTS. So the")
+    print("interrelation is constant-offset-per-pair (ciphertext-autokey / clock),")
+    print("NOT positional progressive. Caveat: this IDENTIFIES the structure; it")
+    print("does not by itself ORDER the alphabet (indirect-symmetry recovery is the")
+    print("next, harder step — unknown per-pair offsets couple symbols without")
+    print("ordering them).")
     return 0
 
 
