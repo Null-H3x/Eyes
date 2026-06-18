@@ -44,6 +44,7 @@ ngram_solve  crib-seeded English n-gram solver (pins C from crib, hill-climbs re
 order_solve  ordering-search solver (pins C structure ordering-free, hill-climbs ordering O + bases)
 template     refrain repeat-template extractor (forced-same/different/free positions, dof)
 model_audit  falsifiable model verification (per-msg-progressive vs pure vs null; honest verdict)
+shared_structure  model-independent shared-plaintext map (triplet openings, repeated passages)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -58,5 +59,5 @@ __all__ = [
     "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
     "chain_extract", "cribfit", "headerbase", "pureprog", "trifid",
     "provenance", "refrain", "ngram_solve", "order_solve", "template",
-    "model_audit",
+    "model_audit", "shared_structure",
 ]

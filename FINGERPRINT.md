@@ -231,6 +231,22 @@ order the alphabet); (2) a **mapping anchor** for the plaintext side — the fla
 unigram denies frequency analysis, so the anchor must come from a crib, a
 confirmed acrostic, or external glyph→letter data.
 
+## Model-independent shared structure (`shared_structure`)
+
+Depending only on "same glyph = same glyph" (isomorph skeletons, no cipher model),
+the corpus has a strong, calibrated **triplet** structure:
+- **Triplet 1 (E1/W1/E2)** shares a **~22-glyph opening**; **Triplet 3 (E4/W4/E5)**
+  shares **~18** — both far above the random-aligned null (~5–7). The messages
+  genuinely come in triplets with shared openings (confirms the original triplet
+  theory, model-free, z≫null).
+- **Triplet 2 (W2/E3/W3)** does **not** share a long opening (~null); W2/W3 share
+  ~13 but **E3 is weakly linked to everything** — structurally distinct (longest
+  message). **No universal opening** beyond the (66,5) header (9-way ≈ chance).
+- The refrain repeats **within** messages too (e.g. a 20-glyph passage at E1@39 and
+  E1@67), and there is a cross-triplet passage (W2/E4/W4, 15 glyphs). These are
+  model-free same-plaintext anchors that constrain plaintext content regardless of
+  cipher. (Report: `report/shared_structure_report.md`; selftest 5/5.)
+
 ## Why years of brute-force failed (the actionable takeaway)
 
 Seed-scanning a PRNG assumes a small-integer seed and a simple combiner. The

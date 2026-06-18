@@ -88,6 +88,8 @@ WORKFLOWS = [
      "eyewitness", ["refrain_template.py"]),
     ("Model verification (per-msg-progressive vs null; honest verdict)", "Map the structure",
      "eyewitness", ["model_audit.py"]),
+    ("Model-independent shared-structure map (triplet openings, repeats)", "Map the structure",
+     "eyewitness", ["shared_structure.py"]),
     ("EyeCrack — salakieli crib battery (register + globality commands)", "Attack",
      "eyecrack", ["salakieli_crib.py"]),
     ("EyeCrack — keystream seed-scan (structure, additive, writes HTML)", "Attack",
