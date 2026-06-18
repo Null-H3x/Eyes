@@ -21,7 +21,16 @@ z-scores and p-values, and multiple-testing aware where relevant.
 - The 0–82 values are the game's data-mined eye numbering read as **base-5
   trigrams** (per the community's analysis), not an arbitrary transcription.
 - Our `corpus.json` is **byte-identical** to WarFairy's published BASE10
-  conversion (verified). Caveat: not yet an independent re-read of raw glyphs.
+  conversion, to the community trigram xlsx, AND — decisively — to the **hard-coded
+  constants decompiled from `noita.exe`** (`SpawnSecretEyes`/`FUN_005b2d10`): all
+  **9/9 messages decode to the corpus** via the guide's base-7 unpack
+  (`provenance`, `binary_provenance`). Three independent sources agree; the corpus
+  is traced to its origin in the game binary.
+- **Provenance settled:** the messages are **hard-coded** 64-bit constants that the
+  engine only base-7-unpacks and draws — there is **no decryption, key, or
+  keystream in the engine, and exactly 9 messages (no West 5)**. The cipher (if any)
+  was applied **offline by the author**, which is *why every in-game seed scan was
+  null* — there is no in-game seed to find.
 
 ## Verified exclusions (what it is NOT)
 
@@ -127,6 +136,32 @@ and where an order is produced it is **permissive** (the same machinery orders a
 comparable alphabet from autokey data), so it is a candidate to test, not model
 evidence.
 
+**Live attack vector — refrain known-position crib (`refrain` / `refrain_attack`).**
+The 4× repeated refrain spans a **25-glyph** region — its maximal shared-plaintext
+extent is West1@32–56 / @62–86, East2@37–61 / @72–96 (the earlier "15" was a
+conservative sub-run). It is the same plaintext at four *known* positions, so under
+pure-progressive a guessed plaintext value at a known position pins the cipher
+alphabet **absolutely** (`x[c]=p+pos`, no rotation freedom). A correct 25-symbol
+guess pins **59 of 83 symbols → ~78 % of the corpus decryptable**, and lights
+corpus-wide IoC up; a wrong guess self-contradicts. The region's own ciphertext
+collisions force ordering-independent constraints (`p[13]=p[10]-3, p[15]=p[8]-7,
+p[16]=p[12]-4, p[18]=p[9]-9, p[19]=p[2]-17 (mod 83)`). A shorter candidate (e.g.
+13 letters) is slid to every offset in the region. Validated on plants. The body
+is **per-message-progressive** (each message its own base; pure-progressive is
+contradicted across the 4 instances).
+
+**Crib-seeded English n-gram solver (`ngram_solve`).** IoC hill-climbing is a
+*proven dead end* — on a plant it reaches near-true IoC on a WRONG alphabet
+(IoC is order-blind/degenerate). The productive replacement: a correct crib + an
+ordering hypothesis pins ~59/83 of the alphabet, then hill-climb the residual
+symbols + per-message bases by **English character-trigram** likelihood, scored
+against a shuffled-decryption null. Validated on a per-message-progressive English
+plant (selftest 6/6: corpus reads back as English at z≥4; wrong cribs score low).
+On the **real corpus** every community candidate (`trueknowledge`,
+`seekeroftruth`, …) rejects under the natural ordering — re-confirming the
+**ordering is the remaining barrier**. The solver is ready the instant a correct
+(refrain, ordering) pair is supplied; the open step is recovering the ordering.
+
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
 free-δ consistency alone is insufficient, and isomorph linkage alone does not
@@ -155,6 +190,9 @@ python3 eyewitness/isomorph_chain.py       # interrelated alphabets + progressiv
 python3 eyewitness/header_base.py          # header => pure-progressive + progressive contamination correction
 python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
 python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
+python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
+python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
+python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed
