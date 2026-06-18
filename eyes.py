@@ -68,6 +68,8 @@ WORKFLOWS = [
      "eyewitness", ["pure_progressive.py"]),
     ("Digit-level / fractionation (Trifid) analysis of eye-marks", "Map the structure",
      "eyewitness", ["trifid_scan.py"]),
+    ("Binary provenance (decompiled SpawnSecretEyes -> corpus, 9/9)", "Map the structure",
+     "eyewitness", ["binary_provenance.py"]),
     ("Depth / crib-drag analysis", "Map the structure",
      "noita_eye_core", ["analyze.py"]),
     ("Cipher fingerprint — keyless transform-stack test", "Map the structure",

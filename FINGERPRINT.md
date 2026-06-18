@@ -21,7 +21,16 @@ z-scores and p-values, and multiple-testing aware where relevant.
 - The 0–82 values are the game's data-mined eye numbering read as **base-5
   trigrams** (per the community's analysis), not an arbitrary transcription.
 - Our `corpus.json` is **byte-identical** to WarFairy's published BASE10
-  conversion (verified). Caveat: not yet an independent re-read of raw glyphs.
+  conversion, to the community trigram xlsx, AND — decisively — to the **hard-coded
+  constants decompiled from `noita.exe`** (`SpawnSecretEyes`/`FUN_005b2d10`): all
+  **9/9 messages decode to the corpus** via the guide's base-7 unpack
+  (`provenance`, `binary_provenance`). Three independent sources agree; the corpus
+  is traced to its origin in the game binary.
+- **Provenance settled:** the messages are **hard-coded** 64-bit constants that the
+  engine only base-7-unpacks and draws — there is **no decryption, key, or
+  keystream in the engine, and exactly 9 messages (no West 5)**. The cipher (if any)
+  was applied **offline by the author**, which is *why every in-game seed scan was
+  null* — there is no in-game seed to find.
 
 ## Verified exclusions (what it is NOT)
 
@@ -155,6 +164,7 @@ python3 eyewitness/isomorph_chain.py       # interrelated alphabets + progressiv
 python3 eyewitness/header_base.py          # header => pure-progressive + progressive contamination correction
 python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
 python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
+python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed
