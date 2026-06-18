@@ -18,6 +18,10 @@
 #   ./install-ghidra.sh --force             # re-download and reinstall
 #   ./install-ghidra.sh --help
 #
+# Note: Ghidra does not require Gradle. If apt update fails because of a stale
+# third-party PPA (e.g. ppa:cwchien/gradle on Ubuntu 26.04), this script will
+# disable the broken source automatically and retry.
+#
 # Safe to re-run — skips work that is already done unless --force is passed.
 #
 
@@ -38,6 +42,69 @@ fail()    { printf "  ${RED}[FAIL]${RESET} %s\n"   "$1" >&2; exit 1; }
 info()    { printf "  ${CYAN}[INFO]${RESET} %s\n"  "$1"; }
 banner()  { printf "\n${BOLD}${CYAN}[[ %s ]]${RESET}\n" "$1"; }
 step()    { printf "${DIM}    ▶ %s${RESET}\n" "$1"; }
+
+# Disable apt source entries that fail on the current Ubuntu release (common after
+# distro upgrades when third-party PPAs lag behind, e.g. ppa:cwchien/gradle on 26.04).
+disable_broken_apt_sources() {
+    local log_file="$1"
+    local repo_line url_key source_file disabled_any=false
+
+    while IFS= read -r repo_line; do
+        [[ -n "$repo_line" ]] || continue
+        url_key="$(sed -E 's|^https?://||; s|/ubuntu.*||; s|[[:space:]].*||' <<<"$repo_line")"
+        if [[ -z "$url_key" ]]; then
+            continue
+        fi
+
+        while IFS= read -r source_file; do
+            [[ -n "$source_file" ]] || continue
+            warn "Disabling unsupported apt source: $source_file"
+            warn "  ($repo_line)"
+            sudo mv "$source_file" "${source_file}.disabled"
+            disabled_any=true
+        done < <(grep -rlF "$url_key" /etc/apt/sources.list.d/ 2>/dev/null \
+            | grep -Ev '\.disabled$' || true)
+    done < <(grep -oE "The repository '[^']+' does not have a Release file" "$log_file" 2>/dev/null \
+        | sed -E "s/^The repository '([^']+)'.*/\1/" || true)
+
+    # Known stale PPAs that often break fresh 26.04 upgrades before upstream catches up.
+    if [[ "${VERSION_CODENAME:-}" == "resolute" ]]; then
+        while IFS= read -r source_file; do
+            [[ -n "$source_file" ]] || continue
+            warn "Disabling stale Gradle PPA (not needed for Ghidra): $source_file"
+            sudo mv "$source_file" "${source_file}.disabled"
+            disabled_any=true
+        done < <(grep -rlE 'cwchien/gradle|ppa\.launchpadcontent\.net/cwchien/gradle' \
+            /etc/apt/sources.list.d/ 2>/dev/null | grep -Ev '\.disabled$' || true)
+    fi
+
+    [[ "$disabled_any" == "true" ]]
+}
+
+apt_update_safe() {
+    local log_file tries=0
+    log_file="$(mktemp)"
+    trap 'rm -f "$log_file"' RETURN
+
+    while (( tries < 5 )); do
+        if sudo apt-get update -qq 2>"$log_file"; then
+            return 0
+        fi
+
+        if grep -q 'does not have a Release file' "$log_file"; then
+            if disable_broken_apt_sources "$log_file"; then
+                tries=$((tries + 1))
+                continue
+            fi
+        fi
+
+        cat "$log_file" >&2
+        return 1
+    done
+
+    cat "$log_file" >&2
+    return 1
+}
 
 # ----- Defaults -----
 GHIDRA_VERSION=""
@@ -137,7 +204,7 @@ if [[ "$RUN_ONLY" == "false" ]]; then
     banner "1. System packages (apt)"
 
     info "Updating apt package lists..."
-    sudo apt-get update -qq
+    apt_update_safe
 
     info "Installing OpenJDK 21, archive tools, and GUI runtime libraries..."
     ASOUND_PKG="libasound2"
@@ -328,7 +395,7 @@ launch_ghidra() {
     if [[ "$USE_XVFB" == "true" ]]; then
         if ! command -v xvfb-run &>/dev/null; then
             info "Installing xvfb..."
-            sudo apt-get update -qq
+            apt_update_safe
             sudo apt-get install -y -qq xvfb >/dev/null
         fi
         ok "Launching under Xvfb (virtual display)"
