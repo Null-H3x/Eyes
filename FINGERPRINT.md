@@ -247,6 +247,31 @@ the corpus has a strong, calibrated **triplet** structure:
   model-free same-plaintext anchors that constrain plaintext content regardless of
   cipher. (Report: `report/shared_structure_report.md`; selftest 5/5.)
 
+## Cipher-construction lattice (what fits the validated structure)
+
+Enumerating constructions that satisfy EVERY validated fact (`cipher_lattice`,
+report `cipher_lattice_report.md`):
+
+- **New exclusion — ciphertext-autokey.** E1≈W1 are a shared-key near-duplicate pair
+  (44% identical, in blocks) with **5 re-sync events** (identical→differ→identical).
+  A content-dependent (ciphertext-autokey) keystream would propagate the difference
+  forever and never re-sync, so it is **excluded** (`resync`, selftest 6/6). Honest
+  limit: *plaintext*-autokey lag-1 re-syncs one position late and is NOT excluded by
+  this alone (distinguishing it from a position keystream needs the plaintext).
+- **Surviving family:** `c[m][t] = C[(p[m][t] + base_m + K[t]) mod 83]` — a
+  position-indexed keystream `K` over a single interrelated (mixed) alphabet `C`,
+  plus a per-message/per-group base. Sub-variants that all fit: **A** progressive
+  (`K[t]=t`, linear) + per-msg base; **B** general aperiodic `K[t]` + per-msg base;
+  **C** per-group mixed alphabet `C_m=S_m∘C`. **D** plaintext-autokey lag-1 is a
+  residual alternative not excluded by re-sync.
+- **Per-message variation is required** (E2 is isomorphic-not-identical to E1), and
+  **keys cluster** (E1=W1 share a base; E2 differs). The community "GAK/XGAK/
+  stacked-with-cut" theories all reduce to this single family (a 0–82 'cut' = the
+  per-message base; stacked substitution = a per-group alphabet).
+- **Open within the family:** K linear vs general; position-keystream vs lag-1
+  plaintext-autokey; the base grouping. All moot for *reading* without the
+  glyph→character ordering.
+
 ## Why years of brute-force failed (the actionable takeaway)
 
 Seed-scanning a PRNG assumes a small-integer seed and a simple combiner. The

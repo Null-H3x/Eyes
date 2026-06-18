@@ -45,6 +45,7 @@ order_solve  ordering-search solver (pins C structure ordering-free, hill-climbs
 template     refrain repeat-template extractor (forced-same/different/free positions, dof)
 model_audit  falsifiable model verification (per-msg-progressive vs pure vs null; honest verdict)
 shared_structure  model-independent shared-plaintext map (triplet openings, repeated passages)
+resync       re-sync test on shared-key near-duplicates (excludes ciphertext-autokey)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -59,5 +60,5 @@ __all__ = [
     "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
     "chain_extract", "cribfit", "headerbase", "pureprog", "trifid",
     "provenance", "refrain", "ngram_solve", "order_solve", "template",
-    "model_audit", "shared_structure",
+    "model_audit", "shared_structure", "resync",
 ]
