@@ -40,6 +40,7 @@ import ngram_solve
 import order_solve
 import template
 import model_audit
+import shared_structure
 import isomorph
 import prng
 import repeats
@@ -86,6 +87,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("order_solve", order_solve.selftest),
     ("template", template.selftest),
     ("model_audit", model_audit.selftest),
+    ("shared_structure", shared_structure.selftest),
 ]
 
 
