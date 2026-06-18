@@ -160,7 +160,22 @@ plant (selftest 6/6: corpus reads back as English at z≥4; wrong cribs score lo
 On the **real corpus** every community candidate (`trueknowledge`,
 `seekeroftruth`, …) rejects under the natural ordering — re-confirming the
 **ordering is the remaining barrier**. The solver is ready the instant a correct
-(refrain, ordering) pair is supplied; the open step is recovering the ordering.
+(refrain, ordering) pair is supplied.
+
+**Ordering-search solver (`order_solve`).** Removes the need to *know* the
+ordering: it pins the alphabet structure ordering-free from the crib's
+letter-pattern + ciphertext (GF over symbol/base/plaintext variables; a
+contradiction = the crib pattern is incompatible, reported with the slot), then
+hill-climbs the ordering `O` + per-message bases by English character-trigram
+likelihood with a dictionary word-coverage gate. **Validated** (selftest 7/7): on
+a per-message-progressive English plant it **recovers readable English** from a
+*sufficient* crib (z≫8, real words). **Key finding:** the crib must be long enough
+to pin DISTINCT plaintext values — roughly the **full ~25-glyph region**; a
+13-letter crib *under-determines* the alphabet (distinct letters collapse onto the
+same value), giving diagnostics but no full read-out. Every run also yields
+diagnostics on wrong cribs (contradiction slot, score gradient, partial words,
+symbols pinned). **Actionable next step:** extend the 13-letter candidates toward
+the full ~25-glyph refrain.
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
@@ -193,6 +208,7 @@ python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid
 python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
 python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
 python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
+python3 eyecrack/order_solve.py "trueknowledgeofthegods"  # ordering-search solver (recovers O from a crib)
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed

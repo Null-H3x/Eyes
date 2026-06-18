@@ -41,6 +41,7 @@ trifid       digit-level / fractionation (Trifid-family) analysis of the 3 eye-m
 provenance   binary-storage decoder (base-7 hard-coded chunks -> base-5 symbols); 9/9 corpus match
 refrain      known-position crib attack on the 4x repeated refrain (pins C absolutely, IoC-scored)
 ngram_solve  crib-seeded English n-gram solver (pins C from crib, hill-climbs residual + bases)
+order_solve  ordering-search solver (pins C structure ordering-free, hill-climbs ordering O + bases)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -54,5 +55,5 @@ __all__ = [
     "globality", "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint",
     "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
     "chain_extract", "cribfit", "headerbase", "pureprog", "trifid",
-    "provenance", "refrain", "ngram_solve",
+    "provenance", "refrain", "ngram_solve", "order_solve",
 ]

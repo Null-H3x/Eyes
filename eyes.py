@@ -82,6 +82,8 @@ WORKFLOWS = [
      "eyecrack", ["refrain_attack.py", "--constraints"]),
     ("EyeCrack — crib-seeded English n-gram solver", "Attack",
      "eyecrack", ["ngram_solve.py", "trueknowledge"]),
+    ("EyeCrack — ordering-search solver (recovers ordering from a crib)", "Attack",
+     "eyecrack", ["order_solve.py", "trueknowledgeofthegods"]),
     ("EyeCrack — salakieli crib battery (register + globality commands)", "Attack",
      "eyecrack", ["salakieli_crib.py"]),
     ("EyeCrack — keystream seed-scan (structure, additive, writes HTML)", "Attack",
