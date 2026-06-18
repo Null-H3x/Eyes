@@ -52,6 +52,8 @@ WORKFLOWS = [
      "eyewitness", ["repeat_census.py"]),
     ("Isomorph chaining — interrelated alphabets / progressive test", "Map the structure",
      "eyewitness", ["isomorph_chain.py"]),
+    ("Maximal-aligned-isomorph extractor (contamination-resistant)", "Map the structure",
+     "eyewitness", ["iso_extract.py"]),
     ("Triplet embedded-key test (pair + key)", "Map the structure",
      "eyewitness", ["triplet_keytest.py"]),
     ("Structural fingerprint (EyeWitness)", "Map the structure",

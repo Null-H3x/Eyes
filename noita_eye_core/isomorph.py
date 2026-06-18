@@ -171,6 +171,36 @@ class GFSystem:
         self.pivots[min(r)] = (r, b)
         return "pivot"
 
+    def classify(self, row: Dict[int, int], rhs: int) -> str:
+        """Reduce a constraint against current pivots WITHOUT storing it.
+        Returns 'redundant' (already implied), 'contradiction', or 'pivot' (would
+        add a new degree of freedom). Mirrors add()'s reduction exactly."""
+        r = {k: v % self.N for k, v in row.items() if v % self.N}
+        b = rhs % self.N
+        while r:
+            lead = min(r)
+            if lead not in self.pivots:
+                break
+            prow, prhs = self.pivots[lead]
+            f = (r[lead] * self._inv(prow[lead])) % self.N
+            for k, c in prow.items():
+                nv = (r.get(k, 0) - f * c) % self.N
+                if nv:
+                    r[k] = nv
+                elif k in r:
+                    del r[k]
+            b = (b - f * prhs) % self.N
+        if not r:
+            return "contradiction" if b else "redundant"
+        return "pivot"
+
+    def snapshot(self):
+        """Cheap copy of the pivot state for rollback (extractor uses this)."""
+        return {k: (dict(row), rhs) for k, (row, rhs) in self.pivots.items()}
+
+    def restore(self, snap) -> None:
+        self.pivots = {k: (dict(row), rhs) for k, (row, rhs) in snap.items()}
+
     def solve(self) -> Dict[int, int]:
         """Back-substitute to a concrete solution (free variables gauged to 0)."""
         allvars = set()
