@@ -479,6 +479,38 @@ def selftest() -> List[tuple[str, bool]]:
     out.append(("sparse non-interlocking pairs -> underdetermined (low redundancy, "
                 "not recoverable)", fc_r.redundant < 5 and not fc_r.recoverable))
 
+    # (6) GF check-only primitives used by the extractor: classify() must agree
+    #     EXACTLY with add()-on-a-copy, and snapshot()/restore() must round-trip.
+    import copy as _copy
+    import random as _random
+    rr = _random.Random(7)
+    gfx = GFSystem(N)
+
+    def _rrow():
+        return ({rr.randrange(N + 9): rr.randrange(1, N)
+                 for _ in range(rr.randint(1, 5))}, rr.randrange(N))
+    for _ in range(60):
+        row, rhs = _rrow()
+        gfx.add(dict(row), rhs)
+    mism = 0
+    for _ in range(1500):
+        row, rhs = _rrow()
+        g2 = _copy.deepcopy(gfx)
+        if g2.add(dict(row), rhs) != gfx.classify(dict(row), rhs):
+            mism += 1
+    out.append(("GF.classify() agrees exactly with add()-on-copy (0 mismatches)",
+                mism == 0))
+    snap = gfx.snapshot()
+    before = gfx.snapshot()
+    for _ in range(25):
+        row, rhs = _rrow()
+        gfx.add(dict(row), rhs)
+    gfx.restore(snap)
+    after = gfx.snapshot()
+    out.append(("GF.snapshot()/restore() is an exact round-trip",
+                before.keys() == after.keys()
+                and all(before[k] == after[k] for k in before)))
+
     return out
 
 

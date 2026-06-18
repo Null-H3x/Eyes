@@ -146,17 +146,10 @@ def per_message_progressive_chain(messages: Sequence[Sequence[int]],
     constraints = contradictions = redundant = 0
     touched: set = set()
     for pr in pairs:
-        bm1, bm2 = N + pr.m1, N + pr.m2     # base variables (indices N..N+M-1)
-        for i in range(pr.length):
+        for (row, rhs), i in zip(per_msg_prog_rows(pr, messages, N),
+                                 range(pr.length)):
             A = int(messages[pr.m1][pr.p1 + i])
             D = int(messages[pr.m2][pr.p2 + i])
-            row: Dict[int, int] = {}
-            _accum(row, D, 1, N); _accum(row, A, N - 1, N)
-            if pr.m1 != pr.m2:
-                _accum(row, bm2, N - 1, N); _accum(row, bm1, 1, N)
-            # same message: base terms cancel (bm1==bm2) -> nothing added
-            row = {v: c for v, c in row.items() if c}
-            rhs = (pr.p2 - pr.p1) % N
             constraints += 1
             res = gf.add(row, rhs)
             if res == "contradiction":
@@ -186,16 +179,11 @@ def per_message_progressive_recover(messages, pairs, N):
             x = parent[x]
         return x
     for pr in pairs:
-        bm1, bm2 = N + pr.m1, N + pr.m2
-        for i in range(pr.length):
+        for (row, rhs), i in zip(per_msg_prog_rows(pr, messages, N),
+                                 range(pr.length)):
             A = int(messages[pr.m1][pr.p1 + i])
             D = int(messages[pr.m2][pr.p2 + i])
-            row: Dict[int, int] = {}
-            _accum(row, D, 1, N); _accum(row, A, N - 1, N)
-            if pr.m1 != pr.m2:
-                _accum(row, bm2, N - 1, N); _accum(row, bm1, 1, N)
-            row = {v: c for v, c in row.items() if c}
-            gf.add(row, (pr.p2 - pr.p1) % N)
+            gf.add(row, rhs)
             parent[find(A)] = find(D)
     val = gf.solve()
     comp: Dict[int, List[int]] = defaultdict(list)
