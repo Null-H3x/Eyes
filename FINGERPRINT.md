@@ -178,17 +178,23 @@ symbols pinned).
 
 **Refrain extent corrected to 22 glyphs** (W1@32–53 / @62–83, E2@37–58 / @72–93):
 an all-distinct crib stays per-message-progressive-consistent through L=22 and
-contradicts at L=23, so the same-plaintext refrain is **22 glyphs** (the earlier
-"25" was a weaker within-instance-skeleton estimate). **Repeat-template finding
-(important):** the structurally-allowed repeated-letter positions are *highly*
-restrictive (essentially only position 7 may repeat freely, plus pairs (4,5),
-(3,13),(10,16)). Consequently **every common English thematic ≤22-char phrase
-tested (~20 candidates: `trueknowledgeofthegods`, `morevaluablethanknowledge`,
-`weseeatrueseekerofknow`, …) CONTRADICTS the structure** ordering-free — their
-repeated letters can't fit the allowed positions. This is a strong signal the
-refrain is **not clean English prose**, pointing at **Finnish** (different
-repeat-statistics) or a non-prose/punctuated refrain. Next step: a Finnish n-gram
-model and reconsidering the refrain's form.
+contradicts at L=23. Validated: the all-distinct-extent method recovers planted
+refrain lengths to ±1, and the refrain's 22-glyph consistency is **special** (random
+4-position sets stay consistent only ~7 glyphs), so the 22-glyph same-plaintext
+refrain is **real**.
+
+**Paranoia audit — a retraction.** An earlier claim that "English thematic phrases
+all contradict ⇒ the refrain is not English (probably Finnish)" was an **OVER-REACH
+and is RETRACTED.** Audit: on a plant that genuinely *is* English (per-message-
+progressive, English refrain), random *wrong* English 22-char phrases pass
+`pin_structure` at **0/300 — identical to the real corpus (0/300)** — while the true
+refrain passes. So a phrase failing the structural test is just normal *wrong-guess*
+rejection and carries **no information about the language**. **The plaintext language
+remains unknown (English fully viable).** Corollary (the real lesson): **blind
+phrase-guessing is near-hopeless** — only a phrase matching the refrain's *exact*
+repeat-pattern passes (~0/300 for random phrases, any language). Productive paths:
+generate candidates that match the ciphertext's required repeat-template, or find a
+different lever; do **not** run a large blind phrase sweep (English or Finnish).
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
