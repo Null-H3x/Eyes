@@ -160,7 +160,56 @@ plant (selftest 6/6: corpus reads back as English at z≥4; wrong cribs score lo
 On the **real corpus** every community candidate (`trueknowledge`,
 `seekeroftruth`, …) rejects under the natural ordering — re-confirming the
 **ordering is the remaining barrier**. The solver is ready the instant a correct
-(refrain, ordering) pair is supplied; the open step is recovering the ordering.
+(refrain, ordering) pair is supplied.
+
+**Ordering-search solver (`order_solve`).** Removes the need to *know* the
+ordering: it pins the alphabet structure ordering-free from the crib's
+letter-pattern + ciphertext (GF over symbol/base/plaintext variables; a
+contradiction = the crib pattern is incompatible, reported with the slot), then
+hill-climbs the ordering `O` + per-message bases by English character-trigram
+likelihood with a dictionary word-coverage gate. **Validated** (selftest 7/7): on
+a per-message-progressive English plant it **recovers readable English** from a
+*sufficient* crib (z≫8, real words). **Key finding:** the crib must be long enough
+to pin DISTINCT plaintext values — roughly the **full ~25-glyph region**; a
+13-letter crib *under-determines* the alphabet (distinct letters collapse onto the
+same value), giving diagnostics but no full read-out. Every run also yields
+diagnostics on wrong cribs (contradiction slot, score gradient, partial words,
+symbols pinned).
+
+**Refrain extent corrected to 22 glyphs** (W1@32–53 / @62–83, E2@37–58 / @72–93):
+an all-distinct crib stays per-message-progressive-consistent through L=22 and
+contradicts at L=23. Validated: the all-distinct-extent method recovers planted
+refrain lengths to ±1, and the refrain's 22-glyph consistency is **special** (random
+4-position sets stay consistent only ~7 glyphs), so the 22-glyph same-plaintext
+refrain is **real**.
+
+**Paranoia audit — a retraction.** An earlier claim that "English thematic phrases
+all contradict ⇒ the refrain is not English (probably Finnish)" was an **OVER-REACH
+and is RETRACTED.** Audit: on a plant that genuinely *is* English (per-message-
+progressive, English refrain), random *wrong* English 22-char phrases pass
+`pin_structure` at **0/300 — identical to the real corpus (0/300)** — while the true
+refrain passes. So a phrase failing the structural test is just normal *wrong-guess*
+rejection and carries **no information about the language**. **The plaintext language
+remains unknown (English fully viable).** Corollary (the real lesson): **blind
+phrase-guessing is near-hopeless** — only a phrase matching the refrain's *exact*
+repeat-pattern passes (~0/300 for random phrases, any language). Productive paths:
+generate candidates that match the ciphertext's required repeat-template, or find a
+different lever; do **not** run a large blind phrase sweep (English or Finnish).
+
+**Refrain repeat-template (`template` / `refrain_template`).** Extracts, ordering-
+free, the structure the 22-glyph refrain forces on its plaintext (GF over
+plaintext-position/base/symbol variables; forced relations found by classify).
+Result on the real refrain: **free plaintext degrees of freedom = 2 of 22** — the
+relative plaintext is pinned to a 2-parameter family. **Forced-SAME letter groups:
+(3,13), (4,5), (10,16)**; free position: 7; 207 forced-DIFFERENT pairs. Skeleton
+`???ABB?.??C??A??C?????`. So a valid refrain must share a letter within each group,
+differ across all forced-different pairs, and is otherwise nearly determined —
+reading it still needs the alphabet ordering, but a correct ordering nearly
+determines the refrain. **Caution (audited):** the tiny dof assumes per-message-
+progressive; it could partly reflect over-constraint from coincidental
+cross-instance matches if the model is imperfect — verify before over-trusting.
+Validated: `template.selftest` 7/7 (recovers engineered collisions as
+forced-different; forced-same arises only from genuine structure).
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
@@ -193,6 +242,7 @@ python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid
 python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
 python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
 python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
+python3 eyecrack/order_solve.py "trueknowledgeofthegods"  # ordering-search solver (recovers O from a crib)
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed

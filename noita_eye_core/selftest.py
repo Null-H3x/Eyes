@@ -37,6 +37,8 @@ import trifid
 import provenance
 import refrain
 import ngram_solve
+import order_solve
+import template
 import isomorph
 import prng
 import repeats
@@ -80,6 +82,8 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("provenance", provenance.selftest),
     ("refrain", refrain.selftest),
     ("ngram_solve", ngram_solve.selftest),
+    ("order_solve", order_solve.selftest),
+    ("template", template.selftest),
 ]
 
 

@@ -31,12 +31,12 @@ DEFAULT_ALPHABET = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                     "0123456789,.?'"
                     "!@#&*()_+-=[]:;<>/")
 
-# The full 4x repeated region (message index, start position). The maximal extent
-# where all four instances share plaintext is 25 glyphs (W1@32, W1@62, E2@37, E2@72);
-# pinning it covers 59/83 symbols (~78% of the corpus). A shorter candidate phrase
-# is placed at an offset inside this region (see refrain_attack.py's sweep).
+# The 4x repeated region (message index, start position). The per-message-
+# progressive-CONSISTENT extent is 22 glyphs (W1@32, W1@62, E2@37, E2@72); the
+# plaintext diverges at position 22 (an all-distinct crib contradicts at L>=23).
+# (An earlier within-instance-skeleton estimate said 25, but that is a weaker test.)
 DEFAULT_INSTANCES = [(1, 32), (1, 62), (2, 37), (2, 72)]
-DEFAULT_LEN = 25
+DEFAULT_LEN = 22
 
 
 @dataclass
