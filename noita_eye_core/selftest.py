@@ -28,6 +28,7 @@ import numbertest
 import null_model
 import oracle
 import pairdiff
+import chain_models
 import isomorph
 import prng
 import repeats
@@ -62,6 +63,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("salakieli", salakieli.selftest),
     ("repeats", repeats.selftest),
     ("isomorph", isomorph.selftest),
+    ("chain_models", chain_models.selftest),
 ]
 
 
