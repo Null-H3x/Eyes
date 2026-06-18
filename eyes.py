@@ -62,6 +62,8 @@ WORKFLOWS = [
      "eyewitness", ["verify_fingerprint.py"]),
     ("Datastream consistency check (integrity + WarFairy cross-check)", "Map the structure",
      "eyewitness", ["datastream_check.py"]),
+    ("Header-base deduction + progressive contamination correction", "Map the structure",
+     "eyewitness", ["header_base.py"]),
     ("Depth / crib-drag analysis", "Map the structure",
      "noita_eye_core", ["analyze.py"]),
     ("Cipher fingerprint — keyless transform-stack test", "Map the structure",

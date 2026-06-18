@@ -35,6 +35,7 @@ isomorph     isomorph census + alphabet-chaining (interrelated-alphabet test)
 chain_models model-constrained chaining (autokey≡free-δ; per-msg-progressive discriminator)
 chain_extract contamination-resistant maximal-aligned-isomorph extractor (anchor-then-classify)
 cribfit      crib-placement tester for repeated aligned-isomorph targets (value-mode sharp)
+headerbase   literal-header => pure-progressive deduction + progressive contamination correction
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -47,5 +48,5 @@ __all__ = [
     "embedded_key", "keystream_scope", "header_test", "numbertest", "depthmap",
     "globality", "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint",
     "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
-    "chain_extract", "cribfit",
+    "chain_extract", "cribfit", "headerbase",
 ]
