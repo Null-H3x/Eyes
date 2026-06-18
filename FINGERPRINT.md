@@ -211,6 +211,19 @@ cross-instance matches if the model is imperfect — verify before over-trusting
 Validated: `template.selftest` 7/7 (recovers engineered collisions as
 forced-different; forced-same arises only from genuine structure).
 
+**Model verification — paranoia audit (`model_audit`).** Before trusting the dof=2
+template we tested whether per-message-progressive is genuinely the refrain's
+structure. **SOLID:** the 4 instances are the same plaintext (isomorph significance
+z≈117; per-message-progressive consistency to L=22 vs random-window extent ~7).
+**NOT cleanly confirmed:** the *specific* model — pure-progressive reaches L=21
+(≈22), random 4-windows reach L=22 at empirical p≈0.002–0.006, and those that do
+have as much over-determination as the refrain. So the consistency tests are passed
+by a flexible model and do not single per-message-progressive out over other
+interrelated-alphabet members. **Verdict:** the same-plaintext refrain is
+established; the dof=2 repeat-template is a **model-dependent hypothesis** to test,
+not a fact. (Report: `report/model_audit_report.md`; `model_audit.selftest` 5/5
+validates the method discriminates models on plants.)
+
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
 free-δ consistency alone is insufficient, and isomorph linkage alone does not

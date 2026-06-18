@@ -86,6 +86,8 @@ WORKFLOWS = [
      "eyecrack", ["order_solve.py", "trueknowledgeofthegods"]),
     ("Refrain repeat-template (forced same/different positions, dof)", "Map the structure",
      "eyewitness", ["refrain_template.py"]),
+    ("Model verification (per-msg-progressive vs null; honest verdict)", "Map the structure",
+     "eyewitness", ["model_audit.py"]),
     ("EyeCrack — salakieli crib battery (register + globality commands)", "Attack",
      "eyecrack", ["salakieli_crib.py"]),
     ("EyeCrack — keystream seed-scan (structure, additive, writes HTML)", "Attack",
