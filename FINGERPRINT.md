@@ -93,12 +93,15 @@ matching returns partial/misaligned pairs (same pattern, different plaintext at
 singletons) that defeated earlier chaining. Anchoring a per-message-progressive
 alphabet on the cleanest threshold (shuffle-null ≈ 0) and classifying the broader
 set against it isolates the genuinely fully-aligned isomorphs — validated on a
-66 %-contaminated plant at **precision 0.996 / recall 1.000** with full alphabet
-recovery up to rotation. On the **real corpus** this yields a tight family of
-**11 long maximal aligned runs** (len 13–18) concentrated at positions ~36–78 of
-messages 0/1/2 — the strongest structural foothold to date. But the alphabet is
-only **linked, not ordered**: the 40 linked symbols collapse onto 12 distinct
-positions (ratio 0.30), so isomorphs constrain but do not pin the order.
+66 %-contaminated plant at **precision 0.996 / recall 1.000** (all-seeds robust)
+with full alphabet recovery up to rotation. Contamination filtering is
+**model-robust**: per-message-progressive and free-δ flag the *identical*
+clean/contaminated split on the real corpus. The result is a tight family of
+**6 long maximal aligned runs** (len 15) across messages 1/2 — the strongest
+structural foothold to date. But the alphabet is only **linked, not ordered**,
+and where an order is produced it is **permissive** (the same machinery orders a
+comparable alphabet from autokey data), so it is a candidate to test, not model
+evidence.
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
