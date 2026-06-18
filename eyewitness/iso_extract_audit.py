@@ -29,17 +29,17 @@ N = 83
 WP, WL = cm._WORD_POS, cm._WLEN
 
 
-def aligned(pr) -> bool:
-    def woff(p):
-        for q in WP:
-            if q <= p < q + WL:
-                return p - q
-        return None
+def reconstruct_P(msgs, C, bases):
+    """True plaintext of a per-msg-progressive plant (independent ground truth)."""
+    Cinv = {s: i for i, s in enumerate(C)}
+    return [[(Cinv[c] - bases[m] - t) % N for t, c in enumerate(msg)]
+            for m, msg in enumerate(msgs)]
 
-    def iw(p, L):
-        return any(q <= p and p + L <= q + WL for q in WP)
-    return (iw(pr.p1, pr.length) and iw(pr.p2, pr.length)
-            and woff(pr.p1) == woff(pr.p2))
+
+def aligned(pr, P) -> bool:
+    """Ground truth = byte-identical plaintext segments (not a position heuristic)."""
+    return (P[pr.m1][pr.p1:pr.p1 + pr.length]
+            == P[pr.m2][pr.p2:pr.p2 + pr.length])
 
 
 def gf_invariants(trials=4000) -> tuple[int, bool]:
@@ -113,22 +113,25 @@ def main() -> int:
     L.append(f"- `snapshot()/restore()` exact round-trip: **{rt}**")
     L.append("")
 
-    # 2. multi-seed true-model precision / recovery
-    L.append("## 2. True-model extraction across seeds (precision / recovery)")
+    # 2. multi-seed true-model precision / recovery (TRUE-plaintext ground truth)
+    L.append("## 2. True-model extraction across seeds (precision vs TRUE plaintext)")
+    L.append("")
+    L.append("Ground truth = byte-identical reconstructed plaintext segments "
+             "(not a position heuristic).")
     L.append("")
     L.append("| seed | clean | precision | recall | linked | distinct | ratio |")
     L.append("|---|---|---|---|---|---|---|")
     precs, recs, ratios, dists = [], [], [], []
     for sd in range(S):
         rng = np.random.default_rng(sd)
-        mp, C, _ = cm.plant_per_msg_progressive(N, rng, M=9, T=110)
+        mp, C, b = cm.plant_per_msg_progressive(N, rng, M=9, T=110)
+        P = reconstruct_P(mp, C, b)
         broad = find_isomorphs(mp, 13, 3)
-        ngen = sum(aligned(pr) for pr in broad)
+        ngen = sum(aligned(pr, P) for pr in broad)
         r = ce.extract(mp, base_len=13, broad_repeats=3, N=N)
-        # recall: clean fixed-length windows vs all aligned windows
         clean_w = [pr for pr in broad
                    if ce._redundant(r._gf, pr, mp, cm.per_msg_prog_rows, N)]
-        ka = sum(aligned(pr) for pr in clean_w)
+        ka = sum(aligned(pr, P) for pr in clean_w)
         prec = ka / max(1, len(clean_w))
         rec = ka / max(1, ngen)
         precs.append(prec); recs.append(rec)
@@ -141,6 +144,30 @@ def main() -> int:
              f"min recovery ratio = {min(ratios):.3f}, min distinct = {min(dists)}")
     L.append(f"- Verdict: contamination filtering is high-precision and recovery is "
              f"injective on true-model data across all {S} seeds.")
+    L.append("")
+
+    # 2b. held-out generalisation (does the alphabet predict or memorise?)
+    import random as _rnd
+    rgg = np.random.default_rng(0)
+    mg, Cg, bg = cm.plant_per_msg_progressive(N, rgg, M=9, T=110)
+    Pg = reconstruct_P(mg, Cg, bg)
+    bd = find_isomorphs(mg, 13, 3)
+    gen = [pr for pr in bd if aligned(pr, Pg)]
+    con = [pr for pr in bd if not aligned(pr, Pg)]
+    _rnd.Random(1).shuffle(gen)
+    tr, te = gen[:len(gen) // 2], gen[len(gen) // 2:]
+    gfh = GFSystem(N)
+    for pr in tr:
+        for row, rhs in cm.per_msg_prog_rows(pr, mg, N):
+            gfh.add(row, rhs)
+    te_red = sum(ce._redundant(gfh, pr, mg, cm.per_msg_prog_rows, N) for pr in te)
+    con_red = sum(ce._redundant(gfh, pr, mg, cm.per_msg_prog_rows, N) for pr in con)
+    L.append("## 2b. Held-out generalisation (predict, don't memorise)")
+    L.append("")
+    L.append(f"- Train alphabet on {len(tr)} genuine pairs; **{te_red}/{len(te)}** "
+             f"unseen genuine pairs predicted redundant.")
+    L.append(f"- Contaminated pairs still rejected: **{len(con) - con_red}/{len(con)}** "
+             f"({con_red} survive).")
     L.append("")
 
     # 3. wrong-basin robustness
