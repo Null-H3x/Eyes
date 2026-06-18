@@ -137,16 +137,20 @@ comparable alphabet from autokey data), so it is a candidate to test, not model
 evidence.
 
 **Live attack vector — refrain known-position crib (`refrain` / `refrain_attack`).**
-The 4× repeated refrain (West1@38/@68, East2@43/@78, len 15) is the same plaintext
-at four *known* positions. Under pure-progressive a guessed plaintext value at a
-known position pins the cipher alphabet **absolutely** (`x[c]=p+pos`, no rotation
-freedom). A correct 15-symbol guess pins **37 of 83 symbols → ~50 % of the corpus
-decryptable**, and lights corpus-wide IoC up; a wrong guess self-contradicts. The
-refrain's own ciphertext collisions force four ordering-independent constraints on
-any guess: `p[7]=p[4]-3, p[9]=p[2]-7, p[10]=p[6]-4, p[12]=p[3]-9 (mod 83)`.
-Validated on plants (selftest 7/7: correct guess → consistent, ≥30 pinned, IoC
-z≥8; wrong → rejected/low). This is the most promising decryption lever; it needs
-a correct refrain phrase (+ alphabet ordering) as the human input.
+The 4× repeated refrain spans a **25-glyph** region — its maximal shared-plaintext
+extent is West1@32–56 / @62–86, East2@37–61 / @72–96 (the earlier "15" was a
+conservative sub-run). It is the same plaintext at four *known* positions, so under
+pure-progressive a guessed plaintext value at a known position pins the cipher
+alphabet **absolutely** (`x[c]=p+pos`, no rotation freedom). A correct 25-symbol
+guess pins **59 of 83 symbols → ~78 % of the corpus decryptable**, and lights
+corpus-wide IoC up; a wrong guess self-contradicts. The region's own ciphertext
+collisions force ordering-independent constraints (`p[13]=p[10]-3, p[15]=p[8]-7,
+p[16]=p[12]-4, p[18]=p[9]-9, p[19]=p[2]-17 (mod 83)`). A shorter candidate (e.g.
+13 letters) is slid to every offset in the region. Validated on plants (selftest
+7/7). **Crux:** the corpus-IoC payoff needs the plaintext-alphabet *ordering*
+roughly right; under the plain A–Z ordering candidate refrains reject, implying
+the ordering is non-alphabetical (a scrambled/keyword alphabet). Needs a correct
+refrain phrase **and** ordering as the human input.
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —

@@ -62,17 +62,19 @@ def main() -> int:
     c = corpus_mod.load()
     N = c.N
     M = [list(x) for x in c.ciphertexts]
-    inst = rf.DEFAULT_INSTANCES
-    L = args.len
+    region = rf.DEFAULT_INSTANCES          # the 25-glyph repeat region starts
+    REGION = rf.DEFAULT_LEN                 # 25
 
     print("=" * 70)
     print("EYECRACK — refrain known-position crib attack")
     print("=" * 70)
-    cons = constraints(M, inst, L)
-    print(f"Target: 4 instances {[ (c.labels[m],p) for m,p in inst]}, length {L}")
-    print("Ordering-independent plaintext constraints (mod 83) a valid guess must meet:")
-    for i, j in cons:
-        print(f"    p[{j}] = p[{i}] - {j - i}")
+    print(f"Repeat region: 4 instances {[ (c.labels[m],p) for m,p in region]}, "
+          f"length {REGION} glyphs (covers ~78% of the corpus).")
+    cons = constraints(M, region, REGION)
+    print("Ordering-independent plaintext constraints (mod 83) over the full region:")
+    print("    " + ",  ".join(f"p[{j}]=p[{i}]-{j-i}" for i, j in cons))
+    print("(A shorter guess is slid to every offset in the region; the offset's")
+    print(" own collisions become its constraints.)")
     print(f"Plaintext-alphabet ordering (hypothesis): '{args.alphabet[:40]}...'")
     if args.constraints:
         return 0
@@ -82,40 +84,43 @@ def main() -> int:
         phrases += [ln.strip() for ln in Path(args.wordlist).read_text().splitlines()
                     if ln.strip()]
     if not phrases:
-        print("\nNo phrases given. Provide 15-char guesses or --wordlist.")
+        print("\nNo phrases given. Provide guesses (any length <= 25) or --wordlist.")
         return 0
 
     rows = []
     for raw in phrases:
         s = raw
-        if len(s) < L:
+        P = len(s)
+        if P < 3 or P > REGION:
             continue
-        for off in range(len(s) - L + 1):
-            sub = s[off:off + L]
-            pv = rf.phrase_to_values(sub, args.alphabet, N)
-            if pv is None:
-                continue
-            r = rf.attack(M, pv, N, instances=inst, n_null=args.null)
-            rows.append((sub, r))
+        pv_full = rf.phrase_to_values(s, args.alphabet, N)
+        if pv_full is None:
+            continue
+        # slide the phrase to every offset inside the region
+        for off in range(REGION - P + 1):
+            inst_off = [(m, p + off) for (m, p) in region]
+            r = rf.attack(M, pv_full, N, instances=inst_off, n_null=args.null)
+            rows.append((s, off, r))
 
-    consistent = [(s, r) for s, r in rows if r.consistent]
-    print(f"\n{len(rows)} windows tested; {len(consistent)} pass refrain consistency.")
-    consistent.sort(key=lambda sr: sr[1].ioc_z, reverse=True)
-    print(f"\n{'phrase':18s} {'pinned':>6} {'cov':>5} {'IoC':>7} {'z':>7}  verdict")
-    print("-" * 70)
-    for s, r in consistent[:max(args.show, 20)]:
+    consistent = [(s, off, r) for s, off, r in rows if r.consistent]
+    print(f"\n{len(rows)} (phrase,offset) placements tested; "
+          f"{len(consistent)} pass refrain consistency.")
+    consistent.sort(key=lambda x: x[2].ioc_z, reverse=True)
+    print(f"\n{'phrase':18s} {'off':>3} {'pinned':>6} {'cov':>5} {'IoC':>7} {'z':>7}  verdict")
+    print("-" * 74)
+    for s, off, r in consistent[:max(args.show, 20)]:
         verdict = ("STRONG — render below" if r.ioc_z >= 6 else
                    "weak" if r.ioc_z >= 3 else "noise")
-        print(f"{s:18s} {r.symbols_pinned:>6} {r.coverage:>4.0%} "
+        print(f"{s:18s} {off:>3} {r.symbols_pinned:>6} {r.coverage:>4.0%} "
               f"{r.ioc:>7.4f} {r.ioc_z:>7.2f}  {verdict}")
-    # render the top survivors
-    for s, r in consistent[:args.show]:
+    for s, off, r in consistent[:args.show]:
         if r.ioc_z >= 6:
-            print(f"\n--- decryption under guess '{s}' (IoC z={r.ioc_z:.2f}) ---")
+            print(f"\n--- decryption under '{s}' @offset {off} (IoC z={r.ioc_z:.2f}) ---")
             for lab, line in zip(c.labels, rf.render(M, r.pinned, args.alphabet, N)):
                 print(f"  {lab}: {line}")
     if not consistent:
-        print("  (none consistent — none of these guesses fit the refrain constraints)")
+        print("  (none consistent — none of these guesses fit the refrain constraints")
+        print("   at any offset; try a different ordering or phrase)")
     print("\nREAD: 'z' is the corpus-wide IoC vs a random-refrain null. A correct")
     print("refrain should stand out at z>>6 AND render as language under the right")
     print("ordering. Consistency alone is necessary, not sufficient.")

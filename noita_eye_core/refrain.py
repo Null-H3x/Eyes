@@ -31,9 +31,12 @@ DEFAULT_ALPHABET = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                     "0123456789,.?'"
                     "!@#&*()_+-=[]:;<>/")
 
-# The extractor's certified 4x target (message index, start position), length 15.
-DEFAULT_INSTANCES = [(1, 38), (1, 68), (2, 43), (2, 78)]
-DEFAULT_LEN = 15
+# The full 4x repeated region (message index, start position). The maximal extent
+# where all four instances share plaintext is 25 glyphs (W1@32, W1@62, E2@37, E2@72);
+# pinning it covers 59/83 symbols (~78% of the corpus). A shorter candidate phrase
+# is placed at an offset inside this region (see refrain_attack.py's sweep).
+DEFAULT_INSTANCES = [(1, 32), (1, 62), (2, 37), (2, 72)]
+DEFAULT_LEN = 25
 
 
 @dataclass
