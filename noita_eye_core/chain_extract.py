@@ -292,6 +292,25 @@ def _aligned(pr) -> bool:
             and woff(pr.p1) == woff(pr.p2))
 
 
+def _reconstruct_progressive_P(messages, C, bases, N):
+    """Recover the TRUE plaintext of a per-message-progressive plant, so ground
+    truth is defined by byte-identical plaintext (not a position heuristic)."""
+    Cinv = {s: i for i, s in enumerate(C)}
+    return [[(Cinv[c] - bases[m] - t) % N for t, c in enumerate(msg)]
+            for m, msg in enumerate(messages)]
+
+
+def _true_aligned(pr, P) -> bool:
+    return (P[pr.m1][pr.p1:pr.p1 + pr.length]
+            == P[pr.m2][pr.p2:pr.p2 + pr.length])
+
+
+def _precision_true(pairs, P) -> float:
+    if not pairs:
+        return 1.0
+    return sum(_true_aligned(pr, P) for pr in pairs) / len(pairs)
+
+
 def _alignment_precision(res, plant_aligned=_aligned) -> float:
     if not res.clean_pairs:
         return 1.0
@@ -334,20 +353,46 @@ def selftest() -> List[Tuple[str, bool]]:
                 s1.keys() == s2.keys() and all(s1[k] == s2[k] for k in s1)))
 
     # ---- end-to-end extraction from contaminated data, validated across SEEDS
-    #      (the single-seed result must not be a lucky basin).
+    #      (the single-seed result must not be a lucky basin). Precision is scored
+    #      against the RECONSTRUCTED TRUE PLAINTEXT (byte-identical segments), not a
+    #      position heuristic — an independent ground truth.
     precisions, ratios, distincts = [], [], []
     for sd in range(6):
         rg = np.random.default_rng(sd)
-        m_sd, C_sd, _ = cm.plant_per_msg_progressive(N, rg, M=9, T=110)
-        WPWL_aligned = _aligned   # plant geometry is identical across seeds
+        m_sd, C_sd, b_sd = cm.plant_per_msg_progressive(N, rg, M=9, T=110)
+        P_sd = _reconstruct_progressive_P(m_sd, C_sd, b_sd, N)
         r_sd = extract(m_sd, base_len=13, broad_repeats=3, N=N)
-        precisions.append(_alignment_precision(r_sd))
+        precisions.append(_precision_true(r_sd.clean_pairs, P_sd))
         ratios.append(r_sd.recovery_ratio)
         distincts.append(r_sd.positions_distinct)
-    out.append(("clean set high-precision (>=0.95) on true-model data, ALL seeds",
+    out.append(("clean set high-precision (>=0.95) vs TRUE plaintext, ALL seeds",
                 min(precisions) >= 0.95))
     out.append(("injective near-full recovery (ratio>=0.95, >=60 symbols), ALL seeds",
                 min(ratios) >= 0.95 and min(distincts) >= 60))
+
+    # ---- held-out GENERALISATION: build the alphabet from a random HALF of the
+    #      genuine pairs and verify it PREDICTS the unseen half (redundant) while
+    #      still rejecting contaminated pairs. Proves recovery generalises rather
+    #      than memorising the pairs it was fit on.
+    import random as _rnd
+    rgg = np.random.default_rng(0)
+    mg, Cg, bg = cm.plant_per_msg_progressive(N, rgg, M=9, T=110)
+    Pg = _reconstruct_progressive_P(mg, Cg, bg, N)
+    bd = find_isomorphs(mg, 13, 3)
+    gen = [pr for pr in bd if _true_aligned(pr, Pg)]
+    con = [pr for pr in bd if not _true_aligned(pr, Pg)]
+    _rnd.Random(1).shuffle(gen)
+    tr, te = gen[:len(gen) // 2], gen[len(gen) // 2:]
+    gfh = GFSystem(N)
+    for pr in tr:
+        for row, rhs in cm.per_msg_prog_rows(pr, mg, N):
+            gfh.add(row, rhs)
+    te_red = sum(_redundant(gfh, pr, mg, cm.per_msg_prog_rows, N) for pr in te)
+    con_red = sum(_redundant(gfh, pr, mg, cm.per_msg_prog_rows, N) for pr in con)
+    out.append(("held-out genuine pairs PREDICTED redundant (generalises, >=0.99)",
+                te_red >= 0.99 * len(te)))
+    out.append(("contaminated pairs still rejected by held-out alphabet (<1%)",
+                con_red <= 0.01 * len(con) + 1))
 
     # ---- robustness: a single greedy order can land in a WRONG basin; the
     #      multi-restart consensus must recover the true alphabet on the known

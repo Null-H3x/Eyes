@@ -7,21 +7,28 @@
 - `classify()` vs `add()`-on-copy mismatches: **0/4000** (OK)
 - `snapshot()/restore()` exact round-trip: **True**
 
-## 2. True-model extraction across seeds (precision / recovery)
+## 2. True-model extraction across seeds (precision vs TRUE plaintext)
+
+Ground truth = byte-identical reconstructed plaintext segments (not a position heuristic).
 
 | seed | clean | precision | recall | linked | distinct | ratio |
 |---|---|---|---|---|---|---|
-| 0 | 1196 | 0.998 | 0.858 | 79 | 79 | 1.00 |
-| 1 | 1198 | 0.997 | 0.856 | 81 | 81 | 1.00 |
-| 2 | 1392 | 0.994 | 1.000 | 83 | 82 | 0.99 |
-| 3 | 1081 | 0.995 | 0.775 | 75 | 75 | 1.00 |
-| 4 | 1215 | 0.998 | 0.873 | 80 | 80 | 1.00 |
-| 5 | 1383 | 0.992 | 1.000 | 81 | 81 | 1.00 |
-| 6 | 1350 | 0.996 | 0.963 | 80 | 80 | 1.00 |
-| 7 | 1169 | 0.992 | 0.841 | 80 | 80 | 1.00 |
+| 0 | 1196 | 1.000 | 0.857 | 79 | 79 | 1.00 |
+| 1 | 1198 | 1.000 | 0.856 | 81 | 81 | 1.00 |
+| 2 | 1392 | 0.999 | 0.999 | 83 | 82 | 0.99 |
+| 3 | 1081 | 1.000 | 0.776 | 75 | 75 | 1.00 |
+| 4 | 1215 | 1.000 | 0.873 | 80 | 80 | 1.00 |
+| 5 | 1383 | 1.000 | 0.999 | 81 | 81 | 1.00 |
+| 6 | 1350 | 1.000 | 0.963 | 80 | 80 | 1.00 |
+| 7 | 1169 | 1.000 | 0.842 | 80 | 80 | 1.00 |
 
-- **min precision = 0.992**, min recall = 0.775, min recovery ratio = 0.988, min distinct = 75
+- **min precision = 0.999**, min recall = 0.776, min recovery ratio = 0.988, min distinct = 75
 - Verdict: contamination filtering is high-precision and recovery is injective on true-model data across all 8 seeds.
+
+## 2b. Held-out generalisation (predict, don't memorise)
+
+- Train alphabet on 697 genuine pairs; **698/698** unseen genuine pairs predicted redundant.
+- Contaminated pairs still rejected: **2259/2259** (0 survive).
 
 ## 3. Wrong-basin robustness (why multi-restart consensus matters)
 

@@ -27,6 +27,19 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
 
+def _is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    if n % 2 == 0:
+        return n == 2
+    i = 3
+    while i * i <= n:
+        if n % i == 0:
+            return False
+        i += 2
+    return True
+
+
 def skeleton(seq: Sequence[int]) -> Tuple[int, ...]:
     """Canonical repeat-pattern: each position -> index of that value's first
     occurrence.  Equal skeletons == isomorphic segments."""
@@ -144,6 +157,13 @@ class GFSystem:
     sparse row {var: coef} == rhs. Detects contradictions incrementally."""
 
     def __init__(self, N: int):
+        # Fermat-inverse (pow(a, N-2)) is only a true multiplicative inverse when N
+        # is prime; on a composite modulus the elimination silently produces wrong
+        # pivots. Guard it — the eye alphabet N=83 is prime, but a caller passing a
+        # composite N must fail loudly rather than return bogus "consistency".
+        if not _is_prime(N):
+            raise ValueError(f"GFSystem requires a prime modulus (got N={N}); "
+                             "modular inverse via Fermat is invalid otherwise.")
         self.N = N
         self.pivots: Dict[int, Tuple[Dict[int, int], int]] = {}  # var -> (row, rhs)
 
@@ -510,6 +530,28 @@ def selftest() -> List[tuple[str, bool]]:
     out.append(("GF.snapshot()/restore() is an exact round-trip",
                 before.keys() == after.keys()
                 and all(before[k] == after[k] for k in before)))
+
+    # classify() verdict edge cases against an explicit pivot x0 - x1 = 5
+    gfe = GFSystem(N); gfe.add({0: 1, 1: N - 1}, 5)
+    out.append(("GF.classify edge: identical pivot row -> redundant",
+                gfe.classify({0: 1, 1: N - 1}, 5) == "redundant"))
+    out.append(("GF.classify edge: scaled pivot row -> redundant",
+                gfe.classify({0: 2, 1: (2 * (N - 1)) % N}, 10) == "redundant"))
+    out.append(("GF.classify edge: same LHS, different RHS -> contradiction",
+                gfe.classify({0: 1, 1: N - 1}, 6) == "contradiction"))
+    out.append(("GF.classify edge: brand-new variables -> pivot",
+                gfe.classify({5: 1, 6: N - 1}, 3) == "pivot"))
+
+    # N must be prime (Fermat inverse). Guard must accept primes, reject composites.
+    out.append(("GF prime guard accepts prime moduli (83, 89)",
+                _is_prime(83) and _is_prime(89) and isinstance(GFSystem(89), GFSystem)))
+    composite_rejected = False
+    try:
+        GFSystem(84)
+    except ValueError:
+        composite_rejected = True
+    out.append(("GF prime guard REJECTS a composite modulus (84)",
+                composite_rejected and not _is_prime(84)))
 
     return out
 

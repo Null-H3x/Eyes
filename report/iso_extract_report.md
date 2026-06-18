@@ -35,14 +35,17 @@ A **fully aligned** pair (same plaintext at every `i`) makes these `L` constrain
 - [PASS] oracle: all genuine pairs are redundant under the true alphabet; <1 % of contaminated survive.
 - [PASS] `rows_fn` builds the **same GF** as the validated `per_message_progressive_chain` (single source of truth, no drift).
 - [PASS] `GFSystem.classify()` agrees **exactly** with `add()`-on-a-copy (0/1500 mismatches); `snapshot()/restore()` is an exact round-trip.
-- [PASS] clean set is high-precision (≥ 0.95) on true-model data **across all seeds** (min observed 0.968).
+- [PASS] clean set high-precision vs the **reconstructed true plaintext** (independent ground truth, not a position heuristic) — **min 0.999 across all seeds**.
+- [PASS] **held-out generalisation**: an alphabet trained on half the genuine pairs predicts **698/698** unseen genuine pairs as redundant and rejects **0/2259** contaminated — it generalises, it does not memorise.
 - [PASS] injective near-full recovery (ratio ≥ 0.95, ≥ 60 symbols) on true-model data **across all seeds**.
+- [PASS] parameter-robust (precision 1.000 across N = 83/89/101, varying M/T) and **bit-identical across separate processes**.
+- [PASS] GF requires a **prime modulus** (Fermat inverse) — guarded; corpus N = 83 is prime.
 - [PASS] **multi-restart consensus escapes the wrong basin** — on the known bad-seed the single greedy order explains 66 pairs (wrong alphabet) while the restart that explains 1040 recovers `C` up to one rotation.
 - [PASS] maximalisation does not fabricate misaligned runs (precision ≥ 0.95 vs ground truth).
 - [PASS] extraction is deterministic.
 - [PASS] **PERMISSIVE (honest limit):** per-message-progressive ALSO recovers a sizable injective alphabet from **autokey** data — so a recovered order is NOT evidence for the model.
 
-Stress test (planted, 66 %-contaminated, 3499 windows / 1388 genuine): recovers the genuine set at **precision 0.996, recall 1.000** and the full 83-symbol alphabet up to a single rotation.
+Stress test (planted, 66 %-contaminated, 3499 windows / 1388 genuine): recovers the genuine set at **precision ≈ 1.000 (true-plaintext ground truth), recall 1.000** and the full 83-symbol alphabet up to a single rotation.
 
 ## Real-corpus result (9 messages, N = 83, L = 13, anchor min_rep = 4)
 
