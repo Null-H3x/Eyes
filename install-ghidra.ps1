@@ -1,6 +1,6 @@
 ﻿# install-ghidra.ps1 - Install Ghidra and launch it on Windows 10/11.
 # Linux: use install-ghidra.sh (see GHIDRA.md)
-# Installer version: 1.1.0
+# Installer version: 1.1.1
 <#
 .SYNOPSIS
   Download, install, and launch Ghidra on Windows.
@@ -76,8 +76,34 @@ if (-not $CacheDir) {
 
 Write-Host ''
 Write-Host '===============================================================' -ForegroundColor Cyan
-Write-Host '     Ghidra installer v1.1.0 // Windows 10/11                  ' -ForegroundColor Cyan
+Write-Host '     Ghidra installer v1.1.1 // Windows 10/11                  ' -ForegroundColor Cyan
 Write-Host '===============================================================' -ForegroundColor Cyan
+
+function Get-JavaVersionLine {
+    param([string]$JavaExe = 'java')
+
+    if (-not (Get-Command $JavaExe -ErrorAction SilentlyContinue)) {
+        return $null
+    }
+
+    $javaPath = (Get-Command $JavaExe).Source
+
+    # java -version writes to stderr; with $ErrorActionPreference = Stop that becomes
+    # a terminating NativeCommandError in Windows PowerShell 5.1. Use cmd to capture both streams.
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = @(cmd /c "`"$javaPath`" -version 2>&1")
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+
+    if (-not $lines -or $lines.Count -eq 0) {
+        return $null
+    }
+
+    return [string]$lines[0]
+}
 
 function Test-Java21Plus {
     param([string]$JavaExe = 'java')
@@ -86,7 +112,11 @@ function Test-Java21Plus {
         return $null
     }
 
-    $versionLine = & $JavaExe -version 2>&1 | Select-Object -First 1
+    $versionLine = Get-JavaVersionLine -JavaExe $JavaExe
+    if (-not $versionLine) {
+        return $null
+    }
+
     if ($versionLine -match 'version "(\d+)') {
         $major = [int]$Matches[1]
         if ($major -ge 21) {
@@ -129,7 +159,8 @@ function Install-Jdk21 {
 
     $existing = Test-Java21Plus
     if ($existing) {
-        Write-Ok "Java $existing already available"
+        $versionLine = Get-JavaVersionLine
+        Write-Ok "Java $existing already available ($versionLine)"
         return
     }
 

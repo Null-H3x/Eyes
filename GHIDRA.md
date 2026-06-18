@@ -7,16 +7,20 @@ One-shot scripts to download the official [Ghidra](https://github.com/NationalSe
 | **Windows 10/11** | `install-ghidra.bat` or `install-ghidra.ps1` | `%LOCALAPPDATA%\Ghidra\` |
 | **Ubuntu 26.04 / 24.04** | `install-ghidra.sh` | `~/.local/share/ghidra/` |
 
-Installer version: **1.1.0**
+Installer version: **1.1.1**
 
 ## Windows
 
+**Recommended** — double-click **`install-ghidra.bat`** (no execution-policy change needed).
+
+Or from PowerShell:
+
 ```powershell
 git pull origin main
-.\install-ghidra.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install-ghidra.ps1
 ```
 
-Or double-click **`install-ghidra.bat`**.
+Running `.\install-ghidra.ps1` directly requires signing or `RemoteSigned` plus an unblock; the `.bat` wrapper always bypasses policy for this one script.
 
 | Flag | Purpose |
 |------|---------|
