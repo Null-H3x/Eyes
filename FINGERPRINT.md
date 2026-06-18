@@ -196,6 +196,21 @@ repeat-pattern passes (~0/300 for random phrases, any language). Productive path
 generate candidates that match the ciphertext's required repeat-template, or find a
 different lever; do **not** run a large blind phrase sweep (English or Finnish).
 
+**Refrain repeat-template (`template` / `refrain_template`).** Extracts, ordering-
+free, the structure the 22-glyph refrain forces on its plaintext (GF over
+plaintext-position/base/symbol variables; forced relations found by classify).
+Result on the real refrain: **free plaintext degrees of freedom = 2 of 22** — the
+relative plaintext is pinned to a 2-parameter family. **Forced-SAME letter groups:
+(3,13), (4,5), (10,16)**; free position: 7; 207 forced-DIFFERENT pairs. Skeleton
+`???ABB?.??C??A??C?????`. So a valid refrain must share a letter within each group,
+differ across all forced-different pairs, and is otherwise nearly determined —
+reading it still needs the alphabet ordering, but a correct ordering nearly
+determines the refrain. **Caution (audited):** the tiny dof assumes per-message-
+progressive; it could partly reflect over-constraint from coincidental
+cross-instance matches if the model is imperfect — verify before over-trusting.
+Validated: `template.selftest` 7/7 (recovers engineered collisions as
+forced-different; forced-same arises only from genuine structure).
+
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
 free-δ consistency alone is insufficient, and isomorph linkage alone does not
