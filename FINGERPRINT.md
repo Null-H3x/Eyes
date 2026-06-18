@@ -98,6 +98,19 @@ free-δ chaining test is **permissive** (consistent on two-alphabet and random
 controls), so it does not identify the member. The key is **not a small PRNG
 seed** (every additive/GAK seed scan to 100M is null).
 
+**Pure-progressive decryption attempt (`pureprog` / `pure_progressive`).** Under
+pure progressive the whole corpus decrypts up to a single monoalphabetic relabel
+once the alphabet `x=C⁻¹` is recovered, and IoC (relabel-invariant) tests whether
+the result is language. The machinery is validated (selftest 6/6: recovers a
+planted alphabet up to rotation, decrypts to plaintext+constant, IoC separates
+language from uniform). On the **real corpus** it is **under-determined**: the
+clean isomorphs are essentially one repeated passage, so `x` is pinned for too few
+symbols (37 linked → 22 distinct) and the decrypted-stream IoC is **0.014
+(z ≈ 2.2, far below language ~0.06)** — and that faint bump is the known 4× repeat,
+not readable text. **Wall: too few independent clean repeated structures to
+recover a usable alphabet.** This is the re-runnable gate — more clean isomorphs or
+an external glyph→letter anchor would move the IoC if the model holds.
+
 **Contamination-resistant extraction (`chain_extract` / `iso_extract`).** Skeleton
 matching returns partial/misaligned pairs (same pattern, different plaintext at
 singletons) that defeated earlier chaining. Anchoring a per-message-progressive
@@ -139,6 +152,7 @@ python3 noita_eye_core/selftest.py
 python3 eyewitness/repeat_census.py        # stream vs block/periodic/transposition
 python3 eyewitness/isomorph_chain.py       # interrelated alphabets + progressive test
 python3 eyewitness/header_base.py          # header => pure-progressive + progressive contamination correction
+python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed

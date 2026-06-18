@@ -130,6 +130,21 @@ def per_msg_prog_rows(pr: IsoPair, messages: Sequence[Sequence[int]], N: int):
         yield row, (pr.p2 - pr.p1) % N
 
 
+def pure_prog_rows(pr: IsoPair, messages: Sequence[Sequence[int]], N: int):
+    """PURE-progressive constraints (single global sliding alphabet, NO per-message
+    base): x[D] - x[A] = (p2 - p1). The literal universal header forces this within
+    the per-message-progressive family (see headerbase). Sharper than
+    per_msg_prog_rows because there is no free base to absorb cross-message pairs."""
+    off = (pr.p2 - pr.p1) % N
+    for i in range(pr.length):
+        A = int(messages[pr.m1][pr.p1 + i])
+        D = int(messages[pr.m2][pr.p2 + i])
+        row: Dict[int, int] = {}
+        _accum(row, D, 1, N); _accum(row, A, N - 1, N)
+        row = {v: c for v, c in row.items() if c}
+        yield row, off
+
+
 def per_message_progressive_chain(messages: Sequence[Sequence[int]],
                                   pairs: List[IsoPair], N: int) -> ChainStat:
     M = len(messages)

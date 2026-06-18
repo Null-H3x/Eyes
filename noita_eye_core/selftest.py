@@ -32,6 +32,7 @@ import chain_models
 import chain_extract
 import cribfit
 import headerbase
+import pureprog
 import isomorph
 import prng
 import repeats
@@ -70,6 +71,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("chain_extract", chain_extract.selftest),
     ("cribfit", cribfit.selftest),
     ("headerbase", headerbase.selftest),
+    ("pureprog", pureprog.selftest),
 ]
 
 
