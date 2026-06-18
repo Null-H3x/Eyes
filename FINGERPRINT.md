@@ -174,8 +174,21 @@ to pin DISTINCT plaintext values — roughly the **full ~25-glyph region**; a
 13-letter crib *under-determines* the alphabet (distinct letters collapse onto the
 same value), giving diagnostics but no full read-out. Every run also yields
 diagnostics on wrong cribs (contradiction slot, score gradient, partial words,
-symbols pinned). **Actionable next step:** extend the 13-letter candidates toward
-the full ~25-glyph refrain.
+symbols pinned).
+
+**Refrain extent corrected to 22 glyphs** (W1@32–53 / @62–83, E2@37–58 / @72–93):
+an all-distinct crib stays per-message-progressive-consistent through L=22 and
+contradicts at L=23, so the same-plaintext refrain is **22 glyphs** (the earlier
+"25" was a weaker within-instance-skeleton estimate). **Repeat-template finding
+(important):** the structurally-allowed repeated-letter positions are *highly*
+restrictive (essentially only position 7 may repeat freely, plus pairs (4,5),
+(3,13),(10,16)). Consequently **every common English thematic ≤22-char phrase
+tested (~20 candidates: `trueknowledgeofthegods`, `morevaluablethanknowledge`,
+`weseeatrueseekerofknow`, …) CONTRADICTS the structure** ordering-free — their
+repeated letters can't fit the allowed positions. This is a strong signal the
+refrain is **not clean English prose**, pointing at **Finnish** (different
+repeat-statistics) or a non-prose/punctuated refrain. Next step: a Finnish n-gram
+model and reconsidering the refrain's form.
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
