@@ -75,3 +75,12 @@ m2@43 ~ m2@78  len=15
 - **NOT decisive on model:** isomorphs cannot crown per-message-progressive over autokey/clock.
 
 **On a plaintext "find/decrypt" search:** still a step beyond this. Reading out plaintext requires the *full* ordered alphabet plus a mapping anchor (one known symbol→letter). The extractor delivers contamination-filtered anchors and a partial, model-ambiguous linkage — not an order — so a decryption search would currently return nothing meaningful. The next lever is **indirect-symmetry / cross-anchor chaining** plus an external mapping anchor.
+
+## Crib-placement follow-on (`cribfit` / `eyecrack/crib_fit.py`)
+
+The 4× repeated 15-glyph segment (West 1 @38/@68, East 2 @43/@78) is the natural crib target, so a placement tester was built and audited. A decisive, honest result came out of the calibration:
+
+- **VALUE mode (sharp):** if you commit to a plaintext-alphabet ordering (letter→ℤ_N), placing a candidate at all four instances and requiring consistency with the extracted corpus alphabet is **razor-sharp** — a random phrase passes **~0 %** (0/2000 in validation). A phrase+ordering that passes *and* extends the corpus would be strong joint evidence.
+- **PATTERN mode (value-free) is PERMISSIVE:** using only a phrase's letter-equality pattern, ~98 % of random patterns "pass" — and **adding corpus extension does not help** (98.3 % still pass). For a sliding cipher the ciphertext repeat pattern reflects `p[i]+i`, not `p[i]`, so the letter pattern alone carries almost no information.
+
+**Takeaway:** crib-dragging here **cannot** work by phrase-guessing alone; it is sharp **only** when paired with a plaintext-alphabet ordering hypothesis. Since the ordering is exactly what we don't have, this re-confirms that an **external mapping anchor (glyph→letter)** — not more phrase candidates — is the true bottleneck. The tester (`crib_fit.py`) is built so its calibrated null makes a permissive result impossible to mistake for a hit.

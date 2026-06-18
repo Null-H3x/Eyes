@@ -30,6 +30,7 @@ import oracle
 import pairdiff
 import chain_models
 import chain_extract
+import cribfit
 import isomorph
 import prng
 import repeats
@@ -66,6 +67,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("isomorph", isomorph.selftest),
     ("chain_models", chain_models.selftest),
     ("chain_extract", chain_extract.selftest),
+    ("cribfit", cribfit.selftest),
 ]
 
 
