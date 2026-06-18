@@ -68,30 +68,124 @@ def _ioc(seq) -> float:
 
 
 def pin_from_refrain(messages, plain_values, instances, N):
-    """Pin x[c] = p[i] + (pos+i) from every refrain instance. Returns
-    (pinned, contradiction_at)."""
-    pinned: Dict[int, int] = {}
+    """Per-MESSAGE-progressive pinning: x[c] = p[i] + base_m + (pos+i).
+
+    The body uses per-message bases (pure-progressive is contradicted across the 4
+    refrain instances), so we gauge the first instance's message base to 0 and
+    derive every other refrain-message base from a ciphertext symbol it shares with
+    an already-pinned message. A wrong guess makes a shared symbol demand two
+    different x[c] (or two different bases) -> contradiction. Returns
+    (pinned x:{symbol->C^{-1} value up to global rotation}, contradiction_at).
+    """
     L = len(plain_values)
+    by_msg: Dict[int, list] = {}
     for inst, (m, pos) in enumerate(instances):
-        for i in range(L):
-            c = int(messages[m][pos + i])
-            v = (plain_values[i] + pos + i) % N
-            if c in pinned and pinned[c] != v:
-                return pinned, (inst, i)
-            pinned[c] = v
+        by_msg.setdefault(m, []).append((inst, pos))
+    pinned: Dict[int, int] = {}
+    base: Dict[int, Optional[int]] = {m: None for m in by_msg}
+    base[instances[0][0]] = 0
+    # iterate: pin messages whose base is known; derive unknown bases from overlap
+    pending = set(by_msg)
+    progress = True
+    while pending and progress:
+        progress = False
+        for m in list(pending):
+            if base[m] is None:
+                # try to derive base[m] from a symbol shared with the pinned set
+                bm = None
+                for inst, pos in by_msg[m]:
+                    for i in range(L):
+                        c = int(messages[m][pos + i])
+                        if c in pinned:
+                            bm = (pinned[c] - plain_values[i] - pos - i) % N
+                            break
+                    if bm is not None:
+                        break
+                if bm is None:
+                    continue
+                base[m] = bm
+            # pin all of message m's refrain symbols
+            for inst, pos in by_msg[m]:
+                for i in range(L):
+                    c = int(messages[m][pos + i])
+                    v = (plain_values[i] + base[m] + pos + i) % N
+                    if c in pinned and pinned[c] != v:
+                        return pinned, (inst, i)
+                    pinned[c] = v
+            pending.discard(m)
+            progress = True
     return pinned, None
+
+
+def viable_offsets(messages, phrase, region_instances, region_len, N):
+    """ORDERING-INDEPENDENT viability: place `phrase` at each offset in the region
+    and check its letter-repeat pattern is compatible with the WITHIN-instance
+    ciphertext collisions (per-message-progressive: bases are free, so only
+    within-instance gaps + the candidate's same-letter equalities constrain it).
+    Returns the list of offsets where the candidate is possible under SOME ordering.
+    """
+    from isomorph import OffsetDSU
+    P = len(phrase)
+    # within-instance collision constraints over region positions (p[a]-p[b]=b-a)
+    def base_dsu():
+        d = OffsetDSU(N)
+        for (m, p) in region_instances:
+            occ = {}
+            for k in range(region_len):
+                sym = int(messages[m][p + k])
+                if sym in occ:
+                    if not d.union(occ[sym], k, (occ[sym] - k) % N):
+                        return None
+                else:
+                    occ[sym] = k
+        return d
+    # candidate same-letter pairs
+    eqs = []
+    first = {}
+    for i, ch in enumerate(phrase):
+        if ch in first:
+            eqs.append((first[ch], i))
+        else:
+            first[ch] = i
+    ok = []
+    for off in range(region_len - P + 1):
+        d = base_dsu()
+        if d is None:
+            return []
+        good = True
+        for (a, b) in eqs:
+            if not d.union(off + a, off + b, 0):
+                good = False
+                break
+        if good:
+            ok.append(off)
+    return ok
+
+
+def decrypt_message(msg, pinned, N) -> List[int]:
+    """Decrypt one message up to its per-message shift: p[t] = x[c]-t (the shift is
+    a constant per message, which IoC is invariant to)."""
+    return [(pinned[int(c)] - t) % N for t, c in enumerate(msg) if int(c) in pinned]
 
 
 def decrypt_with(messages, pinned, N) -> Tuple[List[int], int, int]:
     out, dec, tot = [], 0, 0
     for m in messages:
-        for t, c in enumerate(m):
-            tot += 1
-            c = int(c)
-            if c in pinned:
-                out.append((pinned[c] - t) % N)
-                dec += 1
+        tot += len(m)
+        d = decrypt_message(m, pinned, N)
+        out.extend(d); dec += len(d)
     return out, dec, tot
+
+
+def per_message_ioc(messages, pinned, N) -> float:
+    """Mean per-message IoC of the decryptable positions (shift-invariant, so the
+    unknown per-message base does not matter for this score)."""
+    vals = []
+    for m in messages:
+        d = decrypt_message(m, pinned, N)
+        if len(d) >= 8:
+            vals.append(_ioc(d))
+    return sum(vals) / len(vals) if vals else 0.0
 
 
 def attack(messages, phrase_values, N, instances=None, n_null: int = 400,
@@ -103,8 +197,7 @@ def attack(messages, phrase_values, N, instances=None, n_null: int = 400,
     if contra is not None:
         return AttackResult(False, contra, len(pinned), 0.0, 0.0, 0.0, 0.0, 0.0, pinned)
     stream, dec, tot = decrypt_with(messages, pinned, N)
-    obs = _ioc(stream)
-    # null: random refrain plaintext of the same length, same pinning machinery
+    obs = per_message_ioc(messages, pinned, N)
     rng = np.random.default_rng(seed)
     L = len(phrase_values)
     nulls = []
@@ -113,8 +206,7 @@ def attack(messages, phrase_values, N, instances=None, n_null: int = 400,
         pj, cj = pin_from_refrain(messages, q, instances, N)
         if cj is not None:
             continue
-        sj, _, _ = decrypt_with(messages, pj, N)
-        nulls.append(_ioc(sj))
+        nulls.append(per_message_ioc(messages, pj, N))
     nm = float(np.mean(nulls)) if nulls else 0.0
     nsd = float(np.std(nulls)) if nulls else 1e-9
     return AttackResult(True, None, len(pinned), dec / max(1, tot), obs, nm, nsd,
@@ -137,7 +229,8 @@ def render(messages, pinned, alphabet, N) -> List[str]:
 
 
 # ---------------------------------------------------------------------------
-# Selftest — validate on a planted pure-progressive corpus with a known refrain.
+# Selftest — validate on a planted PER-MESSAGE-progressive corpus (the body's
+# actual model: each message has its own base) with a known refrain.
 # ---------------------------------------------------------------------------
 
 def selftest() -> List[Tuple[str, bool]]:
@@ -146,35 +239,41 @@ def selftest() -> List[Tuple[str, bool]]:
     N = 83
     rng = np.random.default_rng(0)
     C = list(rng.permutation(N))               # secret cipher alphabet
-    order = DEFAULT_ALPHABET                    # plaintext ordering (true)
+    order = DEFAULT_ALPHABET
     A = len(order)
 
-    # low-entropy "language-like" plaintext over the alphabet; a fixed refrain
-    # placed at 4 positions across 2 messages.
     w = np.array([8, 6, 5, 4, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1], dtype=float)
     vocab = [int(v) for v in rng.choice(A, size=16, replace=False)]
     def draw():
         return vocab[int(rng.choice(len(vocab), p=w / w.sum()))]
     refrain_vals = [draw() for _ in range(DEFAULT_LEN)]
-    T = 120
-    insts = [(0, 38), (0, 68), (1, 43), (1, 78)]
+    T, Mn = 120, 5
+    insts = [(0, 38), (0, 68), (1, 43), (1, 78)]   # refrain in messages 0 and 1
+    bases = [int(b) for b in rng.integers(0, N, size=Mn)]   # PER-MESSAGE bases
     msgs = []
-    for m in range(2):
+    for m in range(Mn):
         p = [draw() for _ in range(T)]
         for (mm, pos) in insts:
             if mm == m:
                 p[pos:pos + DEFAULT_LEN] = refrain_vals
-        msgs.append([C[(p[t] + t) % N] for t in range(T)])
+        msgs.append([C[(p[t] + bases[m] + t) % N] for t in range(T)])
 
-    # CORRECT refrain values -> consistent, large pin, high IoC
+    # CORRECT refrain values -> consistent, large pin, high per-message IoC
     r = attack(msgs, [v % N for v in refrain_vals], N, instances=insts, n_null=200)
-    out.append(("correct refrain is consistent", r.consistent))
+    out.append(("correct refrain is consistent (per-message-progressive)",
+                r.consistent))
     out.append(("correct refrain pins many symbols (>=30)", r.symbols_pinned >= 30))
-    out.append(("correct refrain lights IoC up (z>=8)", r.ioc_z >= 8))
+    out.append(("correct refrain lights per-message IoC up (z>=8)", r.ioc_z >= 8))
 
-    # WRONG refrain (shuffle) -> usually contradiction; if it survives, low IoC
-    bad = list(refrain_vals); rng.shuffle(bad)
-    bad = [(v + 1) % N for v in bad]
+    # the recovered alphabet x must decrypt ALL messages (not just the refrain two),
+    # since x = C^{-1} is global; per-message IoC elevated across messages.
+    iocs = [_ioc(decrypt_message(m, r.pinned, N)) for m in msgs
+            if len(decrypt_message(m, r.pinned, N)) >= 8]
+    out.append(("global alphabet decrypts every message to language "
+                "(min per-msg IoC high)", min(iocs) > 2 * (1 / N)))
+
+    # WRONG refrain -> rejected or low IoC
+    bad = list(refrain_vals); rng.shuffle(bad); bad = [(v + 1) % N for v in bad]
     rb = attack(msgs, bad, N, instances=insts, n_null=100)
     out.append(("a wrong refrain is rejected OR scores low (not a false hit)",
                 (not rb.consistent) or rb.ioc_z < 4))
@@ -191,6 +290,12 @@ def selftest() -> List[Tuple[str, bool]]:
                 surv < 120))
 
     # phrase_to_values maps via ordering and rejects out-of-alphabet chars
+    # viable_offsets: a phrase with NO repeated letters is viable at every offset
+    # (no letter-equality constraints to conflict with collisions).
+    vo = viable_offsets(msgs, "abcdefgh", insts, DEFAULT_LEN, N)
+    out.append(("viable_offsets: distinct-letter phrase viable at all offsets",
+                len(vo) == DEFAULT_LEN - 8 + 1))
+
     out.append(("phrase_to_values maps letters", phrase_to_values("BA", order, N) == [1, 0]))
     out.append(("phrase_to_values rejects unknown char",
                 phrase_to_values("~", order, N) is None))

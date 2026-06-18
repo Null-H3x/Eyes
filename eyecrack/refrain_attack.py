@@ -87,43 +87,41 @@ def main() -> int:
         print("\nNo phrases given. Provide guesses (any length <= 25) or --wordlist.")
         return 0
 
+    print(f"\n{'candidate':16s} {'len':>3} viable-offsets (ordering-independent)  "
+          f"| best IoC-z @ordering")
+    print("-" * 74)
     rows = []
     for raw in phrases:
         s = raw
         P = len(s)
         if P < 3 or P > REGION:
+            print(f"{s:16s} {P:>3}  (skip: length must be 3..{REGION})")
             continue
-        pv_full = rf.phrase_to_values(s, args.alphabet, N)
-        if pv_full is None:
-            continue
-        # slide the phrase to every offset inside the region
-        for off in range(REGION - P + 1):
-            inst_off = [(m, p + off) for (m, p) in region]
-            r = rf.attack(M, pv_full, N, instances=inst_off, n_null=args.null)
-            rows.append((s, off, r))
+        vo = rf.viable_offsets(M, s, region, REGION, N)
+        # ordering-dependent IoC at each viable offset under the chosen ordering
+        pv = rf.phrase_to_values(s, args.alphabet, N)
+        best = None
+        if pv is not None:
+            for off in vo:
+                inst_off = [(m, p + off) for (m, p) in region]
+                r = rf.attack(M, pv, N, instances=inst_off, n_null=args.null)
+                if r.consistent and (best is None or r.ioc_z > best[1].ioc_z):
+                    best = (off, r)
+                if r.consistent:
+                    rows.append((s, off, r))
+        bz = f"{best[1].ioc_z:.2f} @off {best[0]}" if best else "— (rejects under this ordering)"
+        print(f"{s:16s} {P:>3}  {str(vo) if vo else 'NONE':40s} | {bz}")
 
-    consistent = [(s, off, r) for s, off, r in rows if r.consistent]
-    print(f"\n{len(rows)} (phrase,offset) placements tested; "
-          f"{len(consistent)} pass refrain consistency.")
-    consistent.sort(key=lambda x: x[2].ioc_z, reverse=True)
-    print(f"\n{'phrase':18s} {'off':>3} {'pinned':>6} {'cov':>5} {'IoC':>7} {'z':>7}  verdict")
-    print("-" * 74)
-    for s, off, r in consistent[:max(args.show, 20)]:
-        verdict = ("STRONG — render below" if r.ioc_z >= 6 else
-                   "weak" if r.ioc_z >= 3 else "noise")
-        print(f"{s:18s} {off:>3} {r.symbols_pinned:>6} {r.coverage:>4.0%} "
-              f"{r.ioc:>7.4f} {r.ioc_z:>7.2f}  {verdict}")
-    for s, off, r in consistent[:args.show]:
-        if r.ioc_z >= 6:
-            print(f"\n--- decryption under '{s}' @offset {off} (IoC z={r.ioc_z:.2f}) ---")
-            for lab, line in zip(c.labels, rf.render(M, r.pinned, args.alphabet, N)):
-                print(f"  {lab}: {line}")
-    if not consistent:
-        print("  (none consistent — none of these guesses fit the refrain constraints")
-        print("   at any offset; try a different ordering or phrase)")
-    print("\nREAD: 'z' is the corpus-wide IoC vs a random-refrain null. A correct")
-    print("refrain should stand out at z>>6 AND render as language under the right")
-    print("ordering. Consistency alone is necessary, not sufficient.")
+    rows.sort(key=lambda x: x[2].ioc_z, reverse=True)
+    strong = [(s, off, r) for s, off, r in rows if r.ioc_z >= 6]
+    for s, off, r in strong[:args.show]:
+        print(f"\n--- decryption under '{s}' @offset {off} (IoC z={r.ioc_z:.2f}) ---")
+        for lab, line in zip(c.labels, rf.render(M, r.pinned, args.alphabet, N)):
+            print(f"  {lab}: {line}")
+    print("\nREAD: 'viable-offsets' = where the candidate's letter pattern fits the")
+    print("ciphertext (ordering-INDEPENDENT — your candidates are NOT ruled out).")
+    print("'IoC-z' needs the ALPHABET ORDERING right too; rejecting under this")
+    print("ordering means the order is wrong, not necessarily the phrase.")
     return 0
 
 
