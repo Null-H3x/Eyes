@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 
-title Ghidra Installer v1.1.0
+title Ghidra Installer v1.1.1
 
 where powershell >nul 2>&1
 if errorlevel 1 (
@@ -12,7 +12,7 @@ if errorlevel 1 (
 
 echo.
 echo ===============================================================
-echo   Ghidra installer v1.1.0 // Windows 10/11
+echo   Ghidra installer v1.1.1 // Windows 10/11
 echo   See GHIDRA.md for Linux install and full usage
 echo ===============================================================
 echo.

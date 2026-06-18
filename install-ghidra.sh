@@ -2,7 +2,7 @@
 #
 # install-ghidra.sh - Install Ghidra and launch it on Ubuntu 26.04 (and nearby releases).
 # Windows: use install-ghidra.ps1 / install-ghidra.bat (see GHIDRA.md)
-# Installer version: 1.1.0
+# Installer version: 1.1.1
 #
 # What it does (in order):
 #   0. Pre-flight        verify Ubuntu/arch, sudo, network
@@ -159,7 +159,7 @@ fi
 # ----- Top banner -----
 echo
 printf "${BOLD}${CYAN}╔═══════════════════════════════════════════════════════════════╗${RESET}\n"
-printf "${BOLD}${CYAN}║     Ghidra installer v1.1.0 // Ubuntu 26.04 LTS              ║${RESET}\n"
+printf "${BOLD}${CYAN}║     Ghidra installer v1.1.1 // Ubuntu 26.04 LTS              ║${RESET}\n"
 printf "${BOLD}${CYAN}╚═══════════════════════════════════════════════════════════════╝${RESET}\n"
 
 # ====================================================================
