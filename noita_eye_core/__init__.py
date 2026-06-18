@@ -32,6 +32,7 @@ calibrate    calibrated language scoring (decoy/shuffle null + char-LM) — the 
 salakieli    curated salakieli plaintext-crib register (phrases/sub-phrases/words)
 repeats      repeated-substring census (stream vs block/periodic/transposition)
 isomorph     isomorph census + alphabet-chaining (interrelated-alphabet test)
+chain_models model-constrained chaining (autokey≡free-δ; per-msg-progressive discriminator)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -43,5 +44,5 @@ __all__ = [
     "prng", "trigram", "depth", "classify", "grouping", "oracle",
     "embedded_key", "keystream_scope", "header_test", "numbertest", "depthmap",
     "globality", "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint",
-    "keyscan", "calibrate", "salakieli", "repeats", "isomorph",
+    "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
 ]
