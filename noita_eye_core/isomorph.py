@@ -135,6 +135,78 @@ class ChainResult:
     consistent: bool
 
 
+# ---------------------------------------------------------------------------
+# GF(N) online linear solver  (for free-offset / autokey chaining)
+# ---------------------------------------------------------------------------
+
+class GFSystem:
+    """Online Gaussian elimination over GF(N) (N prime). Each constraint is a
+    sparse row {var: coef} == rhs. Detects contradictions incrementally."""
+
+    def __init__(self, N: int):
+        self.N = N
+        self.pivots: Dict[int, Tuple[Dict[int, int], int]] = {}  # var -> (row, rhs)
+
+    def _inv(self, a: int) -> int:
+        return pow(a % self.N, self.N - 2, self.N)
+
+    def add(self, row: Dict[int, int], rhs: int) -> str:
+        r = {k: v % self.N for k, v in row.items() if v % self.N}
+        b = rhs % self.N
+        while r:
+            lead = min(r)
+            if lead not in self.pivots:
+                break
+            prow, prhs = self.pivots[lead]
+            f = (r[lead] * self._inv(prow[lead])) % self.N
+            for k, c in prow.items():
+                nv = (r.get(k, 0) - f * c) % self.N
+                if nv:
+                    r[k] = nv
+                elif k in r:
+                    del r[k]
+            b = (b - f * prhs) % self.N
+        if not r:
+            return "contradiction" if b else "redundant"
+        self.pivots[min(r)] = (r, b)
+        return "pivot"
+
+    def solve(self) -> Dict[int, int]:
+        """Back-substitute to a concrete solution (free variables gauged to 0)."""
+        allvars = set()
+        for row, _ in self.pivots.values():
+            allvars.update(row)
+        val: Dict[int, int] = {v: 0 for v in allvars if v not in self.pivots}
+        for p in sorted(self.pivots, reverse=True):
+            row, rhs = self.pivots[p]
+            acc = rhs
+            for k, cf in row.items():
+                if k != p:
+                    acc = (acc - cf * val.get(k, 0)) % self.N
+            val[p] = (acc * self._inv(row[p])) % self.N
+        return val
+
+
+# Note on recovery: free-δ chaining proves the *constant-offset interrelation*
+# (consistency + over-determination) but does NOT, on its own, ORDER the alphabet
+# — each pair's δ is unknown, so it couples symbol-pairs without ordering them.
+# Full alphabet recovery needs indirect-symmetry-of-position chaining, which
+# requires rich cross-linking and is the genuinely hard open step (the community's
+# "alphabet chaining has not been completely successful"). This engine delivers
+# the *identification*; recovery is the next research stage.
+
+
+@dataclass
+class FreeChainResult:
+    constraints: int
+    contradictions: int
+    rank: int
+    redundant: int             # constraints satisfied by prior ones = over-determination
+    symbols_linked: int        # largest connected symbol component
+    consistent: bool
+    recoverable: bool          # consistent, over-determined, AND a large component
+
+
 def progressive_chain(messages: Sequence[Sequence[int]], pairs: List[IsoPair],
                       N: int) -> ChainResult:
     """Test the progressive-alphabet hypothesis by chaining isomorph offsets.
@@ -157,6 +229,67 @@ def progressive_chain(messages: Sequence[Sequence[int]], pairs: List[IsoPair],
     sizes = sorted((len(v) for v in comps.values()), reverse=True)
     return ChainResult(constraints, contradictions, sizes[0] if sizes else 0,
                        len(comps), contradictions == 0)
+
+
+def chain_free_delta(messages: Sequence[Sequence[int]], pairs: List[IsoPair],
+                     N: int, recover_threshold: int = 20) -> FreeChainResult:
+    """Autokey / general interrelated-alphabet chaining.
+
+    Unlike progressive_chain (which fixes the per-pair offset to position
+    difference t−s), here each isomorph pair has its OWN unknown constant offset
+    δ_p in the cipher alphabet: C⁻¹(inst2[i]) − C⁻¹(inst1[i]) = δ_p for all i.
+    This is exactly the relation shared by ciphertext-autokey (offset 1),
+    progressive-alphabet, and clock ciphers.  We solve the linear system over
+    GF(N) (symbol positions x_a plus one free δ per pair); consistency means the
+    cipher alphabet is recoverable up to rotation, reducing the cipher to
+    monoalphabetic form."""
+    gf = GFSystem(N)
+    # plain union-find for symbol connectivity (recoverable-chunk size)
+    parent = list(range(N))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+    constraints = 0
+    contradictions = 0
+    redundant = 0
+    for pi, pr in enumerate(pairs):
+        dv = N + pi                       # this pair's free δ variable
+        prev_sym: Optional[int] = None
+        for i in range(pr.length):
+            a = int(messages[pr.m1][pr.p1 + i])
+            b = int(messages[pr.m2][pr.p2 + i])
+            row: Dict[int, int] = {}
+            row[b] = row.get(b, 0) + 1
+            row[a] = row.get(a, 0) + (N - 1)
+            row[dv] = (N - 1)
+            constraints += 1
+            res = gf.add(row, 0)
+            if res == "contradiction":
+                contradictions += 1
+            elif res == "redundant":
+                redundant += 1
+            parent[find(a)] = find(b)     # a,b linked via shared δ
+            if prev_sym is not None:
+                parent[find(prev_sym)] = find(a)
+            prev_sym = a
+    comps: Dict[int, int] = defaultdict(int)
+    seen_syms = set()
+    for pr in pairs:
+        for i in range(pr.length):
+            seen_syms.add(int(messages[pr.m1][pr.p1 + i]))
+            seen_syms.add(int(messages[pr.m2][pr.p2 + i]))
+    for s in seen_syms:
+        comps[find(s)] += 1
+    linked = max(comps.values()) if comps else 0
+    consistent = contradictions == 0
+    # recoverable requires consistency, genuine over-determination (redundant
+    # constraints — not just an underdetermined fit), and a large linked alphabet.
+    recoverable = consistent and redundant >= recover_threshold and linked >= recover_threshold
+    return FreeChainResult(constraints, contradictions, len(gf.pivots), redundant,
+                           linked, consistent, recoverable)
 
 
 # ---------------------------------------------------------------------------
@@ -247,6 +380,51 @@ def selftest() -> List[tuple[str, bool]]:
     ch_a = progressive_chain(ma, iso_a, N)
     out.append(("autokey: progressive chaining CONTRADICTS (refutes progressive)",
                 ch_a.contradictions > 0))
+
+    # (4) FREE-DELTA chaining: the autokey/general test. Engineer a ciphertext-
+    #     autokey corpus with GENUINE constant-offset isomorphs (via planted
+    #     partial-sum repeats) and verify free-delta chaining is CONSISTENT and
+    #     recovers the alphabet, where progressive (fixed delta) fails.
+    L = 14
+    # partial sums S with repeats at (0,4),(1,8),(2,11) -> ciphertext skeleton
+    S = [int(x) for x in rng.integers(0, N, size=L)]
+    S[4] = S[0]; S[8] = S[1]; S[11] = S[2]
+    W = [S[0]] + [(S[i] - S[i - 1]) % N for i in range(1, L)]
+    mk = []
+    for _ in range(6):
+        p = list(rng.integers(0, N, size=110))
+        for pos in (15, 60):
+            p[pos:pos + L] = W
+        cph = []
+        prev = int(rng.integers(0, N))
+        for t in range(110):
+            cc = (p[t] + prev) % N; cph.append(cc); prev = cc
+        mk.append(cph)
+    iso_k = find_isomorphs(mk, L, 3)
+    out.append(("autokey(engineered): genuine isomorphs found", len(iso_k) > 0))
+    fc = chain_free_delta(mk, iso_k, N, recover_threshold=10)
+    out.append(("autokey: FREE-DELTA chaining is consistent (where progressive fails)",
+                fc.consistent))
+    out.append(("autokey: free-delta is OVER-DETERMINED + consistent (real signal)",
+                fc.redundant >= 10 and fc.recoverable))
+    # progressive (fixed delta) should NOT be consistent on this autokey corpus
+    pc = progressive_chain(mk, iso_k, N)
+    out.append(("autokey: progressive (fixed-delta) chaining contradicts here",
+                pc.contradictions > 0))
+
+    # (5) GF solver KATs: it must catch a genuine linear contradiction, and must
+    #     NOT over-claim — sparse non-interlocking pairs are underdetermined
+    #     (consistent but with ~no redundancy, so consistency is not evidence).
+    gf = GFSystem(N)
+    out.append(("GF: consistent rows accepted",
+                gf.add({0: 1, 1: N - 1}, 5) == "pivot"))
+    out.append(("GF: contradictory row detected",
+                gf.add({0: 1, 1: N - 1}, 7) == "contradiction"))
+    rnd = [list(rng.integers(0, N, size=90)) for _ in range(4)]
+    fake = [IsoPair(0, 5, 1, 40, 12, False), IsoPair(2, 5, 3, 40, 12, False)]
+    fc_r = chain_free_delta(rnd, fake, N, recover_threshold=10)
+    out.append(("sparse non-interlocking pairs -> underdetermined (low redundancy, "
+                "not recoverable)", fc_r.redundant < 5 and not fc_r.recoverable))
 
     return out
 

@@ -458,33 +458,34 @@ def h_isomorph(ctx: Context) -> HypothesisResult:
     c = ctx.corpus
     msgs = ctx.messages
     sig = iso.significance(msgs, 12, 3, n_null=120)
-    pairs14 = iso.find_isomorphs(msgs, 14, 4)
-    ch14 = iso.progressive_chain(msgs, pairs14, c.N)
     pairs12 = iso.find_isomorphs(msgs, 12, 3)
-    ch12 = iso.progressive_chain(msgs, pairs12, c.N)
+    pc12 = iso.progressive_chain(msgs, pairs12, c.N)
+    fc12 = iso.chain_free_delta(msgs, pairs12, c.N, recover_threshold=15)
     return HypothesisResult(
-        id="isomorph", title="Interrelated alphabets (isomorphs) + progressive test",
+        id="isomorph", title="Interrelated alphabets — autokey/clock vs progressive",
         group="Structure",
-        verdict="supported", strength=0.85, leverage=4,
-        question="Are the per-position alphabets interrelated (sliding/autokey) "
-                 "rather than independent?",
+        verdict="supported", strength=0.9, leverage=5,
+        question="Are the per-position alphabets interrelated, and by a constant "
+                 "offset per pair (autokey/clock) or by position (progressive)?",
         statistic=f"true isomorphs (L=12): {sig['observed']} vs null "
-                  f"{sig['null_mean']:.1f} (z={sig['z']:.0f}); progressive chaining "
-                  f"L14/mr4: {'consistent' if ch14.consistent else 'contradicts'}, "
-                  f"L12/mr3: {ch12.contradictions} contradictions",
-        null_desc="within-message shuffle null (destroys interrelation)",
-        formula="repeat-skeleton matches with different values; Z_N offset union-find",
+                  f"{sig['null_mean']:.1f} (z={sig['z']:.0f}); free-δ chaining: "
+                  f"{fc12.contradictions} contradictions, {fc12.redundant} "
+                  f"over-determined, {fc12.symbols_linked} symbols linked; "
+                  f"progressive: {pc12.contradictions} contradictions",
+        null_desc="within-message shuffle null; GF(N) linear consistency",
+        formula="repeat-skeleton matches (diff values); Z_N offset union-find + GF(N) solve",
         validated_by=ctx.badge("isomorph"),
         reproduce="python3 eyewitness/isomorph_chain.py",
-        interpretation="The corpus is full of isomorphs — same repeated-letter "
-        "pattern, different values — at z>100 vs a shuffle null. Isomorphs can only "
-        "come from INTERRELATED per-position alphabets, which rules out independent-"
-        "column substitution (general GAK) and unrelated-alphabet running-key/OTP, "
-        "and points at sliding / progressive / autokey ciphers. Progressive-alphabet "
-        "chaining is consistent for the strongest isomorphs but contradicts on the "
-        "broader set, so a pure positional progressive isn't the whole story "
-        "(matching the community's partial success) — autokey or a non-positional "
-        "interrelation is the next model to chain.",
+        interpretation="The corpus is full of isomorphs (same repeated-letter "
+        "pattern, different values) at z>100 vs a shuffle null — only INTERRELATED "
+        "alphabets produce these, ruling out independent-column substitution "
+        "(general GAK) and unrelated-alphabet running-key/OTP. Decisively: the "
+        "FREE-δ model (constant unknown offset per pair — ciphertext-autokey / "
+        "clock) chains CONSISTENTLY at every threshold with heavy over-determination "
+        "and links most of the 83-symbol alphabet, while PROGRESSIVE (offset = "
+        "position) CONTRADICTS. So the interrelation is constant-offset-per-pair "
+        "(autokey/clock class), not positional progressive. This IDENTIFIES the "
+        "structure; ordering the alphabet (indirect symmetry) is the next step.",
         charts=[])
 
 

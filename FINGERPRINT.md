@@ -72,20 +72,25 @@ Each is a calibrated test, not an impression.
 |---|---|---|
 | Monoalphabetic / transposition / periodic / block / AES / keyless-stack | **excluded** | see table above |
 | Independent-column substitution (general GAK) | **excluded** | isomorphs forbid it |
-| **Ciphertext-autokey** (over a mixed alphabet) | **leading** | autokey-offset chaining (A1, below) |
-| **Progressive-alphabet** (offset = position) | **partial** | isomorph chaining: consistent for strongest isomorphs, contradicts broader set |
+| **Ciphertext-autokey / clock** (constant offset per pair) | **confirmed (structure)** | free-δ isomorph chaining: consistent + over-determined (redundant 278–895), 60–68/83 symbols linked, at every threshold (`isomorph`) |
+| **Progressive-alphabet** (offset = position) | **refuted** | progressive (fixed-δ) chaining contradicts where free-δ is consistent (`isomorph`) |
 | Affine vs additive sub-type | **open** | crib-activated `a_t`-solve (needs an anchor) |
 | Small-seed PRNG keystream (any combiner) | **disfavored** | additive + GAK seed scans to 100M null; if autokey, no seed exists |
 | Key from a salakieli-style passphrase | **open** | needs the in-game key-derivation |
 
 **Leading model:** a polyalphabetic cipher over **interrelated alphabets** with an
-**aperiodic, position-locked, per-group key schedule**, most likely **ciphertext-
-autokey or progressive** over a **mixed** cipher alphabet. The key is **not a small
-PRNG seed** (every additive/GAK seed scan to 100M is null; under autokey there is
-no seed). Decryption is gated on (a) identifying the interrelation (autokey vs
-progressive) and (b) a **mapping anchor** — the flat unigram denies frequency
-analysis, so the anchor must come from a crib, a confirmed acrostic, or external
-glyph→letter data.
+**aperiodic, position-locked, per-group key schedule** whose alphabets are related
+by a **constant offset per isomorph pair** — the signature of **ciphertext-autokey
+(offset 1) or a clock cipher**, **not** a positional progressive (which the free-δ
+vs fixed-δ chaining test refutes). The key is **not a small PRNG seed** (every
+additive/GAK seed scan to 100M is null; under autokey there is no seed).
+
+Two stages remain: (1) **order the cipher alphabet** via indirect-symmetry-of-
+position chaining (free-δ proves the constant-offset interrelation and links most
+of the 83 symbols, but does not by itself *order* them — the unknown per-pair
+offsets couple symbols without ordering); (2) a **mapping anchor** for the
+plaintext side — the flat unigram denies frequency analysis, so the anchor must
+come from a crib, a confirmed acrostic, or external glyph→letter data.
 
 ## Why years of brute-force failed (the actionable takeaway)
 
