@@ -88,11 +88,24 @@ member: the free-δ chaining test that would suggest autokey is **permissive**
 identification. The key is **not a small PRNG seed** (every additive/GAK seed
 scan to 100M is null).
 
+**Contamination-resistant extraction (`chain_extract` / `iso_extract`).** Skeleton
+matching returns partial/misaligned pairs (same pattern, different plaintext at
+singletons) that defeated earlier chaining. Anchoring a per-message-progressive
+alphabet on the cleanest threshold (shuffle-null ≈ 0) and classifying the broader
+set against it isolates the genuinely fully-aligned isomorphs — validated on a
+66 %-contaminated plant at **precision 0.996 / recall 1.000** with full alphabet
+recovery up to rotation. On the **real corpus** this yields a tight family of
+**11 long maximal aligned runs** (len 13–18) concentrated at positions ~36–78 of
+messages 0/1/2 — the strongest structural foothold to date. But the alphabet is
+only **linked, not ordered**: the 40 linked symbols collapse onto 12 distinct
+positions (ratio 0.30), so isomorphs constrain but do not pin the order.
+
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
-free-δ consistency alone is insufficient); (2) a **mapping anchor** for the
-plaintext side — the flat unigram denies frequency analysis, so the anchor must
-come from a crib, a confirmed acrostic, or external glyph→letter data.
+free-δ consistency alone is insufficient, and isomorph linkage alone does not
+order the alphabet); (2) a **mapping anchor** for the plaintext side — the flat
+unigram denies frequency analysis, so the anchor must come from a crib, a
+confirmed acrostic, or external glyph→letter data.
 
 ## Why years of brute-force failed (the actionable takeaway)
 
@@ -106,12 +119,13 @@ seed search.
 ## Reproduce everything
 
 ```bash
-# math gate — every claim's module selftest (216/216)
+# math gate — every claim's module selftest (245/245)
 python3 noita_eye_core/selftest.py
 
 # structure (run from eyewitness/)
 python3 eyewitness/repeat_census.py        # stream vs block/periodic/transposition
 python3 eyewitness/isomorph_chain.py       # interrelated alphabets + progressive test
+python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed
 python3 eyewitness/number_test.py --target 34   # header-as-number

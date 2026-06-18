@@ -115,6 +115,21 @@ def autokey_chain(messages: Sequence[Sequence[int]], pairs: List[IsoPair],
 # Model B: per-message progressive  (M free message bases; discriminating)
 # ---------------------------------------------------------------------------
 
+def per_msg_prog_rows(pr: IsoPair, messages: Sequence[Sequence[int]], N: int):
+    """Yield (row, rhs) constraints for one isomorph pair under the per-message
+    progressive model: x[D] - x[A] - base_{m2} + base_{m1} = (p2 - p1)."""
+    bm1, bm2 = N + pr.m1, N + pr.m2
+    for i in range(pr.length):
+        A = int(messages[pr.m1][pr.p1 + i])
+        D = int(messages[pr.m2][pr.p2 + i])
+        row: Dict[int, int] = {}
+        _accum(row, D, 1, N); _accum(row, A, N - 1, N)
+        if pr.m1 != pr.m2:
+            _accum(row, bm2, N - 1, N); _accum(row, bm1, 1, N)
+        row = {v: c for v, c in row.items() if c}
+        yield row, (pr.p2 - pr.p1) % N
+
+
 def per_message_progressive_chain(messages: Sequence[Sequence[int]],
                                   pairs: List[IsoPair], N: int) -> ChainStat:
     M = len(messages)
