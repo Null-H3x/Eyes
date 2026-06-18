@@ -1,4 +1,4 @@
-# install-ghidra.ps1 — Install Ghidra and launch it on Windows 10/11.
+﻿# install-ghidra.ps1 - Install Ghidra and launch it on Windows 10/11.
 #
 # What it does (in order):
 #   0. Pre-flight        verify Windows/arch, network
@@ -15,7 +15,7 @@
 #   .\install-ghidra.ps1 -Force              # re-download and reinstall
 #   .\install-ghidra.ps1 -DesktopShortcut    # also place a Desktop shortcut
 #
-# Safe to re-run — skips work that is already done unless -Force is passed.
+# Safe to re-run - skips work that is already done unless -Force is passed.
 
 #Requires -Version 5.1
 [CmdletBinding()]
@@ -258,7 +258,7 @@ function Install-GhidraRelease {
     if ((Test-Path $zipPath) -and -not $Force) {
         Write-Ok "Using cached archive: $zipPath"
     } else {
-        Write-Info "Downloading $($Release.ZipName) (~550 MB) — this can take a few minutes..."
+        Write-Info "Downloading $($Release.ZipName) (~550 MB) - this can take a few minutes..."
         Invoke-WebRequest -Uri $Release.DownloadUrl -OutFile "$zipPath.part" -UserAgent $Script:UserAgent
         Move-Item -Force "$zipPath.part" $zipPath
         Write-Ok "Download complete: $zipPath"
@@ -303,7 +303,7 @@ function Install-GhidraRelease {
     }
 
     if ($installPath -match '!') {
-        Write-Fail 'Ghidra cannot run from a path containing "!" — choose a different -InstallDir'
+        Write-Fail 'Ghidra cannot run from a path containing "!" - choose a different -InstallDir'
     }
 
     Set-CurrentInstall -TargetDir $installPath
@@ -326,11 +326,12 @@ call ghidraRun.bat %*
         New-GhidraShortcut -InstallPath $installPath -ShortcutPath (Join-Path $desktop 'Ghidra.lnk')
     }
 
+    $ghidraRunBat = Join-Path $installPath 'ghidraRun.bat'
     Write-Ok 'Launchers installed:'
     Write-Info "  Start Menu: $startMenuDir\Ghidra.lnk"
     Write-Info "  CLI helper: $launcherPath"
     Write-Info "  Install:    $installPath"
-    Write-Info "  Direct run: $(Join-Path $installPath 'ghidraRun.bat')"
+    Write-Info "  Direct run: $ghidraRunBat"
 
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     if ($userPath -notlike "*$launcherDir*") {
@@ -371,7 +372,7 @@ function Start-Ghidra {
 }
 
 # ====================================================================
-# STAGE 0 — Pre-flight
+# STAGE 0 - Pre-flight
 # ====================================================================
 Write-Banner '0. Pre-flight'
 
@@ -415,6 +416,7 @@ $release = Get-ReleaseMetadata
 $installPath = Install-GhidraRelease -Release $release
 
 if ($InstallOnly) {
+    $ghidraRunBat = Join-Path $installPath 'ghidraRun.bat'
     Write-Host ''
     Write-Host '===============================================================' -ForegroundColor Green
     Write-Host '                     INSTALL COMPLETE                          ' -ForegroundColor Green
@@ -423,7 +425,7 @@ if ($InstallOnly) {
     Write-Host '  Launch Ghidra:'
     Write-Host '    Start Menu -> Ghidra'
     Write-Host '    ghidra'
-    Write-Host "    $(Join-Path $installPath 'ghidraRun.bat')"
+    Write-Host "    $ghidraRunBat"
     Write-Host ''
     exit 0
 }
