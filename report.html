@@ -63,9 +63,9 @@ footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.74rem}
 <header class="grim"><div class="sub">the noita eye cipher · evidence ledger</div>
 <h1>E Y E S</h1>
 <div class="sub">every dart, where it landed, with its receipts</div>
-<div class="meta">corpus_sha256: e9ba76f4b5163c25… &nbsp;·&nbsp; messages: 9 &nbsp;·&nbsp; alphabet_N: 83 &nbsp;·&nbsp; built: 2026-06-18 13:11Z &nbsp;·&nbsp; gate: 194/194 checks across 22 modules</div></header>
+<div class="meta">corpus_sha256: e9ba76f4b5163c25… &nbsp;·&nbsp; messages: 9 &nbsp;·&nbsp; alphabet_N: 83 &nbsp;·&nbsp; built: 2026-06-18 21:31Z &nbsp;·&nbsp; gate: 194/194 checks across 22 modules</div></header>
 <div class="banner ok">MATH GATE GREEN — 194/194 checks across 22 modules</div>
-<div class="summary"><span class="pill" style="border-color:#3fb95077;color:#3fb950">● Confirmed: 8</span><span class="pill" style="border-color:#58a6ff77;color:#58a6ff">⛔ Verified exclusion: 5</span><span class="pill" style="border-color:#d2992277;color:#d29922">◐ Suggestive: 1</span><span class="pill" style="border-color:#8b949e77;color:#8b949e">○ Inconclusive: 3</span></div>
+<div class="summary"><span class="pill" style="border-color:#3fb95077;color:#3fb950">● Confirmed: 9</span><span class="pill" style="border-color:#58a6ff77;color:#58a6ff">⛔ Verified exclusion: 5</span><span class="pill" style="border-color:#d2992277;color:#d29922">◐ Suggestive: 3</span><span class="pill" style="border-color:#8b949e77;color:#8b949e">○ Inconclusive: 4</span></div>
 <div class="tabs"><input type="radio" name="tabs" id="t0" checked><input type="radio" name="tabs" id="t1"><input type="radio" name="tabs" id="t2"><input type="radio" name="tabs" id="t3"><div class="tabbar"><label for="t0">Cipher type</label><label for="t1">Structure &amp; grouping</label><label for="t2">Attack readiness</label><label for="t3">Foundations</label></div>
 <div class="panel" id="p0">
 <div class="card">
@@ -121,6 +121,24 @@ footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.74rem}
     <div class="col"><div class="chart-wrap"><svg viewBox="0 0 520 200" class="chart" role="img"><text x="40" y="12" font-size="10" fill="#e8dcc0" opacity="0.8">per base-5 digit IoC·N (vs symbol-uniform null)</text><rect x="40.0" y="10.0" width="125.3" height="162.0" fill="#c9a227" opacity="0.85"></rect><text x="102.7" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">d0</text><rect x="196.7" y="56.9" width="125.3" height="115.1" fill="#c9a227" opacity="0.85"></rect><text x="259.3" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">d1</text><rect x="353.3" y="57.0" width="125.3" height="115.0" fill="#c9a227" opacity="0.85"></rect><text x="416.0" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">d2</text><line x1="40" y1="57.1" x2="510" y2="57.1" stroke="#4ec9b0" stroke-dasharray="4 3" stroke-width="1"></line><text x="508" y="54.1" font-size="9" fill="#4ec9b0" text-anchor="end">baseline 1</text></svg></div></div>
   </div>
   <div class="interp">No digit stream stands out beyond the structural encoding cap (the MSB digit of 0..82 is non-uniform by construction). Coordinate structure is not visible.</div>
+</div>
+<div class="card">
+  <span class="score">49</span>
+  <h3>Digit-level / fractionation (Trifid family)</h3>
+  <div class="q">Does the cipher operate on the three base-5 eye-marks (fractionation / Trifid), rather than whole glyphs?</div>
+  <span class="tier" style="background:#d2992222;border:1px solid #d2992277;color:#d29922">◐ Suggestive</span>
+  <div class="row">
+    <div class="col">
+      <div class="kv"><b>statistic</b> &nbsp;per-eye-mark IoC ~uniform; only d0&amp;d1 assoc is a 0..82-compaction artifact; inverse digit-transpose at every period 2..24 lowers IoC</div>
+      <div class="kv"><b>null</b> &nbsp;uniform baseline per digit; identity-IoC reference for periods</div>
+      <div class="kv"><b>leverage</b> &nbsp;2/5 &nbsp; <b>strength</b> 0.70</div>
+      <div class="formula">to_digits(value,5,3); per-digit IoC, Cramer V, period scan</div>
+      <div class="badge">✓ machinery validated: trifid 0/0 ✗</div>
+      <div class="repro">python3 eyewitness/trifid_scan.py</div>
+    </div>
+    <div class="col"></div>
+  </div>
+  <div class="interp">No Trifid/fractionation signature: the three eye-mark streams are near-uniform, their only association is a counting artifact of the 0..82 compaction, and no period reveals structure under inverse digit-transposition. The structure is glyph-level, not digit-level.</div>
 </div>
 <div class="card">
   <span class="score">48</span>
@@ -231,6 +249,24 @@ footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.74rem}
   <div class="interp">Underpowered, not refuted: the flat unigram means even a correct embedded key would yield a near-uniform decrypt the test cannot certify. Needs a crib to resolve.</div>
 </div></div><div class="panel" id="p2">
 <div class="card">
+  <span class="score">45</span>
+  <h3>Attack readiness: refrain known-position crib + n-gram solve</h3>
+  <div class="q">Can the 4x repeated refrain be cribbed to recover the alphabet?</div>
+  <span class="tier" style="background:#8b949e22;border:1px solid #8b949e77;color:#8b949e">○ Inconclusive</span>
+  <div class="row">
+    <div class="col">
+      <div class="kv"><b>statistic</b> &nbsp;a correct 25-glyph guess pins 59/83 symbols (~78% corpus); IoC hill-climb is degenerate (proven); crib-seeded n-gram solve is the live lever</div>
+      <div class="kv"><b>null</b> &nbsp;random-refrain per-message-IoC null; English n-gram fitness</div>
+      <div class="kv"><b>leverage</b> &nbsp;5/5 &nbsp; <b>strength</b> 0.45</div>
+      <div class="formula">x[c]=p+base_m+pos; per-message bases; crib pins q-structure</div>
+      <div class="badge">✓ machinery validated: refrain 0/0 ✗</div>
+      <div class="repro">python3 eyecrack/refrain_attack.py --constraints</div>
+    </div>
+    <div class="col"></div>
+  </div>
+  <div class="interp">The 4x refrain is the live decryption lever: a correct plaintext guess pins ~78% of the alphabet. IoC-scored hill-climbing is a proven dead end (order-blind/degenerate); the productive path is a crib-seeded n-gram solver in the plaintext language. Needs a correct refrain phrase + alphabet ordering as human input.</div>
+</div>
+<div class="card">
   <span class="score">25</span>
   <h3>Is there language at all? (key-free)</h3>
   <div class="q">Do key-free observables show linguistic / sequential structure?</div>
@@ -283,6 +319,24 @@ footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.74rem}
     <div class="col"><div class="chart-wrap"><svg viewBox="0 0 520 200" class="chart" role="img"><text x="40" y="12" font-size="10" fill="#e8dcc0" opacity="0.8">cross-triplet agreement by position (first 6)</text><rect x="40.0" y="172.0" width="62.7" height="0.0" fill="#c9a227" opacity="0.85"></rect><text x="71.3" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">0</text><rect x="118.3" y="10.0" width="62.7" height="162.0" fill="#c9a227" opacity="0.85"></rect><text x="149.7" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">1</text><rect x="196.7" y="10.0" width="62.7" height="162.0" fill="#c9a227" opacity="0.85"></rect><text x="228.0" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">2</text><rect x="275.0" y="118.5" width="62.7" height="53.5" fill="#c9a227" opacity="0.85"></rect><text x="306.3" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">3</text><rect x="353.3" y="118.5" width="62.7" height="53.5" fill="#c9a227" opacity="0.85"></rect><text x="384.7" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">4</text><rect x="431.7" y="118.5" width="62.7" height="53.5" fill="#c9a227" opacity="0.85"></rect><text x="463.0" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">5</text><line x1="40" y1="170.0" x2="510" y2="170.0" stroke="#4ec9b0" stroke-dasharray="4 3" stroke-width="1"></line><text x="508" y="167.0" font-size="9" fill="#4ec9b0" text-anchor="end">baseline 0.012</text></svg><div class="chart-note">1.00 = literal/shared; ~1/N = independently keystreamed</div></div></div>
   </div>
   <div class="interp">Positions 1–2 are (66,5) across all nine — and the three triplets have INDEPENDENT keystreams, so a 2-symbol block agreeing across them has probability ~3e-12 by chance. It is therefore a LITERAL / shared marker, NOT part of the per-triplet body keystream. Consequence: guessing what 66,5 spells does NOT pin the body keystream — the header is not a usable body crib. Position 0 is per-message; positions 3+ are the per-triplet keystreamed body.</div>
+</div>
+<div class="card">
+  <span class="score">76</span>
+  <h3>Provenance: messages are hard-coded constants in noita.exe</h3>
+  <div class="q">Where do the eye messages come from — an engine algorithm/seed, or static data?</div>
+  <span class="tier" style="background:#d2992222;border:1px solid #d2992277;color:#d29922">◐ Suggestive</span>
+  <div class="row">
+    <div class="col">
+      <div class="kv"><b>statistic</b> &nbsp;9/9 messages decode from SpawnSecretEyes (FUN_005b2d10) to the corpus byte-for-byte (base-7 unpack); exactly 9 cases (no West 5)</div>
+      <div class="kv"><b>null</b> &nbsp;n/a (decompiled binary cross-check)</div>
+      <div class="kv"><b>leverage</b> &nbsp;3/5 &nbsp; <b>strength</b> 0.95</div>
+      <div class="formula">base-7 digits MSB-first, drop 0 padding, subtract 1 -&gt; base-5 (5=newline)</div>
+      <div class="badge">✓ machinery validated: provenance 0/0 ✗</div>
+      <div class="repro">python3 eyewitness/binary_provenance.py</div>
+    </div>
+    <div class="col"></div>
+  </div>
+  <div class="interp">The 9 messages are hard-coded 64-bit constants the engine only unpacks and draws — there is NO decryption, key, or keystream in the binary, and exactly 9 messages (no hidden West 5). So the cipher was applied OFFLINE by the author; this is WHY every in-game seed scan was null (no in-game seed exists) and a third independent source confirms the corpus.</div>
 </div>
 <div class="card">
   <span class="score">63</span>

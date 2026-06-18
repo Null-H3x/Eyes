@@ -552,10 +552,97 @@ def h_integrity(ctx: Context) -> HypothesisResult:
         charts=[])
 
 
+def h_provenance(ctx: Context) -> HypothesisResult:
+    return HypothesisResult(
+        id="provenance",
+        title="Provenance: messages are hard-coded constants in noita.exe",
+        group="Foundations",
+        verdict="confirmed", strength=0.95, leverage=3,
+        question="Where do the eye messages come from — an engine algorithm/seed, "
+                 "or static data?",
+        statistic="9/9 messages decode from SpawnSecretEyes (FUN_005b2d10) to the "
+                  "corpus byte-for-byte (base-7 unpack); exactly 9 cases (no West 5)",
+        null_desc="n/a (decompiled binary cross-check)",
+        formula="base-7 digits MSB-first, drop 0 padding, subtract 1 -> base-5 (5=newline)",
+        validated_by=ctx.badge("provenance"),
+        reproduce="python3 eyewitness/binary_provenance.py",
+        interpretation="The 9 messages are hard-coded 64-bit constants the engine "
+        "only unpacks and draws — there is NO decryption, key, or keystream in the "
+        "binary, and exactly 9 messages (no hidden West 5). So the cipher was "
+        "applied OFFLINE by the author; this is WHY every in-game seed scan was null "
+        "(no in-game seed exists) and a third independent source confirms the corpus.",
+        charts=[])
+
+
+def h_bodymodel(ctx: Context) -> HypothesisResult:
+    return HypothesisResult(
+        id="bodymodel",
+        title="Body key schedule: per-message-progressive (not a single alphabet)",
+        group="Structure",
+        verdict="supported", strength=0.8, leverage=4,
+        question="At the repeated body refrain, is there one global sliding "
+                 "alphabet (pure-progressive) or a per-message offset?",
+        statistic="4x repeat spans 25 glyphs (W1@32-56/@62-86, E2@37-61/@72-96); "
+                  "pure-progressive CONTRADICTS across instances, within-instance "
+                  "consistent -> per-message bases",
+        null_desc="within-instance vs cross-instance consistency (OffsetDSU/GF)",
+        formula="c[m][t]=C[(p[m][t]+base_m+t)]; cross-instance symbol agreement",
+        validated_by=ctx.badge("refrain", "headerbase"),
+        reproduce="python3 eyecrack/refrain_attack.py --constraints",
+        interpretation="The body uses PER-MESSAGE bases (pure-progressive is "
+        "contradicted across the four refrain instances; within-instance structure "
+        "is consistent) — matching the earlier per-group body-key finding. The "
+        "literal header forcing pure-progressive applies to the OPENING, not the body.",
+        charts=[])
+
+
+def h_trifid(ctx: Context) -> HypothesisResult:
+    return HypothesisResult(
+        id="trifid",
+        title="Digit-level / fractionation (Trifid family)",
+        group="Cipher type",
+        verdict="excluded", strength=0.7, leverage=2,
+        question="Does the cipher operate on the three base-5 eye-marks "
+                 "(fractionation / Trifid), rather than whole glyphs?",
+        statistic="per-eye-mark IoC ~uniform; only d0&d1 assoc is a 0..82-compaction "
+                  "artifact; inverse digit-transpose at every period 2..24 lowers IoC",
+        null_desc="uniform baseline per digit; identity-IoC reference for periods",
+        formula="to_digits(value,5,3); per-digit IoC, Cramer V, period scan",
+        validated_by=ctx.badge("trifid"),
+        reproduce="python3 eyewitness/trifid_scan.py",
+        interpretation="No Trifid/fractionation signature: the three eye-mark streams "
+        "are near-uniform, their only association is a counting artifact of the "
+        "0..82 compaction, and no period reveals structure under inverse "
+        "digit-transposition. The structure is glyph-level, not digit-level.",
+        charts=[])
+
+
+def h_refrain(ctx: Context) -> HypothesisResult:
+    return HypothesisResult(
+        id="refrain",
+        title="Attack readiness: refrain known-position crib + n-gram solve",
+        group="Attack readiness",
+        verdict="inconclusive", strength=0.45, leverage=5,
+        question="Can the 4x repeated refrain be cribbed to recover the alphabet?",
+        statistic="a correct 25-glyph guess pins 59/83 symbols (~78% corpus); "
+                  "IoC hill-climb is degenerate (proven); crib-seeded n-gram solve "
+                  "is the live lever",
+        null_desc="random-refrain per-message-IoC null; English n-gram fitness",
+        formula="x[c]=p+base_m+pos; per-message bases; crib pins q-structure",
+        validated_by=ctx.badge("refrain"),
+        reproduce="python3 eyecrack/refrain_attack.py --constraints",
+        interpretation="The 4x refrain is the live decryption lever: a correct "
+        "plaintext guess pins ~78% of the alphabet. IoC-scored hill-climbing is a "
+        "proven dead end (order-blind/degenerate); the productive path is a "
+        "crib-seeded n-gram solver in the plaintext language. Needs a correct "
+        "refrain phrase + alphabet ordering as human input.",
+        charts=[])
+
+
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
-    h_unigram, h_periodicity, h_coordinate, h_fingerprint,
-    h_depth, h_grouping, h_scope, h_depthmap, h_repeats, h_isomorph, h_pairdiff,
-    h_embedded,
-    h_cribdrag, h_language,
-    h_header, h_number, h_integrity,
+    h_unigram, h_periodicity, h_coordinate, h_fingerprint, h_trifid,
+    h_depth, h_grouping, h_scope, h_depthmap, h_repeats, h_isomorph, h_bodymodel,
+    h_pairdiff, h_embedded,
+    h_cribdrag, h_language, h_refrain,
+    h_header, h_number, h_integrity, h_provenance,
 ]
