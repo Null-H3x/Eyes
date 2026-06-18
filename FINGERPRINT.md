@@ -146,11 +146,21 @@ guess pins **59 of 83 symbols → ~78 % of the corpus decryptable**, and lights
 corpus-wide IoC up; a wrong guess self-contradicts. The region's own ciphertext
 collisions force ordering-independent constraints (`p[13]=p[10]-3, p[15]=p[8]-7,
 p[16]=p[12]-4, p[18]=p[9]-9, p[19]=p[2]-17 (mod 83)`). A shorter candidate (e.g.
-13 letters) is slid to every offset in the region. Validated on plants (selftest
-7/7). **Crux:** the corpus-IoC payoff needs the plaintext-alphabet *ordering*
-roughly right; under the plain A–Z ordering candidate refrains reject, implying
-the ordering is non-alphabetical (a scrambled/keyword alphabet). Needs a correct
-refrain phrase **and** ordering as the human input.
+13 letters) is slid to every offset in the region. Validated on plants. The body
+is **per-message-progressive** (each message its own base; pure-progressive is
+contradicted across the 4 instances).
+
+**Crib-seeded English n-gram solver (`ngram_solve`).** IoC hill-climbing is a
+*proven dead end* — on a plant it reaches near-true IoC on a WRONG alphabet
+(IoC is order-blind/degenerate). The productive replacement: a correct crib + an
+ordering hypothesis pins ~59/83 of the alphabet, then hill-climb the residual
+symbols + per-message bases by **English character-trigram** likelihood, scored
+against a shuffled-decryption null. Validated on a per-message-progressive English
+plant (selftest 6/6: corpus reads back as English at z≥4; wrong cribs score low).
+On the **real corpus** every community candidate (`trueknowledge`,
+`seekeroftruth`, …) rejects under the natural ordering — re-confirming the
+**ordering is the remaining barrier**. The solver is ready the instant a correct
+(refrain, ordering) pair is supplied; the open step is recovering the ordering.
 
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
@@ -182,6 +192,7 @@ python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decrypt
 python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
 python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
 python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
+python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed
