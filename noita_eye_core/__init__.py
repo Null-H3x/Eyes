@@ -39,6 +39,7 @@ headerbase   literal-header => pure-progressive deduction + progressive contamin
 pureprog     pure-progressive alphabet recovery + decryption attempt (IoC test, relabel-invariant)
 trifid       digit-level / fractionation (Trifid-family) analysis of the 3 eye-mark streams
 provenance   binary-storage decoder (base-7 hard-coded chunks -> base-5 symbols); 9/9 corpus match
+refrain      known-position crib attack on the 4x repeated refrain (pins C absolutely, IoC-scored)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
 
@@ -52,5 +53,5 @@ __all__ = [
     "globality", "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint",
     "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
     "chain_extract", "cribfit", "headerbase", "pureprog", "trifid",
-    "provenance",
+    "provenance", "refrain",
 ]

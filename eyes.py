@@ -78,6 +78,8 @@ WORKFLOWS = [
      "eyecrack", ["cribdrag.py"]),
     ("EyeCrack — crib-placement tester (4x repeated isomorph target)", "Attack",
      "eyecrack", ["crib_fit.py", "--list-targets"]),
+    ("EyeCrack — refrain known-position crib attack (pins C, IoC-scored)", "Attack",
+     "eyecrack", ["refrain_attack.py", "--constraints"]),
     ("EyeCrack — salakieli crib battery (register + globality commands)", "Attack",
      "eyecrack", ["salakieli_crib.py"]),
     ("EyeCrack — keystream seed-scan (structure, additive, writes HTML)", "Attack",

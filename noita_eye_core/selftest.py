@@ -35,6 +35,7 @@ import headerbase
 import pureprog
 import trifid
 import provenance
+import refrain
 import isomorph
 import prng
 import repeats
@@ -76,6 +77,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("pureprog", pureprog.selftest),
     ("trifid", trifid.selftest),
     ("provenance", provenance.selftest),
+    ("refrain", refrain.selftest),
 ]
 
 

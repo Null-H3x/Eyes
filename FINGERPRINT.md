@@ -136,6 +136,18 @@ and where an order is produced it is **permissive** (the same machinery orders a
 comparable alphabet from autokey data), so it is a candidate to test, not model
 evidence.
 
+**Live attack vector — refrain known-position crib (`refrain` / `refrain_attack`).**
+The 4× repeated refrain (West1@38/@68, East2@43/@78, len 15) is the same plaintext
+at four *known* positions. Under pure-progressive a guessed plaintext value at a
+known position pins the cipher alphabet **absolutely** (`x[c]=p+pos`, no rotation
+freedom). A correct 15-symbol guess pins **37 of 83 symbols → ~50 % of the corpus
+decryptable**, and lights corpus-wide IoC up; a wrong guess self-contradicts. The
+refrain's own ciphertext collisions force four ordering-independent constraints on
+any guess: `p[7]=p[4]-3, p[9]=p[2]-7, p[10]=p[6]-4, p[12]=p[3]-9 (mod 83)`.
+Validated on plants (selftest 7/7: correct guess → consistent, ≥30 pinned, IoC
+z≥8; wrong → rejected/low). This is the most promising decryption lever; it needs
+a correct refrain phrase (+ alphabet ordering) as the human input.
+
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
 free-δ consistency alone is insufficient, and isomorph linkage alone does not
@@ -165,6 +177,7 @@ python3 eyewitness/header_base.py          # header => pure-progressive + progre
 python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
 python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
 python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
+python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed
