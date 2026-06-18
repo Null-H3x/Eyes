@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# install-ghidra.sh — Install Ghidra and launch it on Ubuntu 26.04 (and nearby releases).
+# install-ghidra.sh - Install Ghidra and launch it on Ubuntu 26.04 (and nearby releases).
+# Windows: use install-ghidra.ps1 / install-ghidra.bat (see GHIDRA.md)
+# Installer version: 1.1.0
 #
 # What it does (in order):
 #   0. Pre-flight        verify Ubuntu/arch, sudo, network
@@ -22,7 +24,7 @@
 # third-party PPA (e.g. ppa:cwchien/gradle on Ubuntu 26.04), this script will
 # disable the broken source automatically and retry.
 #
-# Safe to re-run — skips work that is already done unless --force is passed.
+# Safe to re-run - skips work that is already done unless --force is passed.
 #
 
 if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
@@ -157,7 +159,7 @@ fi
 # ----- Top banner -----
 echo
 printf "${BOLD}${CYAN}╔═══════════════════════════════════════════════════════════════╗${RESET}\n"
-printf "${BOLD}${CYAN}║           Ghidra installer // Ubuntu 26.04 LTS               ║${RESET}\n"
+printf "${BOLD}${CYAN}║     Ghidra installer v1.1.0 // Ubuntu 26.04 LTS              ║${RESET}\n"
 printf "${BOLD}${CYAN}╚═══════════════════════════════════════════════════════════════╝${RESET}\n"
 
 # ====================================================================
