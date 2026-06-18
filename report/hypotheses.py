@@ -639,10 +639,61 @@ def h_refrain(ctx: Context) -> HypothesisResult:
         charts=[])
 
 
+def h_shared_structure(ctx: Context) -> HypothesisResult:
+    import shared_structure as ss
+    msgs = ctx.messages
+    tr = ss.triplet_openings(msgs, [("T1", (0, 1, 2)), ("T2", (3, 4, 5)),
+                                    ("T3", (6, 7, 8))], n_null=300)
+    stat = "; ".join(f"{r.name}={r.extent}{'*' if r.significant else ''}" for r in tr)
+    return HypothesisResult(
+        id="shared_structure",
+        title="Model-independent triplet structure (shared openings)",
+        group="Structure",
+        verdict="supported", strength=0.9, leverage=3,
+        question="Do the messages come in triplets sharing long openings, with no "
+                 "cipher-model assumption?",
+        statistic=f"3-way opening extents (glyphs, *=above null): {stat}",
+        null_desc="random aligned-start 3-way isomorph extent",
+        formula="isomorph-skeleton extent (same glyph=same glyph); no model",
+        validated_by=ctx.badge("shared_structure"),
+        reproduce="python3 eyewitness/shared_structure.py",
+        interpretation="MODEL-FREE: Triplet 1 (E1/W1/E2) shares a ~22-glyph opening "
+        "and Triplet 3 (E4/W4/E5) ~18, both far above the null; Triplet 2 (W2/E3/W3) "
+        "shares none and E3 is structurally distinct. The refrain also repeats within "
+        "messages. Confirms the triplet theory rigorously and gives model-independent "
+        "same-plaintext anchors.",
+        charts=[])
+
+
+def h_model_audit(ctx: Context) -> HypothesisResult:
+    import model_audit as ma
+    import refrain as rf
+    a = ma.audit(ctx.messages, rf.DEFAULT_INSTANCES, ctx.corpus.N, n_null=300)
+    return HypothesisResult(
+        id="model_audit",
+        title="Model verification: per-message-progressive (plausible, not proven)",
+        group="Cipher type",
+        verdict="inconclusive", strength=0.4, leverage=3,
+        question="Is the cipher specifically per-message-progressive, licensing the "
+                 "refrain template?",
+        statistic=f"per-msg extent {a.refrain_permsg} vs pure {a.refrain_pure}; "
+                  f"null p(≥{a.refrain_permsg})={a.p_value:.4f}",
+        null_desc="random 4-window consistent-extent distribution",
+        formula="GF consistency depth, per-message vs pure vs random",
+        validated_by=ctx.badge("model_audit"),
+        reproduce="python3 eyewitness/model_audit.py",
+        interpretation="SOLID: the 4 refrain instances are the same plaintext "
+        "(isomorphs z≫100). NOT cleanly confirmed: the SPECIFIC model — pure-"
+        "progressive fits nearly as well and some random windows pass too, so "
+        "per-message-progressive is a flexible fit. The dof=2 refrain template is a "
+        "model-dependent HYPOTHESIS, not a fact.",
+        charts=[])
+
+
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
     h_unigram, h_periodicity, h_coordinate, h_fingerprint, h_trifid,
     h_depth, h_grouping, h_scope, h_depthmap, h_repeats, h_isomorph, h_bodymodel,
-    h_pairdiff, h_embedded,
-    h_cribdrag, h_language, h_refrain,
+    h_shared_structure, h_pairdiff, h_embedded,
+    h_cribdrag, h_language, h_refrain, h_model_audit,
     h_header, h_number, h_integrity, h_provenance,
 ]
