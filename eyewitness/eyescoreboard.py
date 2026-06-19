@@ -44,6 +44,7 @@ def main() -> int:
 
     payload = {
         "premise": asdict(sb.premise),
+        "methodology": asdict(sb.methodology),
         "ranked_ids": sb.ranked_ids,
         "candidates": [asdict(r) for r in sb.candidates],
         "reproduce": sb.reproduce,
@@ -60,8 +61,11 @@ def main() -> int:
     print("EYESCOREBOARD — cipher candidate ranking")
     print("=" * 70)
     print(f"Premise tenable: {'YES' if sb.premise.premise_ok else 'WEAK'} "
-          f"(isomorph z={sb.premise.isomorph_z:.1f}, "
-          f"keystream={sb.premise.keystream_body_verdict})")
+          f"(isomorph z={sb.premise.isomorph_z:.1f})")
+    print(f"Methodology audit: {'PASS' if sb.methodology.audit_pass else 'REVIEW'}")
+    print(f"  real contra: per-msg {sb.methodology.per_msg_real_contra:.2%} | "
+          f"pure {sb.methodology.pure_real_contra:.2%} | "
+          f"free {sb.methodology.free_real_contra:.2%}")
     print()
     print(f"{'rank':>4}  {'id':22s}  {'verdict':12s}  {'score':>5}  notes")
     print("-" * 70)

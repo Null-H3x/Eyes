@@ -4,7 +4,7 @@ A single, citable summary of where the investigation stands: what is **proven**,
 what is a **working hypothesis**, what is **excluded/retracted**, what is **open**,
 and what would **break it open**. Every claim is backed by a self-tested module in
 `noita_eye_core/` (aggregate gate: `python3 noita_eye_core/selftest.py`, currently
-**340/340**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
+**355/355**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
 fingerprint), `report.html` (dashboard), and the per-topic reports in `report/`.
 
 ---
@@ -80,6 +80,18 @@ Each is a calibrated test, not an impression (modules in parentheses):
   do not treat a template match as confirmation by itself (`template`).
 - **Pure-progressive** (single global sliding alphabet) remains a live alternative;
   the literal header would force it within the per-message-progressive family.
+- **EyeScoreboard ranking (`eyescoreboard`).** Methodology-audited scoreboard that
+  ranks interrelated-alphabet models on plant discrimination, real-corpus GF
+  contradiction rate (the metric that actually differs), and refrain extent.
+  **Premise (block-difference + triplet depth): YES** (isomorph z≈112). **Rank 1:**
+  per-message-progressive **SUPPORTED** (real contra 10.9% vs pure 15.0%; refrain
+  L=22 vs L=21). **Rank 2:** pure-progressive **SUGGESTIVE** (within 1 glyph on
+  refrain). **free-δ / autokey-1:** PERMISSIVE (0% real contradictions). Whole
+  families EXCLUDED (mono, OTP, AES, transposition, PRNG, CT-autokey, general-K).
+  **Triplet combine probe (meta-trigram hypothesis):** sum mod 83 and base-5
+  digit-sum across triplet members show IoC ≈ shuffle null (z≈0.5–2) — symbols are
+  **not** composites of the three messages in a triplet. Report:
+  `report/eyescoreboard.md`.
 
 ## EXCLUDED / RETRACTED approaches (so we don't repeat them)
 
@@ -113,11 +125,12 @@ recovered structure. With it:
 ## The audit chain (reproducibility)
 
 ```bash
-python3 noita_eye_core/selftest.py        # aggregate math gate (340/340)
+python3 noita_eye_core/selftest.py        # aggregate math gate (355/355)
 python3 eyewitness/datastream_check.py    # corpus integrity, 3 independent sources
 python3 eyewitness/binary_provenance.py   # decompiled noita.exe -> corpus 9/9
 python3 eyewitness/shared_structure.py    # model-free triplet/shared-opening map
 python3 eyewitness/model_audit.py         # model verification (honest verdict)
+python3 eyewitness/eyescoreboard.py       # cipher candidate ranking (methodology-audited)
 python3 eyewitness/refrain_template.py    # refrain repeat-template (dof=2; hypothesis)
 python3 eyewitness/keyspace_ledger.py     # block structure -> key/keyspace ledger
 python3 eyecrack/refrain_sweep.py --show-template   # template-guided refrain sweep

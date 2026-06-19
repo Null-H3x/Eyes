@@ -63,9 +63,9 @@ footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.74rem}
 <header class="grim"><div class="sub">the noita eye cipher · evidence ledger</div>
 <h1>E Y E S</h1>
 <div class="sub">every dart, where it landed, with its receipts</div>
-<div class="meta">corpus_sha256: e9ba76f4b5163c25… &nbsp;·&nbsp; messages: 9 &nbsp;·&nbsp; alphabet_N: 83 &nbsp;·&nbsp; built: 2026-06-18 23:32Z &nbsp;·&nbsp; gate: 194/194 checks across 22 modules</div></header>
-<div class="banner ok">MATH GATE GREEN — 194/194 checks across 22 modules</div>
-<div class="summary"><span class="pill" style="border-color:#3fb95077;color:#3fb950">● Confirmed: 10</span><span class="pill" style="border-color:#58a6ff77;color:#58a6ff">⛔ Verified exclusion: 5</span><span class="pill" style="border-color:#d2992277;color:#d29922">◐ Suggestive: 3</span><span class="pill" style="border-color:#8b949e77;color:#8b949e">○ Inconclusive: 5</span></div>
+<div class="meta">corpus_sha256: e9ba76f4b5163c25… &nbsp;·&nbsp; messages: 9 &nbsp;·&nbsp; alphabet_N: 83 &nbsp;·&nbsp; built: 2026-06-19 02:19Z &nbsp;·&nbsp; gate: 206/206 checks across 23 modules</div></header>
+<div class="banner ok">MATH GATE GREEN — 206/206 checks across 23 modules</div>
+<div class="summary"><span class="pill" style="border-color:#3fb95077;color:#3fb950">● Confirmed: 11</span><span class="pill" style="border-color:#58a6ff77;color:#58a6ff">⛔ Verified exclusion: 5</span><span class="pill" style="border-color:#d2992277;color:#d29922">◐ Suggestive: 3</span><span class="pill" style="border-color:#8b949e77;color:#8b949e">○ Inconclusive: 5</span></div>
 <div class="tabs"><input type="radio" name="tabs" id="t0" checked><input type="radio" name="tabs" id="t1"><input type="radio" name="tabs" id="t2"><input type="radio" name="tabs" id="t3"><div class="tabbar"><label for="t0">Cipher type</label><label for="t1">Structure &amp; grouping</label><label for="t2">Attack readiness</label><label for="t3">Foundations</label></div>
 <div class="panel" id="p0">
 <div class="card">
@@ -85,6 +85,24 @@ footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.74rem}
     <div class="col"><div class="chart-wrap"><svg viewBox="0 0 520 200" class="chart" role="img"><text x="40" y="12" font-size="10" fill="#e8dcc0" opacity="0.8">IoC normalised: observed vs references</text><rect x="40.0" y="72.4" width="125.3" height="99.6" fill="#c9a227" opacity="0.85"></rect><text x="102.7" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">observed</text><rect x="196.7" y="78.6" width="125.3" height="93.4" fill="#c9a227" opacity="0.85"></rect><text x="259.3" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">uniform</text><rect x="353.3" y="10.0" width="125.3" height="162.0" fill="#c9a227" opacity="0.85"></rect><text x="416.0" y="184" font-size="9" fill="#e8dcc0" text-anchor="middle" opacity="0.7">language</text><line x1="40" y1="78.6" x2="510" y2="78.6" stroke="#4ec9b0" stroke-dasharray="4 3" stroke-width="1"></line><text x="508" y="75.6" font-size="9" fill="#4ec9b0" text-anchor="end">baseline 1</text></svg></div></div>
   </div>
   <div class="interp">The pooled distribution is statistically above uniform but reaches only ~9% of a language-like IoC — far too flat to be a substitution or transposition of natural language. Both are refuted; the tiny excess is residual keystream/pooling structure.</div>
+</div>
+<div class="card">
+  <span class="score">68</span>
+  <h3>Cipher candidate scoreboard (methodology-audited ranking)</h3>
+  <div class="q">Which interrelated-alphabet models survive plant + real-corpus audits?</div>
+  <span class="tier" style="background:#3fb95022;border:1px solid #3fb95077;color:#3fb950">● Confirmed</span>
+  <div class="row">
+    <div class="col">
+      <div class="kv"><b>statistic</b> &nbsp;rank-1 `per-msg-progressive` SUPPORTED (score 98); per-msg real contra 10.92% vs pure 15.01%; refrain gap 1; premise=OK</div>
+      <div class="kv"><b>null</b> &nbsp;plant wrong-model controls; shuffle-null extract; triplet-combine probe</div>
+      <div class="kv"><b>leverage</b> &nbsp;4/5 &nbsp; <b>strength</b> 0.75</div>
+      <div class="formula">GF contradiction rate on broad isomorph pairs + refrain extent gap</div>
+      <div class="badge">✓ machinery validated: eyescoreboard 12/12 ✓</div>
+      <div class="repro">python3 eyewitness/eyescoreboard.py</div>
+    </div>
+    <div class="col"></div>
+  </div>
+  <div class="interp">Premise (block-difference + triplet depth) holds. per-msg-progressive leads on real-corpus contradiction rate and refrain extent but is NOT uniquely proven (pure within 1 glyph; null p~0.003). free-δ/autokey-1 are PERMISSIVE. Whole families EXCLUDED. Triplet member combine (sum mod 83) does NOT yield structured meta-trigrams.</div>
 </div>
 <div class="card">
   <span class="score">64</span>

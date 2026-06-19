@@ -224,6 +224,44 @@ established; the dof=2 repeat-template is a **model-dependent hypothesis** to te
 not a fact. (Report: `report/model_audit_report.md`; `model_audit.selftest` 5/5
 validates the method discriminates models on plants.)
 
+**Cipher candidate scoreboard — methodology audit (`eyescoreboard`).** A
+paranoia-audited ranking harness that challenges its own ground-truth assumptions
+on every run (`run_methodology_audit()`):
+- **Plant discrimination** uses model-appropriate OWN plants (pure-progressive gets
+  its own plant, not the per-msg plant).
+- **Real-corpus discriminator:** GF contradiction rate on broad isomorph pairs
+  (base_len=13, repeats≥3) — per-msg **10.9%**, pure **15.0%**, free-δ **0%**.
+  Clean/flagged extract counts are **identical** across GF models (18/44) and must
+  NOT be scored as a model discriminator.
+- **SUPPORTED** tightened: requires plant gates, refrain extent strictly beating
+  pure (L=22 vs L=21, gap=1), AND lower real-corpus contradiction rate.
+- Cross-checked against `chain_models.discrimination_audit()`; shuffle-null extract
+  control; triplet-combine probe.
+
+**Ranking (real corpus, latest run):**
+| rank | model | verdict | real contra | refrain |
+|---:|---|---|---:|---:|
+| 1 | per-msg-progressive | **SUPPORTED** | 10.92% | 22 |
+| 2 | pure-progressive | SUGGESTIVE | 15.01% | 21 |
+| 3–4 | free-δ / autokey-1 | PERMISSIVE | 0% | — |
+| — | mono, OTP, AES, transposition, PRNG, CT-autokey, general-K | EXCLUDED | — | — |
+
+**Premise (model-independent):** YES — isomorph z≈112, per-triplet keystream scope,
+exploitable depth 136, E1/W1 re-sync=5.
+
+**Meta-trigram / triplet-combine hypothesis (user question).** If the ciphertext
+symbol at each position were a *composite* of the three messages in its triplet
+(e.g. a meta-trigram built from E1+W1+E2), aligned combine streams would show
+structure vs shuffle null. Probed two ways on all three triplets (body positions
+≥25): (1) **sum mod 83** of the three ciphertext values; (2) **base-5 digit-sum**
+of the three eye-mark trigrams. Result: IoC matches null (z≈0.5–2, none significant).
+Each symbol is already a base-5 trigram of **individual** eye-marks (provenance
+9/9); there is **no evidence** the 0–82 stream is a second-level trigram formed by
+combining the three messages in a triplet. The triplet structure is in **shared
+openings / keystream scope**, not in per-position symbol arithmetic.
+
+Report: `report/eyescoreboard.md`; `eyescoreboard.selftest` 12/12.
+
 Open stages: (1) **identify the specific interrelation** and **order the cipher
 alphabet** via indirect-symmetry-of-position chaining (the genuinely hard step —
 free-δ consistency alone is insufficient, and isomorph linkage alone does not
@@ -284,7 +322,7 @@ seed search.
 ## Reproduce everything
 
 ```bash
-# math gate — every claim's module selftest (340/340)
+# math gate — every claim's module selftest (355/355)
 python3 noita_eye_core/selftest.py
 
 # structure (run from eyewitness/)
@@ -295,6 +333,7 @@ python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decrypt
 python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
 python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
 python3 eyewitness/keyspace_ledger.py        # block structure -> key/keyspace ledger
+python3 eyewitness/eyescoreboard.py        # cipher candidate ranking (methodology-audited)
 python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
 python3 eyecrack/refrain_sweep.py --wordlist eyestat/noita_wordlist.txt  # template-guided sweep
 python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver

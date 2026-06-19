@@ -690,10 +690,43 @@ def h_model_audit(ctx: Context) -> HypothesisResult:
         charts=[])
 
 
+def h_eyescoreboard(ctx: Context) -> HypothesisResult:
+    import eyescoreboard as esb
+    sb = esb.build_scoreboard(ctx.messages, ctx.corpus.N)
+    top = sb.candidates[0]
+    pm = next(r for r in sb.candidates if r.model_id == "per-msg-progressive")
+    stat = (f"rank-1 `{top.model_id}` {top.verdict} (score {top.score}); "
+            f"per-msg real contra {sb.methodology.per_msg_real_contra:.2%} vs "
+            f"pure {sb.methodology.pure_real_contra:.2%}; "
+            f"refrain gap {sb.methodology.refrain_extent_gap}; "
+            f"premise={'OK' if sb.premise.premise_ok else 'weak'}")
+    tier_verdict = "supported" if pm.verdict == "SUPPORTED" else (
+        "suggestive" if pm.verdict == "SUGGESTIVE" else "inconclusive")
+    strength = 0.75 if pm.verdict == "SUPPORTED" else (
+        0.55 if pm.verdict == "SUGGESTIVE" else 0.35)
+    return HypothesisResult(
+        id="eyescoreboard",
+        title="Cipher candidate scoreboard (methodology-audited ranking)",
+        group="Cipher type",
+        verdict=tier_verdict, strength=strength, leverage=4,
+        question="Which interrelated-alphabet models survive plant + real-corpus audits?",
+        statistic=stat,
+        null_desc="plant wrong-model controls; shuffle-null extract; triplet-combine probe",
+        formula="GF contradiction rate on broad isomorph pairs + refrain extent gap",
+        validated_by=ctx.badge("eyescoreboard"),
+        reproduce="python3 eyewitness/eyescoreboard.py",
+        interpretation="Premise (block-difference + triplet depth) holds. "
+        "per-msg-progressive leads on real-corpus contradiction rate and refrain "
+        "extent but is NOT uniquely proven (pure within 1 glyph; null p~0.003). "
+        "free-δ/autokey-1 are PERMISSIVE. Whole families EXCLUDED. Triplet member "
+        "combine (sum mod 83) does NOT yield structured meta-trigrams.",
+        charts=[])
+
+
 HYPOTHESES: List[Callable[[Context], HypothesisResult]] = [
     h_unigram, h_periodicity, h_coordinate, h_fingerprint, h_trifid,
     h_depth, h_grouping, h_scope, h_depthmap, h_repeats, h_isomorph, h_bodymodel,
     h_shared_structure, h_pairdiff, h_embedded,
-    h_cribdrag, h_language, h_refrain, h_model_audit,
+    h_cribdrag, h_language, h_refrain, h_model_audit, h_eyescoreboard,
     h_header, h_number, h_integrity, h_provenance,
 ]

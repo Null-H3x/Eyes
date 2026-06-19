@@ -11,6 +11,50 @@
     "premise_ok": true,
     "premise_notes": []
   },
+  "methodology": {
+    "chain_models_agrees": true,
+    "shuffle_clean_fraction": 0.0,
+    "live_clean_fraction": 0.2903,
+    "extract_metrics_model_invariant": true,
+    "per_msg_real_contra": 0.1092,
+    "pure_real_contra": 0.1501,
+    "free_real_contra": 0,
+    "refrain_extent_gap": 1,
+    "triplet_combine": [
+      {
+        "triplet": 1,
+        "combine_ioc": 0.01295816364309515,
+        "combine_z": 0.5173183448594221,
+        "digit_sum_ioc": 0.009996297667530544,
+        "null_ioc_mean": 0.011952980377637914,
+        "significant": false
+      },
+      {
+        "triplet": 2,
+        "combine_ioc": 0.016404647983595352,
+        "combine_z": 1.992682851457934,
+        "digit_sum_ioc": 0.014012303485987697,
+        "null_ioc_mean": 0.012072795625427206,
+        "significant": false
+      },
+      {
+        "triplet": 3,
+        "combine_ioc": 0.015066394279877425,
+        "combine_z": 1.65365113259727,
+        "digit_sum_ioc": 0.008426966292134831,
+        "null_ioc_mean": 0.01220505617977528,
+        "significant": false
+      }
+    ],
+    "challenged_assumptions": [
+      "extract clean/flagged counts are identical across GF models \u2014 do not treat clean fraction as a model discriminator",
+      "refrain extent gap per-msg vs pure is only 1 \u2014 model not uniquely identified"
+    ],
+    "audit_pass": true,
+    "notes": [
+      "triplet member combine (sum mod 83) is NOT structured vs null \u2014 symbols are not a meta-trigram of the triplet set"
+    ]
+  },
   "ranked_ids": [
     "per-msg-progressive",
     "pure-progressive",
@@ -35,6 +79,8 @@
       "rejects_autokey_plant": true,
       "rejects_two_alphabet_plant": true,
       "plant_contradiction_rate": 0.0,
+      "real_contradiction_rate": 0.1092,
+      "real_constraints": 806,
       "clean_windows": 18,
       "flagged": 44,
       "recovery_ratio": 0.864,
@@ -43,12 +89,11 @@
       "refrain_pure_extent": 21,
       "refrain_null_p": 0.0025,
       "refrain_null_z": 3.2,
-      "score": 105,
+      "score": 98,
       "rank": 1,
       "verdict": "SUPPORTED",
       "notes": [
-        "clean fraction 29%",
-        "pure-progressive nearly as deep"
+        "real contra 10.92% < pure 15.01%"
       ]
     },
     {
@@ -61,6 +106,8 @@
       "rejects_autokey_plant": true,
       "rejects_two_alphabet_plant": true,
       "plant_contradiction_rate": 0.0,
+      "real_contradiction_rate": 0.1501,
+      "real_constraints": 806,
       "clean_windows": 18,
       "flagged": 44,
       "recovery_ratio": 0.864,
@@ -69,12 +116,11 @@
       "refrain_pure_extent": 21,
       "refrain_null_p": 0.0025,
       "refrain_null_z": 3.2,
-      "score": 98,
+      "score": 58,
       "rank": 2,
-      "verdict": "SUPPORTED",
+      "verdict": "SUGGESTIVE",
       "notes": [
-        "clean fraction 29%",
-        "pure-progressive nearly as deep"
+        "pure-progressive tied on refrain extent"
       ]
     },
     {
@@ -87,6 +133,8 @@
       "rejects_autokey_plant": false,
       "rejects_two_alphabet_plant": false,
       "plant_contradiction_rate": 0.0,
+      "real_contradiction_rate": 0.0,
+      "real_constraints": 744,
       "clean_windows": 18,
       "flagged": 44,
       "recovery_ratio": 0.045,
@@ -95,12 +143,12 @@
       "refrain_pure_extent": null,
       "refrain_null_p": null,
       "refrain_null_z": null,
-      "score": 10,
+      "score": -10,
       "rank": 3,
       "verdict": "PERMISSIVE",
       "notes": [
         "permissive on control plants",
-        "clean fraction 29%"
+        "zero real contradictions \u2014 permissive"
       ]
     },
     {
@@ -113,6 +161,8 @@
       "rejects_autokey_plant": false,
       "rejects_two_alphabet_plant": false,
       "plant_contradiction_rate": 0.0,
+      "real_contradiction_rate": 0.0,
+      "real_constraints": 744,
       "clean_windows": 18,
       "flagged": 44,
       "recovery_ratio": 0.045,
@@ -121,13 +171,13 @@
       "refrain_pure_extent": null,
       "refrain_null_p": null,
       "refrain_null_z": null,
-      "score": 10,
+      "score": -10,
       "rank": 4,
       "verdict": "PERMISSIVE",
       "notes": [
         "equivalent to free-\u03b4 on plants (chain_models proof)",
         "permissive on control plants",
-        "clean fraction 29%"
+        "zero real contradictions \u2014 permissive"
       ]
     },
     {
@@ -140,6 +190,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,
@@ -165,6 +217,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,
@@ -190,6 +244,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,
@@ -215,6 +271,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,
@@ -240,6 +298,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,
@@ -265,6 +325,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,
@@ -290,6 +352,8 @@
       "rejects_autokey_plant": null,
       "rejects_two_alphabet_plant": null,
       "plant_contradiction_rate": null,
+      "real_contradiction_rate": null,
+      "real_constraints": null,
       "clean_windows": null,
       "flagged": null,
       "recovery_ratio": null,

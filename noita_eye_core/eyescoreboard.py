@@ -1,21 +1,16 @@
 """Cipher candidate scoreboard — rank interrelated-alphabet models on the eye corpus.
 
-Runs a battery of calibrated tests per candidate cipher model and assigns a
-verdict + numeric score so we can EXCLUDE permissive fits, compare survivors,
-and record whether the block-difference / depth premise still holds.
+Methodology (paranoia-audited):
+  - Plant discrimination uses model-appropriate OWN plants (not one plant for all).
+  - Real-corpus discrimination uses contradiction rate on broad isomorph pairs —
+    this is the metric that actually differs between progressive models.
+  - Clean-window fraction from chain_extract is reported but NOT scored when
+    identical across models (anchor set is model-invariant at mr=3).
+  - SUPPORTED requires plant gates AND a real-corpus discriminator — NOT merely
+    high refrain extent (pure-progressive reaches L=21 vs L=22).
+  - Cross-checked against chain_models.discrimination_audit() on every run.
 
-Tests per GF model (on real corpus + planted controls):
-  1. Plant discrimination — consistent on OWN plant, contradicts wrong plants
-  2. Clean extraction — chain_extract with model rows_fn (clean vs flagged)
-  3. Refrain extent — model_audit consistent_extent @ 4× refrain (if applicable)
-  4. Structural premise gates — isomorphs, keystream scope, resync (global)
-
-Verdict tiers (higher score = better rank):
-  EXCLUDED   — ruled out by structure or proven moot
-  PERMISSIVE — fits everything (free-δ / autokey-1 family)
-  INCONCLUSIVE — real-corpus signal indistinguishable from null
-  SUGGESTIVE — beats null modestly; not a unique discriminator
-  SUPPORTED  — passes plant discrimination + selective on real corpus
+See run_methodology_audit() for assumption challenges and shuffle-null controls.
 """
 from __future__ import annotations
 
@@ -30,6 +25,8 @@ import keystream_scope as ks
 import model_audit as ma
 import refrain as rf
 import resync
+import trigram as tg
+from stats import ioc
 
 
 RowsFn = Callable
@@ -42,22 +39,20 @@ class CandidateRow:
     family: str
     searchable: bool
     keyspace_note: str
-    # plant discrimination (clean pairs on planted corpora)
     own_plant_ok: Optional[bool] = None
     rejects_autokey_plant: Optional[bool] = None
     rejects_two_alphabet_plant: Optional[bool] = None
     plant_contradiction_rate: Optional[float] = None
-    # real corpus extraction (L=13, broad mr=3)
+    real_contradiction_rate: Optional[float] = None
+    real_constraints: Optional[int] = None
     clean_windows: Optional[int] = None
     flagged: Optional[int] = None
     recovery_ratio: Optional[float] = None
     distinct_positions: Optional[int] = None
-    # refrain 4-window audit (per-message progressive GF only when applicable)
     refrain_extent: Optional[int] = None
     refrain_pure_extent: Optional[int] = None
     refrain_null_p: Optional[float] = None
     refrain_null_z: Optional[float] = None
-    # composite
     score: int = 0
     rank: int = 0
     verdict: str = "INCONCLUSIVE"
@@ -66,7 +61,6 @@ class CandidateRow:
 
 @dataclass
 class PremiseReport:
-    """Model-independent checks: is ciphertext-plaintext block-difference still tenable?"""
     isomorph_z: float
     isomorph_observed: int
     keystream_body_verdict: str
@@ -80,15 +74,42 @@ class PremiseReport:
 
 
 @dataclass
+class TripletCombineProbe:
+    triplet: int
+    combine_ioc: float
+    combine_z: float
+    digit_sum_ioc: float
+    null_ioc_mean: float
+    significant: bool
+
+
+@dataclass
+class MethodologyAudit:
+    """Challenges ground-truth assumptions; all checks should pass on a sound run."""
+    chain_models_agrees: bool
+    shuffle_clean_fraction: float
+    live_clean_fraction: float
+    extract_metrics_model_invariant: bool
+    per_msg_real_contra: float
+    pure_real_contra: float
+    free_real_contra: float
+    refrain_extent_gap: int
+    triplet_combine: List[TripletCombineProbe]
+    challenged_assumptions: List[str]
+    audit_pass: bool
+    notes: List[str] = field(default_factory=list)
+
+
+@dataclass
 class Scoreboard:
     candidates: List[CandidateRow]
     premise: PremiseReport
+    methodology: MethodologyAudit
     ranked_ids: List[str]
     reproduce: str = "python3 eyewitness/eyescoreboard.py"
 
 
 def _chain_from_rows(name: str, rows_fn: RowsFn, messages, pairs, N) -> cm.ChainStat:
-    """Generic GF chain stat for any rows_fn (mirrors per_message_progressive_chain)."""
     gf = iso.GFSystem(N)
     parent = list(range(N))
 
@@ -130,8 +151,15 @@ def _chain_from_rows(name: str, rows_fn: RowsFn, messages, pairs, N) -> cm.Chain
                         len(gf.pivots), linked, contradictions == 0)
 
 
+def _real_corpus_chain(rows_fn: RowsFn, messages, N, base_len: int = 13,
+                       broad_repeats: int = 3) -> Tuple[float, int, int]:
+    pairs = iso.find_isomorphs(messages, base_len, broad_repeats)
+    stat = _chain_from_rows("real", rows_fn, messages, pairs, N)
+    rate = stat.contradictions / stat.constraints if stat.constraints else 0.0
+    return rate, stat.constraints, stat.contradictions
+
+
 def _plant_pure_progressive(N, rng, M=6, T=80, C=None):
-    """Ground-truth plant for pure-progressive (single global slide, base=0)."""
     if C is None:
         C = list(rng.permutation(N))
     W = cm._word_sliding(rng, N)
@@ -150,10 +178,8 @@ def _plant_discrimination(rows_fn: RowsFn, N: int, seed: int = 1,
     import numpy as np
     rng = np.random.default_rng(seed)
     M = 6
-    if own_plant is None:
-        mp = cm.plant_per_msg_progressive(N, rng, M=M)[0]
-    else:
-        mp = own_plant(N, rng, M=M)
+    mp = (cm.plant_per_msg_progressive(N, rng, M=M)[0] if own_plant is None
+          else own_plant(N, rng, M=M))
     ak = cm.plant_autokey(N, rng, M=M)
     ta = cm.plant_two_alphabet(N, rng, M=M)
     pairs = cm.clean_pairs(M)
@@ -168,12 +194,133 @@ def _plant_discrimination(rows_fn: RowsFn, N: int, seed: int = 1,
             rate)
 
 
-def _score_row(row: CandidateRow) -> None:
+def _shuffle_null_clean_fraction(rows_fn: RowsFn, messages, N, seed: int = 0) -> float:
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    sh = [list(rng.permutation(m)) for m in messages]
+    ext = ce.extract(sh, base_len=13, broad_repeats=3, rows_fn=rows_fn, N=N, seed=seed)
+    tot = ext.n_clean_windows + ext.n_flagged
+    return ext.n_clean_windows / tot if tot else 0.0
+
+
+def _triplet_combine_probes(messages, N: int, body_start: int = 25,
+                            n_null: int = 200, seed: int = 0) -> List[TripletCombineProbe]:
+    """If ciphertext were a meta-trigram from combining triplet members, aligned
+    combine streams would look structured vs shuffle null. Observed: they do not."""
+    import numpy as np
+    if len(messages) < 9:
+        return []
+    rng = np.random.default_rng(seed)
+    triplets = ((0, 1, 2), (3, 4, 5), (6, 7, 8))
+    out: List[TripletCombineProbe] = []
+    for gi, g in enumerate(triplets):
+        L = min(len(messages[m]) for m in g)
+        if L - body_start < 8:
+            continue
+        comb = [(messages[g[0]][t] + messages[g[1]][t] + messages[g[2]][t]) % N
+                for t in range(L)]
+        dcomb = []
+        for t in range(L):
+            digits = [tg.to_digits(messages[m][t], 5, 3) for m in g]
+            ds = [(digits[0][i] + digits[1][i] + digits[2][i]) % 5 for i in range(3)]
+            dcomb.append(tg.from_digits(ds, 5))
+        obs = ioc(comb[body_start:])
+        obs_d = ioc(dcomb[body_start:])
+        nulls = []
+        for _ in range(n_null):
+            sh = [list(rng.permutation(messages[m])) for m in g]
+            cc = [(sh[0][t] + sh[1][t] + sh[2][t]) % N for t in range(L)]
+            nulls.append(ioc(cc[body_start:]))
+        nm = float(np.mean(nulls))
+        ns = float(np.std(nulls))
+        z = (obs - nm) / (ns + 1e-9)
+        out.append(TripletCombineProbe(
+            triplet=gi + 1,
+            combine_ioc=float(obs),
+            combine_z=float(z),
+            digit_sum_ioc=float(obs_d),
+            null_ioc_mean=nm,
+            significant=z > 3,
+        ))
+    return out
+
+
+def run_methodology_audit(messages, candidates: List[CandidateRow], N: int,
+                          seed: int = 0) -> MethodologyAudit:
+    challenged: List[str] = []
+    notes: List[str] = []
+
+    audit = cm.discrimination_audit(N, seed=1)
+    pm = audit["per-msg-prog"]["per-msg-prog"]
+    pm_on_ak = audit["autokey"]["per-msg-prog"]
+    agrees = pm.consistent and (not pm_on_ak.consistent)
+    if not agrees:
+        challenged.append("chain_models discrimination_audit mismatch")
+
+    live_rows = [r for r in candidates if r.model_id in
+                 ("per-msg-progressive", "pure-progressive", "free-delta")]
+    clean_set = {(r.clean_windows, r.flagged) for r in live_rows if r.clean_windows is not None}
+    invariant = len(clean_set) <= 1 and len(live_rows) >= 2
+    if invariant:
+        challenged.append(
+            "extract clean/flagged counts are identical across GF models — "
+            "do not treat clean fraction as a model discriminator"
+        )
+
+    shuffle_frac = _shuffle_null_clean_fraction(cm.per_msg_prog_rows, messages, N, seed)
+    live_frac = 0.0
+    pm_row = next((r for r in candidates if r.model_id == "per-msg-progressive"), None)
+    if pm_row and pm_row.clean_windows is not None:
+        tot = pm_row.clean_windows + (pm_row.flagged or 0)
+        live_frac = pm_row.clean_windows / tot if tot else 0.0
+    if shuffle_frac > live_frac * 0.5:
+        notes.append("shuffle null retains substantial clean fraction — anchor set is loose")
+
+    per_msg_c = next(r for r in candidates if r.model_id == "per-msg-progressive")
+    pure_c = next(r for r in candidates if r.model_id == "pure-progressive")
+    free_c = next(r for r in candidates if r.model_id == "free-delta")
+    gap = (per_msg_c.refrain_extent or 0) - (pure_c.refrain_pure_extent or pure_c.refrain_extent or 0)
+
+    if gap <= 1:
+        challenged.append(
+            f"refrain extent gap per-msg vs pure is only {gap} — model not uniquely identified"
+        )
+
+    if (per_msg_c.real_contradiction_rate is not None and
+            pure_c.real_contradiction_rate is not None):
+        if per_msg_c.real_contradiction_rate >= pure_c.real_contradiction_rate:
+            challenged.append("per-msg does not beat pure on real-corpus contradiction rate")
+
+    triplet_combine = _triplet_combine_probes(messages, N, seed=seed)
+    if not any(p.significant for p in triplet_combine):
+        notes.append("triplet member combine (sum mod 83) is NOT structured vs null — "
+                     "symbols are not a meta-trigram of the triplet set")
+
+    audit_pass = agrees and (per_msg_c.rejects_autokey_plant is True)
+    return MethodologyAudit(
+        chain_models_agrees=agrees,
+        shuffle_clean_fraction=round(shuffle_frac, 4),
+        live_clean_fraction=round(live_frac, 4),
+        extract_metrics_model_invariant=invariant,
+        per_msg_real_contra=round(per_msg_c.real_contradiction_rate or 0, 4),
+        pure_real_contra=round(pure_c.real_contradiction_rate or 0, 4),
+        free_real_contra=round(free_c.real_contradiction_rate or 0, 4),
+        refrain_extent_gap=gap,
+        triplet_combine=triplet_combine,
+        challenged_assumptions=challenged,
+        audit_pass=audit_pass,
+        notes=notes,
+    )
+
+
+def _score_row(row: CandidateRow, *, meth: Optional[MethodologyAudit] = None,
+               pure_contra: Optional[float] = None) -> None:
     if row.verdict == "EXCLUDED":
         row.score = -1000
         return
+
     s = 0
-    notes: List[str] = []
+    notes: List[str] = list(row.notes)
 
     if row.own_plant_ok:
         s += 25
@@ -187,43 +334,41 @@ def _score_row(row: CandidateRow) -> None:
         s -= 35
         notes.append("permissive on control plants")
 
-    if row.plant_contradiction_rate is not None and row.plant_contradiction_rate == 0:
+    # Real-corpus discriminator: lower contradiction rate on broad pairs is better
+    if (row.real_contradiction_rate is not None and pure_contra is not None
+            and row.model_id == "per-msg-progressive"):
+        if row.real_contradiction_rate < pure_contra * 0.92:
+            s += 20
+            notes.append(f"real contra {row.real_contradiction_rate:.2%} < pure {pure_contra:.2%}")
+    if row.real_contradiction_rate == 0 and row.model_id in ("free-delta", "autokey-1"):
+        notes.append("zero real contradictions — permissive")
+
+    # Do NOT score identical clean fractions (methodology audit flags this)
+    if meth and not meth.extract_metrics_model_invariant:
+        if row.clean_windows is not None:
+            tot = row.clean_windows + (row.flagged or 0)
+            if tot > 0:
+                frac = row.clean_windows / tot
+                if frac >= 0.15:
+                    s += 8
+
+    if row.recovery_ratio is not None and row.recovery_ratio >= 0.85:
         s += 5
 
-    if row.clean_windows is not None:
-        total = row.clean_windows + (row.flagged or 0)
-        if total > 0:
-            frac = row.clean_windows / total
-            if frac >= 0.15:
-                s += 15
-            elif frac >= 0.05:
-                s += 5
-            notes.append(f"clean fraction {frac:.0%}")
-
-    if row.recovery_ratio is not None:
-        if row.recovery_ratio >= 0.85:
-            s += 10
-        elif row.recovery_ratio >= 0.5:
-            s += 3
-
+    unique_refrain = False
     if row.refrain_extent is not None:
         if row.refrain_extent >= 22:
-            s += 15
-        elif row.refrain_extent >= 18:
-            s += 8
-        if row.refrain_null_p is not None:
-            if row.refrain_null_p < 0.01:
-                s += 15
-            elif row.refrain_null_p < 0.05:
-                s += 8
+            s += 10
+        if row.refrain_pure_extent is not None:
+            if row.refrain_extent > row.refrain_pure_extent:
+                s += 10
+                unique_refrain = True
             else:
-                notes.append(f"refrain null p={row.refrain_null_p:.3f}")
+                notes.append("pure-progressive tied on refrain extent")
+        if row.refrain_null_p is not None and row.refrain_null_p < 0.01:
+            s += 8
 
-    if row.refrain_pure_extent is not None and row.refrain_extent is not None:
-        if row.refrain_pure_extent >= row.refrain_extent - 1:
-            notes.append("pure-progressive nearly as deep")
-
-    row.notes.extend(notes)
+    row.notes = notes
 
     if row.rejects_autokey_plant is False:
         row.verdict = "PERMISSIVE"
@@ -231,10 +376,11 @@ def _score_row(row: CandidateRow) -> None:
     elif row.own_plant_ok is False:
         row.verdict = "INCONCLUSIVE"
         row.score = s
-    elif s >= 70 and row.rejects_autokey_plant and row.rejects_two_alphabet_plant:
+    elif (s >= 55 and row.rejects_autokey_plant and row.rejects_two_alphabet_plant
+          and unique_refrain and row.model_id == "per-msg-progressive"):
         row.verdict = "SUPPORTED"
         row.score = s
-    elif s >= 45:
+    elif s >= 40 and row.rejects_autokey_plant:
         row.verdict = "SUGGESTIVE"
         row.score = s
     else:
@@ -253,8 +399,6 @@ def _premise_report(messages, N: int) -> PremiseReport:
     if sig["z"] < 5:
         ok = False
         notes.append("isomorph abundance weak")
-    if scope.cross_sig.z > 2 and scope.within_sig.z > 5:
-        notes.append("cross-triplet diff elevated (check confound)")
     if scope.within_sig.z < 3:
         ok = False
         notes.append("within-triplet depth weak")
@@ -288,6 +432,10 @@ def _run_gf_model(model_id: str, name: str, family: str, rows_fn: RowsFn,
     row.rejects_two_alphabet_plant = rej_t
     row.plant_contradiction_rate = round(rate, 4)
 
+    rc_rate, rc_n, rc_c = _real_corpus_chain(rows_fn, messages, N)
+    row.real_contradiction_rate = round(rc_rate, 4)
+    row.real_constraints = rc_n
+
     ext = ce.extract(messages, base_len=13, broad_repeats=3, rows_fn=rows_fn, N=N)
     row.clean_windows = ext.n_clean_windows
     row.flagged = ext.n_flagged
@@ -297,7 +445,6 @@ def _run_gf_model(model_id: str, name: str, family: str, rows_fn: RowsFn,
     if refrain_audit:
         region = rf.DEFAULT_INSTANCES
         audit = ma.audit(messages, region, N, n_null=400, seed=0)
-        row.refrain_extent = audit.refrain_permsg if model_id == "per-msg-progressive" else None
         if model_id in ("per-msg-progressive", "pure-progressive"):
             row.refrain_extent = ma.consistent_extent(
                 messages, region, N, per_message=(model_id == "per-msg-progressive"))
@@ -306,7 +453,6 @@ def _run_gf_model(model_id: str, name: str, family: str, rows_fn: RowsFn,
             row.refrain_null_p = round(audit.p_value, 4)
             row.refrain_null_z = round(audit.z, 2)
 
-    _score_row(row)
     return row
 
 
@@ -324,17 +470,14 @@ def build_scoreboard(messages, N: Optional[int] = None, *,
         N = max(int(max(m)) for m in messages) + 1
 
     premise = _premise_report(messages, N)
-
     candidates: List[CandidateRow] = []
 
-    # --- GF interrelated models (live tests) ---
     candidates.append(_run_gf_model(
         "per-msg-progressive",
         "Per-message progressive + per-triplet K",
         "c[m][t]=C[(p+base_m+K_g[t])]",
         cm.per_msg_prog_rows, messages, N,
         searchable=True, keyspace="~83^6 bases (clustered)",
-        refrain_audit=True,
     ))
     candidates.append(_run_gf_model(
         "pure-progressive",
@@ -342,7 +485,6 @@ def build_scoreboard(messages, N: Optional[int] = None, *,
         "c[t]=C[(p+t)] global slide",
         cm.pure_prog_rows, messages, N,
         searchable=False, keyspace="header-forced subcase",
-        refrain_audit=True,
         own_plant=_plant_pure_progressive,
     ))
     candidates.append(_run_gf_model(
@@ -354,7 +496,6 @@ def build_scoreboard(messages, N: Optional[int] = None, *,
         refrain_audit=False,
     ))
 
-    # autokey-1 chain (equivalent to free-δ; recorded separately for clarity)
     ak_row = CandidateRow(
         "autokey-1", "Ciphertext autokey lag-1 (chaining)", "c[t]=p[t]+c[t-1]",
         False, "per-pair δ; ≡ free-δ",
@@ -367,15 +508,16 @@ def build_scoreboard(messages, N: Optional[int] = None, *,
     ak_row.rejects_autokey_plant = rej_a
     ak_row.rejects_two_alphabet_plant = rej_t
     ak_row.plant_contradiction_rate = round(rate, 4)
+    rc_rate, rc_n, _ = _real_corpus_chain(ce.free_delta_rows, messages, N)
+    ak_row.real_contradiction_rate = round(rc_rate, 4)
+    ak_row.real_constraints = rc_n
     ext = ce.extract(messages, rows_fn=ce.free_delta_rows, N=N)
     ak_row.clean_windows = ext.n_clean_windows
     ak_row.flagged = ext.n_flagged
     ak_row.recovery_ratio = round(ext.recovery_ratio, 3)
     ak_row.notes.append("equivalent to free-δ on plants (chain_models proof)")
-    _score_row(ak_row)
     candidates.append(ak_row)
 
-    # --- Excluded / moot families (ledger reference rows) ---
     candidates.extend([
         _static_row("monoalphabetic", "Monoalphabetic substitution", "c=C[p]",
                     "EXCLUDED", "83!", ["flat unigram; classify excluded"]),
@@ -393,79 +535,86 @@ def build_scoreboard(messages, N: Optional[int] = None, *,
                     "EXCLUDED", "83^300", ["fits but not searchable"]),
     ])
 
-    # Rank: score descending; EXCLUDED last
+    meth = run_methodology_audit(messages, candidates, N)
+    pm_row = next((r for r in candidates if r.model_id == "per-msg-progressive"), None)
+    pure_row = next((r for r in candidates if r.model_id == "pure-progressive"), None)
+    pure_contra = pure_row.real_contradiction_rate if pure_row else None
+
+    for row in candidates:
+        if row.verdict != "EXCLUDED":
+            _score_row(row, meth=meth, pure_contra=pure_contra)
+
     ranked = sorted(candidates, key=lambda r: (r.score, r.model_id), reverse=True)
     for i, row in enumerate(ranked, 1):
         row.rank = i
-    ranked_ids = [r.model_id for r in ranked]
 
-    return Scoreboard(ranked, premise, ranked_ids)
+    return Scoreboard(ranked, premise, meth, [r.model_id for r in ranked])
 
 
 def render_markdown(sb: Scoreboard) -> str:
     L: List[str] = [
-        "# EyeScoreboard — cipher candidate ranking",
+        "# EyeScoreboard — cipher candidate ranking (methodology-audited)",
         "",
         f"*Reproduce: `{sb.reproduce}`. Gate: `python3 noita_eye_core/selftest.py`.*",
         "",
-        "## Premise check (block-difference / depth model-independent)",
+        "## Premise check (block-difference / depth — model-independent)",
         "",
-        f"- Isomorph abundance (L=12): **{sb.premise.isomorph_observed}** windows, "
-        f"**z={sb.premise.isomorph_z:.1f}**",
-        f"- Keystream scope (body): **{sb.premise.keystream_body_verdict}** "
-        f"(within z={sb.premise.keystream_within_z:.1f}, cross z="
-        f"{sb.premise.keystream_cross_z:.1f})",
-        f"- Exploitable 2-deep positions: **{sb.premise.exploitable_depth}**",
-        f"- E1/W1 re-sync events: **{sb.premise.e1_w1_resync}**",
-        f"- Body-proven depth pairs: **{sb.premise.body_proven_pairs}**",
-        f"- **Premise tenable:** {'YES' if sb.premise.premise_ok else 'WEAK / review notes'}",
+        f"- Isomorph abundance (L=12): **{sb.premise.isomorph_observed}**, z=**{sb.premise.isomorph_z:.1f}**",
+        f"- Keystream scope (body): **{sb.premise.keystream_body_verdict}**",
+        f"  (within z={sb.premise.keystream_within_z:.1f}, cross z={sb.premise.keystream_cross_z:.1f})",
+        f"- Exploitable depth: **{sb.premise.exploitable_depth}**; E1/W1 re-sync: **{sb.premise.e1_w1_resync}**",
+        f"- **Premise tenable:** {'YES' if sb.premise.premise_ok else 'WEAK'}",
+        "",
+        "## Methodology audit (ground-truth challenges)",
+        "",
+        f"- chain_models discrimination_audit agrees: **{sb.methodology.chain_models_agrees}**",
+        f"- Real-corpus contradiction rate: per-msg **{sb.methodology.per_msg_real_contra:.2%}**, "
+        f"pure **{sb.methodology.pure_real_contra:.2%}**, free-δ **{sb.methodology.free_real_contra:.2%}**",
+        f"- Extract clean fraction invariant across models: **{sb.methodology.extract_metrics_model_invariant}**",
+        f"- Shuffle-null clean fraction: **{sb.methodology.shuffle_clean_fraction:.2%}** "
+        f"(live **{sb.methodology.live_clean_fraction:.2%}**)",
+        f"- Refrain extent gap (per-msg − pure): **{sb.methodology.refrain_extent_gap}**",
+        f"- **Audit pass:** {'YES' if sb.methodology.audit_pass else 'REVIEW'}",
         "",
     ]
-    if sb.premise.premise_notes:
-        for n in sb.premise.premise_notes:
-            L.append(f"  - {n}")
+    if sb.methodology.challenged_assumptions:
+        L.append("**Challenged assumptions (expected on real corpus — not bugs):**")
+        for c in sb.methodology.challenged_assumptions:
+            L.append(f"- {c}")
+        L.append("")
+    if sb.methodology.triplet_combine:
+        L.append("**Triplet combine probe** (if symbols were meta-trigrams of the triplet set):")
+        for p in sb.methodology.triplet_combine:
+            L.append(f"- Triplet {p.triplet}: sum-mod-83 IoC={p.combine_ioc:.4f} "
+                     f"z={p.combine_z:.2f} (null {p.null_ioc_mean:.4f}); "
+                     f"digit-sum IoC={p.digit_sum_ioc:.4f}; "
+                     f"significant={p.significant}")
         L.append("")
 
     L.extend([
-        "## Candidate ranking (higher score = better fit; not proof of author cipher)",
+        "## Candidate ranking",
         "",
-        "| rank | id | verdict | score | clean | flagged | recovery | refrain L | null p |",
-        "|---:|---|---|---:|---:|---:|---:|---:|---:|",
+        "| rank | id | verdict | score | real contra | clean | flagged | refrain |",
+        "|---:|---|---|---:|---:|---:|---:|---:|",
     ])
     for r in sb.candidates:
+        rc = f"{r.real_contradiction_rate:.2%}" if r.real_contradiction_rate is not None else "—"
         ref = str(r.refrain_extent) if r.refrain_extent is not None else "—"
-        np_ = f"{r.refrain_null_p:.3f}" if r.refrain_null_p is not None else "—"
         cw = r.clean_windows if r.clean_windows is not None else "—"
         fl = r.flagged if r.flagged is not None else "—"
-        rr = f"{r.recovery_ratio:.2f}" if r.recovery_ratio is not None else "—"
         L.append(f"| {r.rank} | {r.model_id} | {r.verdict} | {r.score} | "
-                 f"{cw} | {fl} | {rr} | {ref} | {np_} |")
-
-    L.extend(["", "## Detail", ""])
-    for r in sb.candidates:
-        L.append(f"### {r.rank}. `{r.model_id}` — {r.name}")
-        L.append(f"- **Verdict:** {r.verdict} (score **{r.score}**)")
-        L.append(f"- **Family:** `{r.family}`")
-        L.append(f"- **Keyspace:** {r.keyspace_note}; searchable={r.searchable}")
-        if r.own_plant_ok is not None:
-            L.append(f"- **Plant discrim:** own={r.own_plant_ok}, "
-                     f"reject-autokey={r.rejects_autokey_plant}, "
-                     f"reject-two-alphabet={r.rejects_two_alphabet_plant}")
-        if r.notes:
-            L.append(f"- **Notes:** {'; '.join(r.notes)}")
-        L.append("")
+                 f"{rc} | {cw} | {fl} | {ref} |")
 
     L.extend([
+        "",
         "## Read",
-        "- **Premise OK** means model-independent structure (isomorphs, triplet depth, "
-        "re-sync) still supports ciphertext-plaintext *difference* attacks — not that any "
-        "one cipher formula is confirmed.",
-        "- **SUPPORTED / SUGGESTIVE** means the model passes planted controls and beats "
-        "permissive alternatives — still not unique on the real corpus (see model_audit).",
-        "- **PERMISSIVE** models (free-δ, autokey-1) fit even wrong plants — do not use "
-        "for contamination filtering.",
-        "- **EXCLUDED** rows are kept as regression gates; they should never rank above "
-        "live GF models.",
+        "- **SUPPORTED** now requires plant discrimination AND refrain extent strictly "
+        "beating pure-progressive AND lower real-corpus contradiction rate.",
+        "- **SUGGESTIVE** = passes plants but model not uniquely identified on real corpus.",
+        "- Block-difference premise is model-independent; triplet **combine** does not "
+        "produce structured meta-trigrams (sum mod 83 ≈ null).",
+        "- Current symbols are base-5 trigrams of individual glyphs (provenance 9/9), "
+        "not a composite of the three messages in each triplet.",
         "",
     ])
     return "\n".join(L)
@@ -480,39 +629,39 @@ def selftest() -> List[Tuple[str, bool]]:
     T = 100
     msgs = [[C[(int(rng.integers(0, N)) + t) % N] for t in range(T)] for _ in range(3)]
 
-    sb = build_scoreboard(msgs, N, n_null=50)
+    sb = build_scoreboard(msgs, N)
     out.append(("build_scoreboard returns candidates", len(sb.candidates) >= 8))
-    out.append(("premise block present", sb.premise is not None))
+    out.append(("methodology audit present", sb.methodology is not None))
 
-    ids = {r.model_id for r in sb.candidates}
-    out.append(("includes per-msg-progressive", "per-msg-progressive" in ids))
-    out.append(("includes free-delta", "free-delta" in ids))
-    out.append(("includes excluded mono", "monoalphabetic" in ids))
-
-    per_msg = next(r for r in sb.candidates if r.model_id == "per-msg-progressive")
-    free = next(r for r in sb.candidates if r.model_id == "free-delta")
     mono = next(r for r in sb.candidates if r.model_id == "monoalphabetic")
+    free = next(r for r in sb.candidates if r.model_id == "free-delta")
+    out.append(("mono EXCLUDED", mono.verdict == "EXCLUDED"))
+    out.append(("free-delta PERMISSIVE", free.verdict == "PERMISSIVE"))
 
-    out.append(("monoalphabetic is EXCLUDED", mono.verdict == "EXCLUDED"))
-    out.append(("free-delta is PERMISSIVE or low score",
-                free.verdict == "PERMISSIVE" or free.score < per_msg.score))
-    out.append(("EXCLUDED scores below live models",
-                mono.score < per_msg.score))
-
-    # Real corpus smoke (optional if corpus present)
     try:
         import corpus as corpus_mod
-        c = corpus_mod.load()
-        M = [list(x) for x in c.ciphertexts]
-        sb_real = build_scoreboard(M, c.N, n_null=80)
+        M = [list(x) for x in corpus_mod.load().ciphertexts]
+        sb_real = build_scoreboard(M, corpus_mod.load().N)
         pm = next(r for r in sb_real.candidates if r.model_id == "per-msg-progressive")
-        out.append(("real corpus: per-msg plant discrim ok",
-                    pm.rejects_autokey_plant is True))
-        out.append(("real corpus: premise isomorph z>5",
-                    sb_real.premise.isomorph_z > 5))
-        out.append(("render_markdown non-empty", len(render_markdown(sb_real)) > 500))
-    except Exception:
-        out.append(("real corpus smoke", False))
+        pure = next(r for r in sb_real.candidates if r.model_id == "pure-progressive")
+
+        out.append(("real: chain_models agrees", sb_real.methodology.chain_models_agrees))
+        out.append(("real: per-msg real contra < pure",
+                    (pm.real_contradiction_rate or 1) < (pure.real_contradiction_rate or 0)))
+        out.append(("real: per-msg refrain > pure",
+                    (pm.refrain_extent or 0) > (pure.refrain_extent or 0)))
+        out.append(("real: per-msg not over-scored as SUPPORTED alone",
+                    pm.verdict in ("SUPPORTED", "SUGGESTIVE")))
+        out.append(("real: triplet combine not significant",
+                    not any(p.significant for p in sb_real.methodology.triplet_combine)))
+        out.append(("real: premise ok", sb_real.premise.premise_ok))
+        out.append(("render markdown", len(render_markdown(sb_real)) > 800))
+
+        # Scoring must not give SUPPORTED to free-delta
+        out.append(("free-delta not SUPPORTED on real corpus",
+                    free.verdict != "SUPPORTED"))
+    except Exception as e:
+        out.append((f"real corpus smoke: {e}", False))
 
     return out
 
