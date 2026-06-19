@@ -40,6 +40,7 @@ import ngram_solve
 import order_solve
 import ordering_exhaust
 import refrain_sweep
+import refrain_compose
 import template
 import model_audit
 import eyescoreboard
@@ -91,6 +92,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("order_solve", order_solve.selftest),
     ("ordering_exhaust", ordering_exhaust.selftest),
     ("refrain_sweep", refrain_sweep.selftest),
+    ("refrain_compose", refrain_compose.selftest),
     ("template", template.selftest),
     ("model_audit", model_audit.selftest),
     ("eyescoreboard", eyescoreboard.selftest),
