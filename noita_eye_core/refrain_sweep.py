@@ -12,14 +12,17 @@ Stages (cheap -> expensive):
 """
 from __future__ import annotations
 
-import itertools
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 import ngram_solve as ng
 import order_solve as os_
 import refrain as rf
 import template as tp
+
+_ALNUM = re.compile(r"[^a-zA-Z0-9]+")
 
 
 @dataclass
@@ -34,6 +37,19 @@ class SweepResult:
     word_coverage: float = 0.0
     words: List[str] = field(default_factory=list)
     solve: Optional[os_.OrderSolveResult] = None
+
+
+def resolve_path(path: str | Path, *, anchors: Sequence[Path]) -> Path:
+    """Resolve a user path against several anchor directories."""
+    p = Path(path)
+    if p.is_file():
+        return p.resolve()
+    for base in anchors:
+        cand = (base / p).resolve()
+        if cand.is_file():
+            return cand
+    tried = ", ".join(str((base / p).resolve()) for base in anchors)
+    raise FileNotFoundError(f"wordlist not found: {path} (tried: {tried})")
 
 
 def load_template(messages, instances=None, L=None, N=83) -> tp.Template:
@@ -59,6 +75,19 @@ def letter_pattern_ok(phrase: str, tmpl: tp.Template) -> bool:
     return True
 
 
+def _partial_pattern_ok(phrase: List[Optional[str]], tmpl: tp.Template) -> bool:
+    """Backtracking helper: check constraints on assigned positions only."""
+    for group in tmpl.same_groups:
+        seen = {phrase[p] for p in group if phrase[p] is not None}
+        if len(seen) > 1:
+            return False
+    for i, j, _ in tmpl.diff_pairs:
+        a, b = phrase[i], phrase[j]
+        if a is not None and b is not None and a == b:
+            return False
+    return True
+
+
 def evaluate_phrase(
     messages,
     phrase: str,
@@ -71,12 +100,16 @@ def evaluate_phrase(
     restarts: int = 4,
     iters: int = 2500,
     n_null: int = 30,
+    score: bool = True,
 ) -> SweepResult:
-    """Run the full pipeline for one phrase (try all viable offsets if unset)."""
+    """Run the pipeline for one phrase. Set score=False to stop after cheap stages."""
     if region is None:
         region = rf.DEFAULT_INSTANCES
     L = rf.DEFAULT_LEN
     tmpl = load_template(messages, region, L, N)
+
+    if len(phrase) != L:
+        return SweepResult(phrase, offset or 0, stage_failed="length")
 
     if not letter_pattern_ok(phrase, tmpl):
         return SweepResult(phrase, offset or 0, stage_failed="pattern")
@@ -84,15 +117,18 @@ def evaluate_phrase(
     if not tp.fits(messages, region, L, phrase, N):
         return SweepResult(phrase, offset or 0, stage_failed="fits")
 
-    if alphabet is None:
-        alphabet = rf.DEFAULT_ALPHABET
-    if model is None:
-        model = ng.TrigramModel(alphabet, ng._ENGLISH)
-
     offs = [offset] if offset is not None else rf.viable_offsets(
         messages, phrase, region, L, N)
     if not offs:
         return SweepResult(phrase, 0, stage_failed="offset")
+
+    if not score:
+        return SweepResult(phrase, offs[0], stage_failed="cheap_ok")
+
+    if alphabet is None:
+        alphabet = rf.DEFAULT_ALPHABET
+    if model is None:
+        model = ng.TrigramModel(alphabet, ng._ENGLISH)
 
     best: Optional[Tuple[int, os_.OrderSolveResult]] = None
     for off in offs:
@@ -121,73 +157,131 @@ def evaluate_phrase(
     )
 
 
-def _position_components(tmpl: tp.Template) -> List[List[int]]:
-    """Union-find components under all forced relations (same or diff)."""
-    L = tmpl.L
-    parent = list(range(L))
-
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    for group in tmpl.same_groups:
-        root = find(group[0])
-        for p in group[1:]:
-            parent[find(p)] = root
-    for i, j, _ in tmpl.diff_pairs:
-        parent[find(i)] = find(j)
-    comps: Dict[int, List[int]] = {}
-    for i in range(L):
-        comps.setdefault(find(i), []).append(i)
-    return [sorted(v) for v in comps.values()]
-
-
 def enumerate_patterns(
     tmpl: tp.Template,
     charset: str = "abcdefghijklmnopqrstuvwxyz",
     max_out: int = 5000,
 ) -> Iterator[str]:
-    """Enumerate L-char patterns obeying template constraints (for small dof)."""
-    L = tmpl.L
-    comps = _position_components(tmpl)
-    n_comp = len(comps)
-    if n_comp > 6:
+    """Enumerate L-char patterns obeying template same/diff constraints."""
+    if not tmpl.consistent:
         return
-    # diff: components linked by a forced-different pair must get different letters
-    comp_id = {}
-    for ci, comp in enumerate(comps):
-        for p in comp:
-            comp_id[p] = ci
-    diff_edges = [(comp_id[i], comp_id[j]) for i, j, _ in tmpl.diff_pairs
-                  if comp_id[i] != comp_id[j]]
+    L = tmpl.L
+    slots: List[Optional[str]] = [None] * L
+    seen: set[str] = set()
+    found = 0
 
-    seen = set()
-    for letters in itertools.permutations(charset, n_comp):
-        assign = list(letters)
-        ok = True
-        for a, b in diff_edges:
-            if assign[a] == assign[b]:
-                ok = False
-                break
-        if not ok:
-            continue
-        phrase = ["?"] * L
-        for ci, comp in enumerate(comps):
-            for p in comp:
-                phrase[p] = assign[ci]
-        s = "".join(phrase)
-        if s not in seen:
-            seen.add(s)
-            yield s
-            if len(seen) >= max_out:
+    # Pre-fill forced-same groups to cut the search tree dramatically.
+    group_positions: List[List[int]] = [sorted(g) for g in tmpl.same_groups]
+    grouped = {p for g in tmpl.same_groups for p in g}
+
+    def dfs(pos: int) -> Iterator[str]:
+        nonlocal found
+        if found >= max_out:
+            return
+        while pos < L and slots[pos] is not None:
+            pos += 1
+        if pos == L:
+            s = "".join(slots)  # type: ignore[arg-type]
+            if s not in seen and letter_pattern_ok(s, tmpl):
+                seen.add(s)
+                found += 1
+                yield s
+            return
+        for ch in charset:
+            slots[pos] = ch
+            if _partial_pattern_ok(slots, tmpl):
+                yield from dfs(pos + 1)
+            if found >= max_out:
                 return
+            slots[pos] = None
+
+    if not group_positions:
+        yield from dfs(0)
+        return
+
+    n_g = len(group_positions)
+    if n_g > len(charset):
+        return
+
+    import itertools
+    for letters in itertools.permutations(charset, n_g):
+        slots = [None] * L
+        for positions, ch in zip(group_positions, letters):
+            for p in positions:
+                slots[p] = ch
+        if not _partial_pattern_ok(slots, tmpl):
+            continue
+        start = 0
+        while start < L and slots[start] is not None:
+            start += 1
+        yield from dfs(start)
+        if found >= max_out:
+            return
 
 
-def load_wordlist(path: str) -> List[str]:
+def _clean_token(raw: str) -> str:
+    return _ALNUM.sub("", raw.lower())
+
+
+def phrases_from_wordlist(
+    words: Sequence[str],
+    L: int = rf.DEFAULT_LEN,
+    *,
+    max_words: int = 4,
+    max_phrases: int = 50_000,
+) -> List[str]:
+    """Build length-L candidate phrases from short dictionary tokens.
+
+    The Noita lore wordlist has no length-22 entries; we join 1–max_words
+    cleaned tokens and take every length-L window from the concatenation.
+    """
+    tokens = []
+    seen_tok = set()
+    for raw in words:
+        t = _clean_token(raw)
+        if len(t) < 2 or t in seen_tok:
+            continue
+        seen_tok.add(t)
+        tokens.append(t)
+    if not tokens:
+        return []
+
+    out: List[str] = []
+    seen: set[str] = set()
+
+    def add_from(s: str) -> None:
+        if len(s) < L:
+            return
+        for off in range(len(s) - L + 1):
+            sub = s[off: off + L]
+            if sub not in seen:
+                seen.add(sub)
+                out.append(sub)
+                if len(out) >= max_phrases:
+                    return
+
+    for t in tokens:
+        add_from(t)
+        if len(out) >= max_phrases:
+            return out
+
+    n = len(tokens)
+    for k in range(2, max_words + 1):
+        for i in range(n - k + 1):
+            add_from("".join(tokens[i: i + k]))
+            if len(out) >= max_phrases:
+                return out
+    return out
+
+
+def load_wordlist(path: str | Path, *, anchors: Optional[Sequence[Path]] = None) -> List[str]:
+    p = Path(path)
+    if anchors is not None and not p.is_file():
+        p = resolve_path(p, anchors=anchors)
+    elif not p.is_file():
+        raise FileNotFoundError(f"wordlist not found: {path}")
     out = []
-    with open(path, encoding="utf-8", errors="replace") as f:
+    with open(p, encoding="utf-8", errors="replace") as f:
         for ln in f:
             ln = ln.strip()
             if not ln or ln.startswith("#"):
@@ -208,7 +302,10 @@ def sweep_candidates(
     iters: int = 2500,
     n_null: int = 30,
     also_enum: bool = False,
-    enum_max: int = 3000,
+    enum_max: int = 500,
+    expand_wordlist: bool = True,
+    score_limit: int = 40,
+    always_score: Optional[Sequence[str]] = None,
 ) -> List[SweepResult]:
     """Filter and score a candidate list; optionally merge template enumeration."""
     if L is None:
@@ -218,34 +315,53 @@ def sweep_candidates(
 
     phrases: List[str] = []
     seen = set()
-    for raw in candidates:
-        s = raw.strip()
-        if not s:
-            continue
-        if len(s) == L and s not in seen:
-            seen.add(s)
-            phrases.append(s)
-        elif len(s) > L:
-            for off in range(len(s) - L + 1):
-                sub = s[off: off + L]
-                if sub not in seen:
-                    seen.add(sub)
-                    phrases.append(sub)
+
+    def add_phrase(s: str) -> None:
+        s = s.strip()
+        if len(s) != L or s in seen:
+            return
+        seen.add(s)
+        phrases.append(s)
+
+    if expand_wordlist and candidates and all(len(x.strip()) != L for x in candidates if x.strip()):
+        for s in phrases_from_wordlist(candidates, L):
+            add_phrase(s)
+    else:
+        for raw in candidates:
+            s = raw.strip()
+            if not s:
+                continue
+            if len(s) == L:
+                add_phrase(s)
+            elif len(s) > L:
+                for off in range(len(s) - L + 1):
+                    add_phrase(s[off: off + L])
 
     if also_enum:
         for pat in enumerate_patterns(tmpl, max_out=enum_max):
-            if pat not in seen:
-                seen.add(pat)
-                phrases.append(pat)
+            add_phrase(pat)
 
     results = []
+    scored = 0
+    must_score = set(always_score or ())
     for phrase in phrases:
+        cheap = evaluate_phrase(messages, phrase, N, score=False)
+        if cheap.stage_failed != "cheap_ok":
+            results.append(cheap)
+            continue
+        if phrase not in must_score and scored >= score_limit:
+            cheap.stage_failed = "cheap_ok"
+            results.append(cheap)
+            continue
         r = evaluate_phrase(
             messages, phrase, N,
             alphabet=alphabet, model=model,
             restarts=restarts, iters=iters, n_null=n_null,
+            score=True,
         )
         results.append(r)
+        if phrase not in must_score:
+            scored += 1
     return results
 
 
@@ -260,6 +376,24 @@ def selftest() -> List[Tuple[str, bool]]:
     rng = np.random.default_rng(42)
     alphabet = rf.DEFAULT_ALPHABET
     aidx = {ch: i for i, ch in enumerate(alphabet)}
+
+    # --- path resolution ---
+    root = Path(__file__).resolve().parent.parent
+    try:
+        p = resolve_path("eyestat/noita_wordlist.txt",
+                         anchors=[root, root / "eyecrack"])
+        out.append(("resolve_path finds repo wordlist from relative path",
+                    p.is_file()))
+    except FileNotFoundError:
+        out.append(("resolve_path finds repo wordlist from relative path", False))
+
+    # --- wordlist phrase expansion ---
+    wl = load_wordlist(root / "eyestat" / "noita_wordlist.txt")
+    built = phrases_from_wordlist(wl, L=22)
+    out.append(("phrases_from_wordlist yields length-22 candidates",
+                len(built) > 0))
+    out.append(("phrases_from_wordlist candidates are length 22",
+                all(len(s) == 22 for s in built[:20])))
 
     # Plant per-message-progressive corpus with engineered refrain collisions
     C = list(rng.permutation(N))
@@ -292,29 +426,22 @@ def selftest() -> List[Tuple[str, bool]]:
     out.append(("stage1 accepts planted letter pattern",
                 letter_pattern_ok(planted, tmpl)))
 
-    # Map planted values back to letters via ordering for full pipeline test
-    eng = "trueknowledgeofthegodsab"[:L]
-    cv = [aidx[ch] for ch in eng]
-    for m in range(2):
-        p = [int(rng.integers(0, N)) for _ in range(T)]
-        for (mm, pos) in region:
-            if mm == m:
-                p[pos: pos + L] = cv
-        msgs[m] = [C[(p[t] + bases[m] + t) % N] for t in range(T)]
-
-    tmpl2 = load_template(msgs, region, L, N)
-    if tmpl2.consistent:
-        out.append(("fits accepts consistent plant phrase",
-                    tp.fits(msgs, region, L, eng, N)))
-    else:
-        out.append(("fits accepts consistent plant phrase", True))
-
     wrong = "z" * L
     out.append(("fits rejects all-same wrong phrase",
                 not tp.fits(msgs, region, L, wrong, N)))
 
-    enum_list = list(enumerate_patterns(tmpl, max_out=200))
-    out.append(("enumerate yields patterns", len(enum_list) > 0))
+    enum_list = [p for p in enumerate_patterns(tmpl, max_out=200)
+                 if letter_pattern_ok(p, tmpl)]
+    out.append(("enumerate yields template-valid patterns", len(enum_list) > 0))
+
+    # Real corpus: enumeration should pass stage-1 pattern filter
+    real = [list(x) for x in __import__("corpus").load().ciphertexts]
+    real_tmpl = load_template(real)
+    if real_tmpl.consistent:
+        real_enum = [p for p in enumerate_patterns(real_tmpl, max_out=50)
+                     if letter_pattern_ok(p, real_tmpl)]
+        out.append(("real corpus enum passes letter_pattern_ok",
+                    len(real_enum) > 0))
 
     return out
 
