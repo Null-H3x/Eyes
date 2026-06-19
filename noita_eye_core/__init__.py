@@ -59,6 +59,7 @@ __all__ = [
     "globality", "pairdiff", "langdetect", "cribdrag", "cipher_fingerprint",
     "keyscan", "calibrate", "salakieli", "repeats", "isomorph", "chain_models",
     "chain_extract", "cribfit", "headerbase", "pureprog", "trifid",
-    "provenance", "refrain", "ngram_solve", "order_solve", "template",
+    "provenance", "refrain", "ngram_solve", "order_solve", "ordering_exhaust",
+    "refrain_sweep", "template",
     "model_audit", "shared_structure", "resync",
 ]

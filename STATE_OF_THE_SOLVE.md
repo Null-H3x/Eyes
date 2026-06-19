@@ -4,7 +4,7 @@ A single, citable summary of where the investigation stands: what is **proven**,
 what is a **working hypothesis**, what is **excluded/retracted**, what is **open**,
 and what would **break it open**. Every claim is backed by a self-tested module in
 `noita_eye_core/` (aggregate gate: `python3 noita_eye_core/selftest.py`, currently
-**325/325**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
+**340/340**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
 fingerprint), `report.html` (dashboard), and the per-topic reports in `report/`.
 
 ---
@@ -89,7 +89,8 @@ Each is a calibrated test, not an impression (modules in parentheses):
   fail the structural filter at 0/300 *even on a genuinely-English plant*, so phrase
   failure says nothing about language. Language remains unknown.
 - **Blind phrase-guessing** — near-hopeless: random phrases pass the structural filter
-  at ~0/300 in any language (only the exact repeat-structure passes).
+  at ~0/300 in any language (only the exact repeat-structure passes). Use
+  `refrain_sweep` to filter candidates by template instead.
 
 ## The OPEN problem & what would break it
 
@@ -112,12 +113,14 @@ recovered structure. With it:
 ## The audit chain (reproducibility)
 
 ```bash
-python3 noita_eye_core/selftest.py        # aggregate math gate (325/325)
+python3 noita_eye_core/selftest.py        # aggregate math gate (340/340)
 python3 eyewitness/datastream_check.py    # corpus integrity, 3 independent sources
 python3 eyewitness/binary_provenance.py   # decompiled noita.exe -> corpus 9/9
 python3 eyewitness/shared_structure.py    # model-free triplet/shared-opening map
 python3 eyewitness/model_audit.py         # model verification (honest verdict)
 python3 eyewitness/refrain_template.py    # refrain repeat-template (dof=2; hypothesis)
+python3 eyewitness/keyspace_ledger.py     # block structure -> key/keyspace ledger
+python3 eyecrack/refrain_sweep.py --show-template   # template-guided refrain sweep
 python3 eyes.py                           # menu of all tools + dashboard build
 ```
 

@@ -38,6 +38,8 @@ import provenance
 import refrain
 import ngram_solve
 import order_solve
+import ordering_exhaust
+import refrain_sweep
 import template
 import model_audit
 import shared_structure
@@ -86,6 +88,8 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("refrain", refrain.selftest),
     ("ngram_solve", ngram_solve.selftest),
     ("order_solve", order_solve.selftest),
+    ("ordering_exhaust", ordering_exhaust.selftest),
+    ("refrain_sweep", refrain_sweep.selftest),
     ("template", template.selftest),
     ("model_audit", model_audit.selftest),
     ("shared_structure", shared_structure.selftest),
