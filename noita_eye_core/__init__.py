@@ -43,6 +43,7 @@ refrain      known-position crib attack on the 4x repeated refrain (pins C absol
 ngram_solve  crib-seeded English n-gram solver (pins C from crib, hill-climbs residual + bases)
 order_solve  ordering-search solver (pins C structure ordering-free, hill-climbs ordering O + bases)
 template     refrain repeat-template extractor (forced-same/different/free positions, dof)
+refrain_compose  anchored refrain composer (double-letter map, stacked anchors, wcov-ranked fill)
 model_audit  falsifiable model verification (per-msg-progressive vs pure vs null; honest verdict)
 shared_structure  model-independent shared-plaintext map (triplet openings, repeated passages)
 resync       re-sync test on shared-key near-duplicates (excludes ciphertext-autokey)

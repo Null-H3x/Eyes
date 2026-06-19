@@ -89,6 +89,8 @@ WORKFLOWS = [
                   "--top", "20"]),
     ("EyeCrack — refrain template constraints only", "Attack",
      "eyecrack", ["refrain_sweep.py", "--show-template"]),
+    ("EyeCrack — anchored refrain composer (double-letter map + wcov)", "Attack",
+     "eyecrack", ["refrain_compose.py", "--doubles"]),
     ("EyeCrack — residual ordering exhaust (Phase 2)", "Attack",
      "eyecrack", ["ordering_exhaust.py", "--phrase", "trueknowledgeofthegods"]),
     ("Keyspace ledger (block structure -> key hypotheses)", "Map the structure",

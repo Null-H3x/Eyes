@@ -196,6 +196,29 @@ repeat-pattern passes (~0/300 for random phrases, any language). Productive path
 generate candidates that match the ciphertext's required repeat-template, or find a
 different lever; do **not** run a large blind phrase sweep (English or Finnish).
 
+**Anchored refrain composer (`refrain_compose`).** Turns the dof=2 template into a
+*generative* attack and pins down what the "ABB" block can be. **Structural facts
+(verified):** the entire 22-glyph refrain admits an adjacent **doubled letter ONLY
+at (4,5) [forced] and optionally (6,7) or (7,8)** — every other adjacent pair is
+forced-different, so any candidate plaintext with a double letter anywhere else is
+**dead**. The forced double at (4,5) is the skeleton's `BB`. **Candidate space for
+the double:** all bigrams `aa`–`yy` are structurally allowed there (only `zz`
+excluded), and **161** standalone 3-letter `XYY` words plus **~25,000** words
+(via internal doubles and word *endings* like `-ee/-ll/-ss/-ff/-oo`) can place a
+double at (4,5) — so the double-letter slot **alone is not discriminating**. The
+narrowing levers are: (1) the no-other-doubles rule; (2) the long-range forced-same
+ties (pos 3=13, distance 10; pos 10=16, distance 6); (3) **stacking** multiple
+expected words at mutually-compatible offsets (`compatible_placements`); (4) a
+dictionary **word-coverage (wcov)** gate over a trigram fill (`compose`). **Honest
+result (re-confirmed):** expanding the word/fragment list *widens* the candidate set;
+a character-trigram model still ranks English-*flavoured gibberish* at the top, so
+the composer outputs a ranked SHORTLIST to feed `order_solve`, not a decryption.
+Reading still needs the glyph→char ordering. Example (anchors `god@0`,`see@3`,
+`eye@5`) co-place as `godseeye…`; the wcov fill surfaces `godsee­you…` ("god/gods
+see you", resonant with the in-game "we are watching you"). `refrain_compose.selftest`
+23/23. CLI: `python3 eyecrack/refrain_compose.py --doubles | --offsets W… | --compat
+W… | --anchor W`.
+
 **Refrain repeat-template (`template` / `refrain_template`).** Extracts, ordering-
 free, the structure the 22-glyph refrain forces on its plaintext (GF over
 plaintext-position/base/symbol variables; forced relations found by classify).
@@ -322,7 +345,7 @@ seed search.
 ## Reproduce everything
 
 ```bash
-# math gate — every claim's module selftest (355/355)
+# math gate — every claim's module selftest (378/378)
 python3 noita_eye_core/selftest.py
 
 # structure (run from eyewitness/)
@@ -336,6 +359,8 @@ python3 eyewitness/keyspace_ledger.py        # block structure -> key/keyspace l
 python3 eyewitness/eyescoreboard.py        # cipher candidate ranking (methodology-audited)
 python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
 python3 eyecrack/refrain_sweep.py --wordlist eyestat/noita_wordlist.txt  # template-guided sweep
+python3 eyecrack/refrain_compose.py --doubles   # where doubles are allowed; anchored composer
+python3 eyecrack/refrain_compose.py --compat god see eye  # stacked anchor placements
 python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
 python3 eyecrack/order_solve.py "trueknowledgeofthegods"  # ordering-search solver (recovers O from a crib)
 python3 eyecrack/ordering_exhaust.py --phrase "..."  # residual ordering exhaust (Phase 2)
