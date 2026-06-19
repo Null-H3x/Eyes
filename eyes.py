@@ -93,6 +93,8 @@ WORKFLOWS = [
      "eyecrack", ["ordering_exhaust.py", "--phrase", "trueknowledgeofthegods"]),
     ("Keyspace ledger (block structure -> key hypotheses)", "Map the structure",
      "eyewitness", ["keyspace_ledger.py"]),
+    ("EyeScoreboard — cipher candidate ranking (plant + corpus + premise)", "Map the structure",
+     "eyewitness", ["eyescoreboard.py"]),
     ("Refrain repeat-template (forced same/different positions, dof)", "Map the structure",
      "eyewitness", ["refrain_template.py"]),
     ("Model verification (per-msg-progressive vs null; honest verdict)", "Map the structure",

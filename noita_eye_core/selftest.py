@@ -42,6 +42,7 @@ import ordering_exhaust
 import refrain_sweep
 import template
 import model_audit
+import eyescoreboard
 import shared_structure
 import resync
 import isomorph
@@ -92,6 +93,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("refrain_sweep", refrain_sweep.selftest),
     ("template", template.selftest),
     ("model_audit", model_audit.selftest),
+    ("eyescoreboard", eyescoreboard.selftest),
     ("shared_structure", shared_structure.selftest),
     ("resync", resync.selftest),
 ]
