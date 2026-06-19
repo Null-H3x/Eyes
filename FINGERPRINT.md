@@ -284,7 +284,7 @@ seed search.
 ## Reproduce everything
 
 ```bash
-# math gate — every claim's module selftest (245/245)
+# math gate — every claim's module selftest (340/340)
 python3 noita_eye_core/selftest.py
 
 # structure (run from eyewitness/)
@@ -294,9 +294,12 @@ python3 eyewitness/header_base.py          # header => pure-progressive + progre
 python3 eyewitness/pure_progressive.py     # pure-progressive recovery + decryption attempt (IoC test)
 python3 eyewitness/trifid_scan.py          # digit-level / fractionation (Trifid) analysis of eye-marks
 python3 eyewitness/binary_provenance.py    # decompiled SpawnSecretEyes -> corpus (9/9); needs data/lua/noita.c
+python3 eyewitness/keyspace_ledger.py        # block structure -> key/keyspace ledger
 python3 eyecrack/refrain_attack.py --constraints   # known-position crib attack on the 4x refrain
+python3 eyecrack/refrain_sweep.py --wordlist eyestat/noita_wordlist.txt  # template-guided sweep
 python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
 python3 eyecrack/order_solve.py "trueknowledgeofthegods"  # ordering-search solver (recovers O from a crib)
+python3 eyecrack/ordering_exhaust.py --phrase "..."  # residual ordering exhaust (Phase 2)
 python3 eyewitness/iso_extract.py          # contamination-resistant maximal-aligned isomorphs
 python3 eyewitness/depth_map.py            # provable shared-keystream / true depth
 python3 eyewitness/header_test.py          # (66,5) literal vs keystreamed

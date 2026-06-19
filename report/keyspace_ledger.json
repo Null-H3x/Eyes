@@ -1,0 +1,120 @@
+{
+  "N": 83,
+  "keystream_scope_body": "PER-TRIPLET keystreams \u2014 only within-triplet pairs are in depth (cross z=-0.5, at the uniform baseline); each triplet has its own keystream",
+  "keystream_scope_cross_z": -0.47,
+  "keystream_scope_within_z": 14.65,
+  "keystream_scope_full_cross_z": 5.09,
+  "exploitable_depth": 136,
+  "body_proven_pairs": [
+    {
+      "pair": [
+        "East 1",
+        "West 1"
+      ],
+      "z_body": 20.4,
+      "exploitable": 54
+    },
+    {
+      "pair": [
+        "East 4",
+        "East 5"
+      ],
+      "z_body": 9.4,
+      "exploitable": 82
+    }
+  ],
+  "e1_w1_resync_events": 5,
+  "literal_header_positions": [
+    1,
+    2
+  ],
+  "triplet_near_dup": [
+    {
+      "triplet": 1,
+      "members": [
+        "East 1",
+        "West 1",
+        "East 2"
+      ],
+      "near_dup_pair": [
+        "East 1",
+        "West 1"
+      ],
+      "odd": "East 2",
+      "body_agreement": 0.4444,
+      "edit_runs_z": -7.55
+    },
+    {
+      "triplet": 2,
+      "members": [
+        "West 2",
+        "East 3",
+        "West 3"
+      ],
+      "near_dup_pair": [
+        "West 2",
+        "West 3"
+      ],
+      "odd": "East 3",
+      "body_agreement": 0.0784,
+      "edit_runs_z": -4.76
+    },
+    {
+      "triplet": 3,
+      "members": [
+        "East 4",
+        "West 4",
+        "East 5"
+      ],
+      "near_dup_pair": [
+        "East 4",
+        "East 5"
+      ],
+      "odd": "West 4",
+      "body_agreement": 0.2719,
+      "edit_runs_z": -7.89
+    }
+  ],
+  "surviving_family": "c[m][t] = C[(p[m][t] + base_m + K_g[t]) mod 83]",
+  "hypotheses": [
+    {
+      "id": 1,
+      "name": "Progressive + per-msg bases",
+      "keyspace": "~83^6 with pair clustering",
+      "status": "FITS",
+      "searchable": true
+    },
+    {
+      "id": 2,
+      "name": "General aperiodic K per triplet",
+      "keyspace": "83^300 approx",
+      "status": "FITS",
+      "searchable": false
+    },
+    {
+      "id": 5,
+      "name": "PRNG seed x GAK",
+      "keyspace": "~3.4e11",
+      "status": "MOOT (offline author)",
+      "searchable": false
+    },
+    {
+      "id": 8,
+      "name": "Ciphertext-autokey",
+      "status": "EXCLUDED",
+      "searchable": false
+    },
+    {
+      "id": 9,
+      "name": "Mono/Vigenere/AES/OTP/transposition",
+      "status": "EXCLUDED",
+      "searchable": false
+    }
+  ],
+  "search_priority": [
+    "Per-triplet progressive + clustered bases",
+    "Refrain/template plaintext (pins C)",
+    "Position-0 indicator -> base_m",
+    "General K_g after #1 fails with calibrated null"
+  ]
+}
