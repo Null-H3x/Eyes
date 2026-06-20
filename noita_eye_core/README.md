@@ -10,7 +10,7 @@ directory:
 
 ```bash
 cd noita_eye_core
-python3 selftest.py            # 104 checks across 12 modules (the math gate)
+python3 selftest.py            # aggregate math gate (478 checks; run for current total)
 python3 classify.py            # "what TYPE of cipher is this?" on the real corpus
 python3 classify.py --selftest # ground-truth checks for the classifier alone
 python3 analyze.py             # depth analysis on the real corpus
