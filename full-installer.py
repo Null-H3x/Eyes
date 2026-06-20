@@ -22,8 +22,12 @@ Usage
     python3 full-installer.py --venv .venv    # choose the venv location
 
 Designed to be dependency-free itself (stdlib only) and safe to re-run.  On
-Ubuntu 24.04/26.04 the default venv path sidesteps the PEP 668
-"externally-managed-environment" pip error.
+Ubuntu 24.04/26.04 install OS packages first if Setup fails::
+
+    sudo apt install python3-venv python3-pip
+
+The venv path sidesteps PEP 668 "externally-managed-environment" pip errors.
+If pip is missing inside a new venv, ensurepip bootstraps it automatically.
 """
 from __future__ import annotations
 
@@ -72,6 +76,36 @@ def venv_python(venv_dir: Path) -> Path:
     return venv_dir / "bin" / "python"
 
 
+def debian_python_packages() -> str:
+    maj, min = sys.version_info[:2]
+    return f"python{maj}.{min}-venv python3-pip"
+
+
+def pip_available(py: Path) -> bool:
+    r = subprocess.run([str(py), "-m", "pip", "--version"],
+                       capture_output=True, text=True)
+    return r.returncode == 0
+
+
+def ensure_pip(py: Path) -> None:
+    """Bootstrap pip when the interpreter has none (common on Ubuntu 26.04+)."""
+    if pip_available(py):
+        return
+    print("  pip not found — bootstrapping with ensurepip ...")
+    r = subprocess.run([str(py), "-m", "ensurepip", "--upgrade"],
+                       capture_output=True, text=True)
+    if r.returncode == 0 and pip_available(py):
+        return
+    err = ((r.stderr or "") + (r.stdout or "")).strip()
+    tail = err.splitlines()[-1] if err else "ensurepip failed"
+    raise RuntimeError(
+        f"pip is not available in {py}. On Ubuntu/Debian install:\n"
+        f"    sudo apt install {debian_python_packages()}\n"
+        f"  Then re-run: python3 full-installer.py\n"
+        f"  ({tail})"
+    )
+
+
 def ensure_venv(venv_dir: Path) -> Path:
     py = venv_python(venv_dir)
     if py.exists():
@@ -95,15 +129,22 @@ def ensure_venv(venv_dir: Path) -> Path:
         raise RuntimeError(f"venv creation failed: {tail}") from e
     if not py.exists():
         raise RuntimeError(f"venv creation did not produce {py}")
+    ensure_pip(py)
     return py
 
 
-def pip_install(py: Path, packages: List[str]) -> None:
-    print(f"  upgrading pip ...")
-    subprocess.run([str(py), "-m", "pip", "install", "--upgrade", "pip"],
-                   check=False)
+def pip_install(py: Path, packages: List[str], *, no_venv: bool = False) -> None:
+    ensure_pip(py)
+    pip_flags: List[str] = []
+    if no_venv:
+        # PEP 668: Debian/Ubuntu system Python is externally managed.
+        pip_flags.append("--user")
+    print("  upgrading pip ...")
+    subprocess.run([str(py), "-m", "pip", "install", *pip_flags,
+                    "--upgrade", "pip"], check=False)
     print(f"  installing: {', '.join(packages)}")
-    subprocess.run([str(py), "-m", "pip", "install", *packages], check=True)
+    subprocess.run([str(py), "-m", "pip", "install", *pip_flags, *packages],
+                   check=True)
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +252,7 @@ def main() -> int:
         except Exception as e:
             print(_c(f"  ERROR creating venv: {e}", C_RED))
             maj, min = sys.version_info[:2]
-            print(f"  Tip: `sudo apt install python{maj}.{min}-venv` "
+            print(f"  Tip: `sudo apt install python{maj}.{min}-venv python3-pip` "
                   "or re-run with --no-venv.")
             return 2
 
@@ -222,12 +263,17 @@ def main() -> int:
         banner("[2/3] Dependencies")
         deps = list(BASE_DEPS) + (GPU_DEPS if args.gpu else [])
         try:
-            pip_install(py, deps)
+            pip_install(py, deps, no_venv=args.no_venv)
         except subprocess.CalledProcessError as e:
             print(_c(f"  ERROR installing dependencies: {e}", C_RED))
+            maj, min = sys.version_info[:2]
+            print(f"  Tip: `sudo apt install python{maj}.{min}-venv python3-pip`")
             if args.gpu:
                 print("  Tip: CuPy needs the NVIDIA open driver + CUDA 12.8+ "
                       "for Blackwell (RTX 50xx). Verify `nvidia-smi` first.")
+            return 2
+        except RuntimeError as e:
+            print(_c(f"  ERROR: {e}", C_RED))
             return 2
 
     # 3. Smoke test.
