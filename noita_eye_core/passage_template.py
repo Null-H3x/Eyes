@@ -32,23 +32,124 @@ def _sk(seq: Sequence[int]) -> Tuple[int, ...]:
     return tuple(first.setdefault(int(v), i) for i, v in enumerate(seq))
 
 
+def _collision_pair_sets(messages, instances: Sequence[Tuple[int, int]], L: int,
+                         N: int) -> List[Tuple[Tuple[int, int, int], ...]]:
+    """Per-instance sorted collision triples."""
+    sets: List[Tuple[Tuple[int, int, int], ...]] = []
+    for m, pos in instances:
+        if pos + L > len(messages[m]):
+            return []
+        seg = messages[m][pos:pos + L]
+        first: Dict[int, int] = {}
+        pairs: List[Tuple[int, int, int]] = []
+        for i, v in enumerate(seg):
+            v = int(v)
+            if v in first:
+                j = first[v]
+                pairs.append((j, i, (i - j) % N))
+            else:
+                first[v] = i
+        sets.append(tuple(sorted(pairs)))
+    return sets
+
+
+def collisions_cross_instance_match(messages, instances: Sequence[Tuple[int, int]],
+                                    L: int, N: int = 83) -> bool:
+    """True iff every instance yields the same collision triple set."""
+    sets = _collision_pair_sets(messages, instances, L, N)
+    if not sets or len(instances) == 0:
+        return len(instances) == 0
+    return len(set(sets)) == 1
+
+
 def collision_constraints(messages, instances: Sequence[Tuple[int, int]],
                           L: int, N: int = 83) -> List[Tuple[int, int, int]]:
-    """Ordering-independent plaintext value ties from ciphertext symbol repeats
-    within one instance: ``p[j] = p[i] - (j-i)`` for repeated symbol at i,j."""
-    if not instances:
+    """Ordering-independent plaintext value ties from ciphertext symbol repeats.
+
+    Under per-message-progressive, equal ciphertext at relative positions ``i`` and
+    ``j`` within one instance forces ``p[j] = p[i] - (j-i) (mod N)``.
+
+    When all instances share the same plaintext (certified target), every instance
+    must yield the **same** collision set; otherwise returns ``[]``.
+    """
+    sets = _collision_pair_sets(messages, instances, L, N)
+    if not sets or len(set(sets)) != 1:
         return []
-    m, pos = instances[0]
-    seg = messages[m][pos:pos + L]
-    first: Dict[int, int] = {}
-    out: List[Tuple[int, int, int]] = []
-    for i, v in enumerate(seg):
-        v = int(v)
-        if v in first:
-            j = first[v]
-            out.append((j, i, (i - j) % N))
-        else:
-            first[v] = i
+    return list(sets[0])
+
+
+def collision_dsu(messages, instances: Sequence[Tuple[int, int]], L: int,
+                    N: int = 83) -> bool:
+    """Return True iff every instance yields a non-contradictory collision DSU."""
+    if not instances:
+        return False
+    for m, pos in instances:
+        if pos + L > len(messages[m]):
+            return False
+        d = __import__("isomorph", fromlist=["OffsetDSU"]).OffsetDSU(N)
+        occ: Dict[int, int] = {}
+        for k in range(L):
+            sym = int(messages[m][pos + k])
+            if sym in occ:
+                if not d.union(occ[sym], k, (occ[sym] - k) % N):
+                    return False
+            else:
+                occ[sym] = k
+    return True
+
+
+def verify_collisions_vs_template(messages, instances: Sequence[Tuple[int, int]],
+                                  tmpl: tp.Template, N: int) -> List[Tuple[str, bool]]:
+    """Cross-check ciphertext collisions against the extracted template GF."""
+    out: List[Tuple[str, bool]] = []
+    if not tmpl.consistent:
+        return out
+    gf, _ = tp._build_gf(messages, list(instances), tmpl.L, N)
+    if gf is None:
+        out.append(("template GF rebuild", False))
+        return out
+    out.append(("template GF rebuild", True))
+    out.append(("collisions cross-instance pair-set match",
+                collisions_cross_instance_match(messages, instances, tmpl.L, N)))
+    cols = collision_constraints(messages, instances, tmpl.L, N)
+    for i, j, gap in cols:
+        # p[j] = p[i] - gap  <=>  p[i] - p[j] = gap
+        cls = gf.classify({i: 1, j: (N - 1) % N}, gap % N)
+        out.append((f"collision ({i},{j}) gap={gap} implied by template",
+                    cls == "redundant"))
+    for grp in tmpl.same_groups:
+        for a in range(len(grp)):
+            for b in range(a + 1, len(grp)):
+                i, j = grp[a], grp[b]
+                cls = gf.classify({i: 1, j: (N - 1) % N}, 0)
+                out.append((f"same_group ({i},{j}) forced equal in template",
+                            cls == "redundant"))
+    dsu = collision_dsu(messages, instances, tmpl.L, N)
+    out.append(("collision OffsetDSU per-instance consistent", dsu))
+    return out
+
+
+def verify_extend_consistent(messages, instances: Sequence[Tuple[int, int]],
+                             start_L: int, N: int, max_extra: int = 40
+                             ) -> List[Tuple[str, bool]]:
+    """Verify extend_length monotonicity and final template agreement."""
+    out: List[Tuple[str, bool]] = []
+    max_L, steps = extend_length(messages, instances, start_L, N, max_extra=max_extra)
+    out.append(("extend: at least one step recorded", len(steps) >= 1))
+    out.append(("extend: step L values strictly increase when multiple",
+                all(steps[i].L < steps[i + 1].L for i in range(len(steps) - 1))))
+    consistent_steps = [s for s in steps if s.consistent]
+    if consistent_steps:
+        out.append(("extend: max_L equals last consistent step",
+                    max_L == consistent_steps[-1].L))
+        tmpl = tp.extract(messages, list(instances), max_L, N)
+        out.append(("extend: template at max_L is consistent",
+                    tmpl.consistent and max_L > 0))
+        if tmpl.consistent:
+            out.append(("extend: final step dof matches template",
+                        consistent_steps[-1].dof == tmpl.dof))
+    else:
+        out.append(("extend: no consistent length", max_L == 0))
     return out
 
 
@@ -165,7 +266,7 @@ def extend_length(messages, instances: Sequence[Tuple[int, int]], start_L: int,
                   N: int, max_extra: int = 40) -> Tuple[int, List[LengthStep]]:
     """Increase L from ``start_L`` until ``template.extract`` contradicts."""
     steps: List[LengthStep] = []
-    max_L = start_L
+    max_L = 0
     for extra in range(max_extra + 1):
         L = start_L + extra
         if any(p + L > len(messages[m]) for m, p in instances):
@@ -217,6 +318,8 @@ def analyze_target(messages, target: PassageTarget, N: int,
     """Run extend-length + template extraction for one target."""
     max_L, steps = extend_length(messages, target.instances, target.base_length,
                                  N, max_extra=max_extra)
+    if max_L <= 0:
+        return PassageAnalysis(target, 0, None, steps, [])
     tmpl = tp.extract(messages, target.instances, max_L, N)
     cols = collision_constraints(messages, target.instances, max_L, N)
     return PassageAnalysis(target, max_L, tmpl if tmpl.consistent else None,
@@ -270,7 +373,13 @@ def validate_phrase(target: PassageTarget, phrase: str, messages, N: int,
             value_null=rv.null_rate,
             verdict=verdict,
         )
-        if best is None or (rv.consistent and rv.extends_corpus):
+
+        def _rank(v: CribValidation) -> Tuple[bool, bool, float]:
+            return (bool(v.value_consistent and v.extends_corpus),
+                    bool(v.value_consistent),
+                    -(v.value_null or 1.0))
+
+        if best is None or _rank(cand) > _rank(best):
             best = cand
     return best
 
@@ -298,7 +407,8 @@ def validate_phrases(analyses: Sequence[PassageAnalysis], phrases: Sequence[str]
 def format_collision_line(cols: Sequence[Tuple[int, int, int]]) -> str:
     if not cols:
         return "(none)"
-    return ", ".join(f"p[{j}]=p[{i}]-{gap}" for i, j, gap in cols)
+    parts = [f"p[{j}]=p[{i}]-{gap}" for i, j, gap in sorted(cols)]
+    return ", ".join(parts)
 
 
 def render_report(analyses: Sequence[PassageAnalysis],
@@ -334,8 +444,10 @@ def render_report(analyses: Sequence[PassageAnalysis],
             lines.append(f"- **free positions:** {tmpl.free_positions}")
             lines.append(f"- **skeleton:** `{tp.skeleton_string(tmpl)}`")
             lines.append(f"- **collisions (mod 83):** {format_collision_line(a.collisions)}")
+        elif a.max_L == 0:
+            lines.append("- **INCONSISTENT** at base length (max L=0)")
         else:
-            lines.append("- **INCONSISTENT** at base length")
+            lines.append("- **INCONSISTENT** under per-msg-progressive at max extend")
         if len(a.steps) > 1:
             lines.append("")
             lines.append("| L | dof | same groups | skeleton |")
@@ -388,6 +500,28 @@ def run_paranoia_audit(messages, labels: Sequence[str], N: int) -> List[Tuple[st
                 refrain is not None and refrain.max_template is not None and
                 len(refrain.max_template.same_groups) == 3))
 
+    if refrain is not None and refrain.max_template is not None:
+        out.extend(verify_collisions_vs_template(
+            messages, refrain.target.instances, refrain.max_template, N))
+        out.extend(verify_extend_consistent(
+            messages, refrain.target.instances, refrain.target.base_length, N,
+            max_extra=15))
+        cols = collision_constraints(messages, refrain.target.instances,
+                                     refrain.max_L, N)
+        ra_pairs = []
+        m0, p0 = refrain.target.instances[0]
+        seg = messages[m0][p0:p0 + refrain.max_L]
+        first: Dict[int, int] = {}
+        for i, v in enumerate(seg):
+            v = int(v)
+            if v in first:
+                ra_pairs.append((first[v], i))
+            else:
+                first[v] = i
+        ra_line = format_collision_line([(i, j, (j - i) % N) for i, j in ra_pairs])
+        pt_line = format_collision_line(cols)
+        out.append(("collisions match refrain_attack format", ra_line == pt_line))
+
     for a in analyses:
         if not a.steps:
             out.append((f"{a.target.name}: has extend steps", False))
@@ -395,17 +529,22 @@ def run_paranoia_audit(messages, labels: Sequence[str], N: int) -> List[Tuple[st
         out.append((f"{a.target.name}: extend steps monotonic in L",
                     all(a.steps[i].L < a.steps[i + 1].L
                         for i in range(len(a.steps) - 1))))
+        if a.max_L == 0:
+            out.append((f"{a.target.name}: inconsistent at base (max_L=0)", True))
+            continue
         if a.max_template:
             out.append((f"{a.target.name}: max_L template consistent", True))
             for g in a.max_template.same_groups:
                 out.append((f"{a.target.name}: same_group in range",
                             all(0 <= p < a.max_L for p in g)))
-            for i, j, _ in a.collisions:
+            for i, j, gap in a.collisions:
                 out.append((f"{a.target.name}: collision i<j", i < j))
-        for st in a.steps:
-            if st.consistent and st.L == a.max_L:
-                out.append((f"{a.target.name}: final step dof matches template",
-                            st.dof == a.max_template.dof))
+                out.append((f"{a.target.name}: collision gap mod N valid",
+                            0 < gap < N))
+            for st in a.steps:
+                if st.consistent and st.L == a.max_L:
+                    out.append((f"{a.target.name}: final step dof matches template",
+                                st.dof == a.max_template.dof))
 
     # Stage 6: wrong phrase must not extend corpus on refrain (sharp gate)
     if refrain is not None:
@@ -458,6 +597,19 @@ def selftest() -> List[Tuple[str, bool]]:
     out.append(("analyze produces max_template", ana.max_template is not None))
     out.append(("collision_constraints returns list",
                 isinstance(ana.collisions, list)))
+    if ana.max_template:
+        tmpl0 = tp.extract(msgs, region, L0, N)
+        out.extend(verify_collisions_vs_template(msgs, region, tmpl0, N))
+        out.extend(verify_extend_consistent(msgs, region, L0, N, max_extra=8))
+
+    # Cross-instance mismatch must not emit constraints
+    bad = [list(row) for row in msgs]
+    bad[1][45] = (bad[1][45] + 1) % N  # corrupt rel index 5 in instance (1,40)
+    out.append(("collision mismatch across instances -> empty",
+                not collisions_cross_instance_match(bad, region, L0, N)
+                and collision_constraints(bad, region, L0, N) == []))
+    out.append(("collision_dsu still per-instance ok on mismatch",
+                collision_dsu(bad, region, L0, N)))
 
     # discover dedup: refrain + extract on plant won't have refrain but discover works
     # discover on tiny plant may return 0 (needs rich internal repeat skeletons);

@@ -4,7 +4,7 @@ A single, citable summary of where the investigation stands: what is **proven**,
 what is a **working hypothesis**, what is **excluded/retracted**, what is **open**,
 and what would **break it open**. Every claim is backed by a self-tested module in
 `noita_eye_core/` (aggregate gate: `python3 noita_eye_core/selftest.py`, currently
-**474/474**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
+**474/478** (passage_template adds 100 checks + paranoia audit)) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
 fingerprint), `report.html` (dashboard), and the per-topic reports in `report/`.
 
 ---
@@ -143,7 +143,7 @@ recovered structure. With it:
 ## The audit chain (reproducibility)
 
 ```bash
-python3 noita_eye_core/selftest.py        # aggregate math gate (474/474)
+python3 noita_eye_core/selftest.py        # aggregate math gate (478/478)
 python3 eyewitness/datastream_check.py    # corpus integrity, 3 independent sources
 python3 eyewitness/binary_provenance.py   # decompiled noita.exe -> corpus 9/9
 python3 eyewitness/shared_structure.py    # model-free triplet/shared-opening map

@@ -345,7 +345,7 @@ seed search.
 ## Reproduce everything
 
 ```bash
-# math gate — every claim's module selftest (474/474)
+# math gate — every claim's module selftest (478/478)
 python3 noita_eye_core/selftest.py
 
 # structure (run from eyewitness/)
@@ -362,7 +362,7 @@ python3 eyecrack/refrain_sweep.py --wordlist eyestat/noita_wordlist.txt  # templ
 python3 eyecrack/refrain_compose.py --doubles   # where doubles are allowed; anchored composer
 python3 eyecrack/refrain_compose.py --compat god see eye  # stacked anchor placements
 python3 eyewitness/passage_template.py --html   # discover/extend/template pipeline
-python3 eyewitness/passage_template.py --audit    # paranoia invariants (84 checks)
+python3 eyewitness/passage_template.py --audit    # paranoia invariants (77 checks)
 python3 eyecrack/ngram_solve.py "trueknowledge"    # crib-seeded English n-gram solver
 python3 eyecrack/order_solve.py "trueknowledgeofthegods"  # ordering-search solver (recovers O from a crib)
 python3 eyecrack/ordering_exhaust.py --phrase "..."  # residual ordering exhaust (Phase 2)

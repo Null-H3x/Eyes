@@ -7,14 +7,14 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 ## passage-12-6 (shared_structure)
 
 - **Instances (7):** East 1@36, East 1@64, West 1@36, West 1@66, East 2@41, East 2@76, +1 more
-- **Base L:** 12 → **max consistent L:** 12
-- **INCONSISTENT** at base length
+- **Base L:** 12 → **max consistent L:** 0
+- **INCONSISTENT** at base length (max L=0)
 
 ## passage-15-2 (shared_structure)
 
 - **Instances (6):** East 1@42, East 1@70, West 1@42, West 1@72, East 2@47, East 2@82
-- **Base L:** 15 → **max consistent L:** 15
-- **INCONSISTENT** at base length
+- **Base L:** 15 → **max consistent L:** 0
+- **INCONSISTENT** at base length (max L=0)
 
 ## refrain-4x (refrain)
 
@@ -23,7 +23,7 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 - **dof:** 2 · **forced-SAME groups:** [[3, 13], [4, 5], [10, 16]]
 - **free positions:** [7]
 - **skeleton:** `???ABB?.??C??A??C?????`
-- **collisions (mod 83):** p[13]=p[10]-80, p[15]=p[8]-76, p[16]=p[12]-79, p[18]=p[9]-74, p[19]=p[2]-66
+- **collisions (mod 83):** p[19]=p[2]-17, p[15]=p[8]-7, p[18]=p[9]-9, p[13]=p[10]-3, p[16]=p[12]-4
 
 | L | dof | same groups | skeleton |
 |---:|---:|---:|---|
@@ -36,7 +36,7 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 - **dof:** 3 · **forced-SAME groups:** []
 - **free positions:** []
 - **skeleton:** `???????????????????????`
-- **collisions (mod 83):** p[6]=p[3]-80, p[8]=p[1]-76, p[9]=p[5]-79, p[11]=p[2]-74, p[20]=p[15]-78
+- **collisions (mod 83):** (none)
 
 | L | dof | same groups | skeleton |
 |---:|---:|---:|---|
@@ -54,7 +54,7 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 - **dof:** 2 · **forced-SAME groups:** [[6, 18], [11, 23]]
 - **free positions:** []
 - **skeleton:** `??????A????B??????A????B`
-- **collisions (mod 83):** p[7]=p[4]-80, p[9]=p[2]-76, p[10]=p[6]-79, p[12]=p[3]-74, p[21]=p[16]-78
+- **collisions (mod 83):** (none)
 
 | L | dof | same groups | skeleton |
 |---:|---:|---:|---|
@@ -76,7 +76,7 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 - **dof:** 4 · **forced-SAME groups:** []
 - **free positions:** [4]
 - **skeleton:** `????.???????????????????????`
-- **collisions (mod 83):** p[5]=p[1]-79, p[11]=p[1]-73, p[15]=p[7]-75, p[21]=p[6]-68, p[22]=p[18]-79, p[24]=p[19]-78
+- **collisions (mod 83):** (none)
 
 | L | dof | same groups | skeleton |
 |---:|---:|---:|---|
@@ -102,7 +102,7 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 - **dof:** 1 · **forced-SAME groups:** []
 - **free positions:** []
 - **skeleton:** `??????????????????????????????`
-- **collisions (mod 83):** p[9]=p[2]-76, p[11]=p[1]-73, p[12]=p[4]-75, p[15]=p[2]-70, p[18]=p[6]-71, p[27]=p[23]-79
+- **collisions (mod 83):** (none)
 
 | L | dof | same groups | skeleton |
 |---:|---:|---:|---|
@@ -130,7 +130,7 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 - **dof:** 13 · **forced-SAME groups:** [[0, 28], [1, 29], [2, 30], [11, 12]]
 - **free positions:** [4, 15, 17, 18, 24, 27]
 - **skeleton:** `ABC?.??????DD??.?..?????.??.ABC`
-- **collisions (mod 83):** p[6]=p[3]-80, p[8]=p[1]-76, p[9]=p[5]-79, p[20]=p[10]-73, p[26]=p[13]-70
+- **collisions (mod 83):** (none)
 
 | L | dof | same groups | skeleton |
 |---:|---:|---:|---|
@@ -146,3 +146,31 @@ Model-dependent (per-message-progressive template). Same-plaintext instance site
 | 29 | 14 | 1 | `A???.??????????.?..?????.??.A` |
 | 30 | 14 | 2 | `AB??.??????????.?..?????.??.AB` |
 | 31 | 13 | 4 | `ABC?.??????DD??.?..?????.??.ABC` |
+
+## passage-14-5 (shared_structure)
+
+- **Instances (2):** East 4@54, East 5@55
+- **Base L:** 14 → **max consistent L:** 29
+- **dof:** 25 · **forced-SAME groups:** []
+- **free positions:** [1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28]
+- **skeleton:** `?.?..?..?..?..?....?...?.....`
+- **collisions (mod 83):** (none)
+
+| L | dof | same groups | skeleton |
+|---:|---:|---:|---|
+| 14 | 12 | 0 | `?....?..?..?..` |
+| 15 | 12 | 0 | `?.?..?..?..?..?` |
+| 16 | 13 | 0 | `?.?..?..?..?..?.` |
+| 17 | 14 | 0 | `?.?..?..?..?..?..` |
+| 18 | 15 | 0 | `?.?..?..?..?..?...` |
+| 19 | 16 | 0 | `?.?..?..?..?..?....` |
+| 20 | 17 | 0 | `?.?..?..?..?..?.....` |
+| 21 | 18 | 0 | `?.?..?..?..?..?......` |
+| 22 | 19 | 0 | `?.?..?..?..?..?.......` |
+| 23 | 20 | 0 | `?.?..?..?..?..?........` |
+| 24 | 20 | 0 | `?.?..?..?..?..?....?...?` |
+| 25 | 21 | 0 | `?.?..?..?..?..?....?...?.` |
+| 26 | 22 | 0 | `?.?..?..?..?..?....?...?..` |
+| 27 | 23 | 0 | `?.?..?..?..?..?....?...?...` |
+| 28 | 24 | 0 | `?.?..?..?..?..?....?...?....` |
+| 29 | 25 | 0 | `?.?..?..?..?..?....?...?.....` |
