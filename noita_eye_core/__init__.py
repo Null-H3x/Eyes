@@ -46,6 +46,7 @@ template     refrain repeat-template extractor (forced-same/different/free posit
 refrain_compose  anchored refrain composer (double-letter map, stacked anchors, wcov-ranked fill)
 model_audit  falsifiable model verification (per-msg-progressive vs pure vs null; honest verdict)
 shared_structure  model-independent shared-plaintext map (triplet openings, repeated passages)
+passage_template  discover/extend/template pipeline for repeat anchors + optional crib validation
 resync       re-sync test on shared-key near-duplicates (excludes ciphertext-autokey)
 analyze      real-corpus analysis entry point
 selftest     aggregate math gate
@@ -62,5 +63,5 @@ __all__ = [
     "chain_extract", "cribfit", "headerbase", "pureprog", "trifid",
     "provenance", "refrain", "ngram_solve", "order_solve", "ordering_exhaust",
     "refrain_sweep", "template",
-    "model_audit", "shared_structure", "resync",
+    "model_audit", "shared_structure", "passage_template", "resync",
 ]
