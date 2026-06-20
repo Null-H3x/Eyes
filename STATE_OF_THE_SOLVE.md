@@ -4,7 +4,7 @@ A single, citable summary of where the investigation stands: what is **proven**,
 what is a **working hypothesis**, what is **excluded/retracted**, what is **open**,
 and what would **break it open**. Every claim is backed by a self-tested module in
 `noita_eye_core/` (aggregate gate: `python3 noita_eye_core/selftest.py`, currently
-**474/478** (passage_template adds 100 checks + paranoia audit)) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
+**478/478**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
 fingerprint), `report.html` (dashboard), and the per-topic reports in `report/`.
 
 ---
