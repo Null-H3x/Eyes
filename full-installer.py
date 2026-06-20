@@ -4,7 +4,7 @@
 Creates an isolated virtualenv, installs the dependencies, and runs a short
 functional smoke test across every tool in the repository:
 
-    noita_eye_core   the math gate (478 checks)         [required]
+    noita_eye_core   the math gate (829 checks)         [required]
     classify         cipher-type discriminator           [required]
     EyeWitness       fingerprint + independent verifier + triplet key-test [required]
     EyeCrack         depth/crib-drag + seed-scan demo     [required]
