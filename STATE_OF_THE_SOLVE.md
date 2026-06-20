@@ -155,6 +155,7 @@ python3 eyecrack/refrain_sweep.py --show-template   # template-guided refrain sw
 python3 eyecrack/refrain_compose.py --doubles       # refrain double-letter map + anchored composer
 python3 eyewitness/passage_template.py --html       # discover · extend · template pipeline
 python3 eyewitness/passage_template.py --audit      # paranoia invariants on real corpus
+python3 eyewitness/passage_template_integration.py  # plumbing smoke (26 checks)
 python3 eyes.py                           # menu of all tools + dashboard build
 ```
 

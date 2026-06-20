@@ -154,21 +154,34 @@ def have_venv() -> bool:
     return venv_python().exists()
 
 
-def run(argv, cwd, use_system=False):
+def run(argv, cwd, use_system=False) -> int:
     py = sys.executable if use_system else str(venv_python())
     print(DIM(f"\n$ {Path(py).name} {' '.join(argv)}   (in {cwd})\n"))
     try:
-        subprocess.run([py, *argv], cwd=str(ROOT / cwd))
+        proc = subprocess.run([py, *argv], cwd=str(ROOT / cwd))
+        rc = proc.returncode
     except KeyboardInterrupt:
         print(RED("\n(interrupted)"))
+        rc = 130
     except Exception as e:
         print(RED(f"error: {e}"))
+        rc = 1
     input(DIM("\n[enter] to return to the menu "))
+    return rc
 
 
 def setup():
     print(GOLD("\nBootstrapping environment (venv + dependencies + smoke test)…"))
-    run(["full-installer.py"], ".", use_system=True)
+    rc = run(["full-installer.py"], ".", use_system=True)
+    if rc == 0 and have_venv():
+        print(TEAL("\n  environment ready — menu tools will use .venv"))
+    elif rc != 0:
+        print(RED("\n  Setup did not complete successfully."))
+        if not have_venv():
+            maj, min = sys.version_info[:2]
+            print(DIM(f"  Tip: minimal Ubuntu/Debian VMs often need:"))
+            print(DIM(f"    sudo apt install python{maj}.{min}-venv"))
+            print(DIM(f"  Or run manually: python3 full-installer.py --no-venv"))
 
 
 def open_dashboard():

@@ -4,7 +4,7 @@
 Creates an isolated virtualenv, installs the dependencies, and runs a short
 functional smoke test across every tool in the repository:
 
-    noita_eye_core   the math gate (104 checks)         [required]
+    noita_eye_core   the math gate (478 checks)         [required]
     classify         cipher-type discriminator           [required]
     EyeWitness       fingerprint + independent verifier + triplet key-test [required]
     EyeCrack         depth/crib-drag + seed-scan demo     [required]
@@ -78,7 +78,21 @@ def ensure_venv(venv_dir: Path) -> Path:
         print(_c(f"  venv already present: {venv_dir}", C_DIM))
         return py
     print(f"  creating venv at {venv_dir} ...")
-    subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=True)
+    try:
+        subprocess.run([sys.executable, "-m", "venv", str(venv_dir)],
+                       check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        err = ((e.stderr or "") + (e.stdout or "")).strip()
+        if "ensurepip" in err.lower() or "python3-venv" in err.lower():
+            maj, min = sys.version_info[:2]
+            raise RuntimeError(
+                f"Cannot create venv — OS package python{maj}.{min}-venv is "
+                f"missing (common on minimal Ubuntu/Debian images). "
+                f"Install with: sudo apt install python{maj}.{min}-venv "
+                f"Or re-run with --no-venv to use the current interpreter."
+            ) from e
+        tail = err.splitlines()[-1] if err else str(e)
+        raise RuntimeError(f"venv creation failed: {tail}") from e
     if not py.exists():
         raise RuntimeError(f"venv creation did not produce {py}")
     return py
@@ -128,6 +142,8 @@ def build_tests(quick: bool, gpu: bool, tmp_fp: str) -> List[Test]:
                  ["eyestat_selftest.py"], 900, False),
             Test("EyeSieve self-test", "eyesieve",
                  ["eyesieve_selftest.py"], 900, False),
+            Test("Passage template integration (plumbing)", "eyewitness",
+                 ["passage_template_integration.py"], 600, False),
         ]
     if gpu:
         tests.append(Test("EyeStat GPU probe (CuPy)", "eyestat",
@@ -194,8 +210,9 @@ def main() -> int:
             py = ensure_venv(Path(args.venv))
         except Exception as e:
             print(_c(f"  ERROR creating venv: {e}", C_RED))
-            print("  Tip: install the venv module (e.g. "
-                  "`sudo apt install python3-venv`) or use --no-venv.")
+            maj, min = sys.version_info[:2]
+            print(f"  Tip: `sudo apt install python{maj}.{min}-venv` "
+                  "or re-run with --no-venv.")
             return 2
 
     # 2. Install dependencies.
