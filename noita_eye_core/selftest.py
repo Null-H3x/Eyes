@@ -45,6 +45,7 @@ import template
 import model_audit
 import eyescoreboard
 import shared_structure
+import passage_template
 import resync
 import isomorph
 import prng
@@ -97,6 +98,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("model_audit", model_audit.selftest),
     ("eyescoreboard", eyescoreboard.selftest),
     ("shared_structure", shared_structure.selftest),
+    ("passage_template", passage_template.selftest),
     ("resync", resync.selftest),
 ]
 
