@@ -29,19 +29,19 @@ class WorkflowPhase:
 PHASES: Tuple[WorkflowPhase, ...] = (
     WorkflowPhase(
         "datastream", "01 · Datastream",
-        "Corpus integrity, provenance, deck size", "#58a6ff"),
+        "Corpus integrity, provenance, deck size", "#0ff0fc"),
     WorkflowPhase(
         "family", "02 · Family ID",
-        "Cipher type & structural classification", "#d29922"),
+        "Cipher type & structural classification", "#ff8c00"),
     WorkflowPhase(
         "anchors", "03 · Anchors & templates",
-        "Passage, refrain, viewer patterns", "#c9a227"),
+        "Passage, refrain, viewer patterns", "#9b30ff"),
     WorkflowPhase(
         "attack", "04 · Attack",
-        "Cribs, ordering, seed scans", "#f85149"),
+        "Cribs, ordering, seed scans", "#ff4444"),
     WorkflowPhase(
         "validate", "05 · Validate",
-        "Audits, math gate, integration", "#3fb950"),
+        "Audits, math gate, integration", "#39ff14"),
 )
 
 # Tool title keywords → phase (first match wins).
@@ -171,7 +171,7 @@ def render_workflow_svg(payload: dict, *, width: int = 1100) -> str:
         )
         nodes.append(
             f'<text x="{cx_phase}" y="{y - 6}" text-anchor="middle" '
-            f'font-size="9" fill="#a99c80">{phase["subtitle"]}</text>'
+            f'font-size="9" fill="#4a5060">{phase["subtitle"]}</text>'
         )
         for ti, tool in enumerate(tools):
             x = start_x + ti * step + step // 2
@@ -181,7 +181,7 @@ def render_workflow_svg(payload: dict, *, width: int = 1100) -> str:
                 f'<g class="wf-node" data-num="{tool["num"]}" data-id="{tool["id"]}" '
                 f'role="button" tabindex="0">'
                 f'<rect x="{x - 22}" y="{y - 2}" width="44" height="44" rx="6" '
-                f'fill="#1c160f" stroke="{phase["color"]}" stroke-width="1.2"/>'
+                f'fill="#13131a" stroke="{phase["color"]}" stroke-width="1.2"/>'
                 f'<text x="{x}" y="{y + 14}" text-anchor="middle" font-size="13" '
                 f'fill="{phase["color"]}" font-weight="bold">{num}</text>'
                 f'<title>{tool["seq_label"]} {tool["title"]} — {tool["command"]}</title>'
@@ -189,7 +189,7 @@ def render_workflow_svg(payload: dict, *, width: int = 1100) -> str:
             )
             nodes.append(
                 f'<text x="{x}" y="{y + 58}" text-anchor="middle" font-size="8" '
-                f'fill="#e8dcc0" opacity="0.85">{_escape(short)}</text>'
+                f'fill="#c8d6e0" opacity="0.85">{_escape(short)}</text>'
             )
 
     edges = payload.get("edges", [])
@@ -200,14 +200,14 @@ def render_workflow_svg(payload: dict, *, width: int = 1100) -> str:
             x2, y2 = centers[b]
             edge_lines.append(
                 f'<line x1="{x1}" y1="{y1 + 44}" x2="{x2}" y2="{y2 - 22}" '
-                f'stroke="#3a3220" stroke-width="1.5" marker-end="url(#arrow)"/>'
+                f'stroke="#2a2a3e" stroke-width="1.5" marker-end="url(#arrow)"/>'
             )
 
     return (
         f'<svg class="workflow-svg" viewBox="0 0 {width} {height}" '
         f'role="img" aria-label="EYES investigation workflow">'
         f'<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" '
-        f'orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3a3220"/></marker></defs>'
+        f'orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2a2a3e"/></marker></defs>'
         f'{"".join(edge_lines)}{"".join(nodes)}</svg>'
     )
 
