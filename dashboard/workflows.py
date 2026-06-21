@@ -70,6 +70,28 @@ PRESETS: Tuple[WorkflowPreset, ...] = (
         ),
         tags=("report", "fast"),
     ),
+    WorkflowPreset(
+        id="practice-corpus",
+        title="Practice Corpus Scan",
+        description=(
+            "Dataset-agnostic pipeline for imported or planted practice ciphers: "
+            "infer deck size, classify cipher family, fingerprint structure, "
+            "and map repeats, isomorphs, depth, and shared openings."
+        ),
+        steps=(
+            "validate-infer-deck-size-n-active-corpus-alphabet",
+            "map-cipher-type-what-family-is-this",
+            "map-cipher-fingerprint-keyless-transform-stack-test",
+            "map-repeat-census-stream-vs-block-periodic-transposi",
+            "map-depth-map-how-much-shared-keystream-is-provable",
+            "map-isomorph-chaining-interrelated-alphabets-progres",
+            "map-maximal-aligned-isomorph-extractor-contamination",
+            "map-structural-fingerprint-eyewitness",
+            "map-verify-fingerprint-independent-re-check",
+            "map-model-independent-shared-structure-map-triplet-o",
+        ),
+        tags=("practice", "corpus", "agnostic"),
+    ),
 )
 
 

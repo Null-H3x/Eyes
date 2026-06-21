@@ -458,6 +458,7 @@ class Orchestrator:
             wstate["current_step"] = min(wstate.get("current_step", 0), len(preset_steps))
             wstate["title"] = preset.title
             wstate["description"] = preset.description
+            wstate["tags"] = list(preset.tags)
             wstate["updated_at"] = ISO()
             self._save_state()
             return
@@ -472,6 +473,9 @@ class Orchestrator:
         if wstate.get("description") != preset.description:
             wstate["description"] = preset.description
             changed = True
+        if list(wstate.get("tags") or []) != list(preset.tags):
+            wstate["tags"] = list(preset.tags)
+            changed = True
         if changed:
             wstate["updated_at"] = ISO()
             self._save_state()
@@ -484,6 +488,7 @@ class Orchestrator:
                 "id": workflow_id,
                 "title": preset.title,
                 "description": preset.description,
+                "tags": list(preset.tags),
                 "current_step": 0,
                 "status": "idle",          # idle | running | completed | failed
                 "steps": [
