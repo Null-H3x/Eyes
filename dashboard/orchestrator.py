@@ -180,6 +180,11 @@ class Orchestrator:
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
         try:
+            from dashboard.dataset_store import active_corpus_path
+            env["EYES_CORPUS_PATH"] = str(active_corpus_path())
+        except Exception:
+            pass
+        try:
             with stdout_path.open("w", encoding="utf-8", errors="replace") as out, \
                  stderr_path.open("w", encoding="utf-8", errors="replace") as err:
                 out.write(f"$ {py} {' '.join(tool.argv)}   (in {tool.cwd})\n\n")

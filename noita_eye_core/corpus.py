@@ -12,6 +12,7 @@ JSON so the "single source" claim is enforced by a test, not just asserted.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
@@ -49,7 +50,10 @@ class Corpus:
         return [i for i, ln in enumerate(self.lengths) if ln > t]
 
 
-def load(path: Path | str = DEFAULT_PATH) -> Corpus:
+def load(path: Path | str | None = None) -> Corpus:
+    if path is None:
+        env = os.environ.get("EYES_CORPUS_PATH")
+        path = Path(env) if env else DEFAULT_PATH
     p = Path(path)
     with p.open("r", encoding="utf-8") as f:
         raw = json.load(f)

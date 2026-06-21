@@ -12,6 +12,9 @@ report/ledger.json
 # workbench runtime artifacts
 dashboard/jobs/
 dashboard/data/state.json
+dashboard/data/active_dataset.json
+dashboard/data/active_corpus.json
+dashboard/data/datasets/
 
 # keyscan generated report
 keyscan_report.html

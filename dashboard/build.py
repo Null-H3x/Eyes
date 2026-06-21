@@ -21,6 +21,8 @@ ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
 from dashboard.cipher_validate import catalog as cipher_catalog  # noqa: E402
+from dashboard.dataset_store import get_active, get_active_id, list_datasets  # noqa: E402
+from dashboard.eye_puzzle import analyze_dataset  # noqa: E402
 from dashboard.orchestrator import get_orchestrator, have_venv  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
 from dashboard.workflow_map import annotate_tools, render_workflow_svg, workflow_map_payload  # noqa: E402
@@ -119,18 +121,21 @@ border-radius:6px;border:1px solid #3a3220;background:var(--bg2);color:var(--ink
 .cipher-pos table{width:100%;border-collapse:collapse}
 .cipher-pos th,.cipher-pos td{border:1px solid #3a3220;padding:3px 6px;text-align:center}
 .cipher-pos .ok{color:var(--green)}.cipher-pos .bad{color:var(--red)}
+.dataset-active{margin:10px 0;padding:8px 12px;border-radius:6px;border:1px solid #3a3220;
+background:#2a2215;font-size:.82rem}
+.dataset-active strong{color:var(--gold)}
 footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.78rem}
 """
 
 
 def _collect_snapshot() -> dict:
     sys.path.insert(0, str(ROOT / "noita_eye_core"))
-    import corpus as corpus_mod  # noqa: E402
+    import corpus as corpus_mod  # noqa: E402,E401,F401
 
     tools = annotate_tools(load_tools())
     missing = validate_presets([t["id"] for t in tools])
     orch = get_orchestrator()
-    cor = corpus_mod.load()
+    active = get_active()
     wf = workflow_map_payload()
     return {
         "have_venv": have_venv(),
@@ -138,7 +143,11 @@ def _collect_snapshot() -> dict:
         "workflow_map": wf,
         "workflow_svg": render_workflow_svg(wf),
         "cipher_catalog": cipher_catalog(),
-        "message_labels": list(cor.labels),
+        "message_labels": list(active.labels),
+        "active_dataset_id": get_active_id(),
+        "active_dataset": active.to_dict(include_messages=False),
+        "datasets": list_datasets(),
+        "dataset_analysis": analyze_dataset(active).to_dict(),
         "presets": [
             {"id": p.id, "title": p.title, "description": p.description,
              "steps": list(p.steps), "tags": list(p.tags)}
@@ -194,8 +203,10 @@ def render_html(data: dict) -> str:
   Static snapshot — start the server for live runs:
   <code>python3 dashboard/server.py</code>
 </div>
+<div class="dataset-active" id="dataset-banner">Active dataset: loading…</div>
 <nav class="tabs" role="tablist">
 <button type="button" class="active" data-tab="map">Workflow Map</button>
+<button type="button" data-tab="datasets">Datasets</button>
 <button type="button" data-tab="tools">Tools</button>
 <button type="button" data-tab="ciphers">Known Ciphers</button>
 <button type="button" data-tab="workflows">Workflows</button>
@@ -209,6 +220,73 @@ def render_html(data: dict) -> str:
 <div id="phase-list" class="phase-list"></div>
 </section>
 
+<section id="panel-datasets" class="panel">
+<p class="meta">Import or <strong>plant</strong> eye-puzzle-like ciphertext (N=83). No universal header required — custom sets are first-class. Tool runs use the active dataset via <code>EYES_CORPUS_PATH</code>.</p>
+<div class="cipher-grid">
+<div class="card cipher-form">
+<h3>Active dataset</h3>
+<select id="ds-active-select"></select>
+<button type="button" class="btn primary" id="ds-set-active">Set active</button>
+<button type="button" class="btn" id="ds-analyze">Analyze structure</button>
+<h3>Import ciphertext</h3>
+<label for="ds-import-name">Name</label>
+<input type="text" id="ds-import-name" value="My puzzle corpus">
+<label for="ds-import-format">Format</label>
+<select id="ds-import-format">
+<option value="auto">Auto-detect</option>
+<option value="corpus_json">Corpus JSON</option>
+<option value="lines">Decimal lines (one message per line)</option>
+<option value="glyphs">Glyph lines</option>
+</select>
+<label for="ds-import-n">Deck size N</label>
+<input type="number" id="ds-import-n" value="83" min="2" max="256">
+<label for="ds-import-body">Ciphertext data</label>
+<textarea id="ds-import-body" rows="8" placeholder="# decimals per line, or full corpus.json, or glyph strings&#10;10 20 30 40&#10;Msg2: 15 25 35"></textarea>
+<button type="button" class="btn primary" id="ds-import-btn">Import &amp; activate</button>
+<h3>Plant (convert plaintext → ciphertext)</h3>
+<label for="ds-plant-mode">Cipher mode</label>
+<select id="ds-plant-mode">
+<option value="add">add (Vigenère)</option>
+<option value="sub">sub</option>
+<option value="beaufort">beaufort</option>
+<option value="pure_progressive">pure progressive</option>
+<option value="per_msg_progressive">per-message progressive</option>
+</select>
+<label for="ds-plant-plain">Plaintext messages (one per line; optional Label: values)</label>
+<textarea id="ds-plant-plain" rows="5" placeholder="A: 10 20 30 40&#10;B: 11 21 31 41"></textarea>
+<label for="ds-plant-keys">Per-message keys (one line each, optional)</label>
+<textarea id="ds-plant-keys" rows="2" placeholder="7 3&#10;8 4"></textarea>
+<label for="ds-plant-bases">Per-message bases (JSON array, optional)</label>
+<input type="text" id="ds-plant-bases" placeholder="[0, 3]">
+<label for="ds-plant-header">Inject header symbols (JSON [pos,sym,...] optional)</label>
+<input type="text" id="ds-plant-header" placeholder="[1, 66, 2, 5] for Noita header">
+<button type="button" class="btn primary" id="ds-plant-btn">Plant &amp; activate</button>
+<h3>Quick convert (single message, preview only)</h3>
+<label for="ds-convert-mode">Mode</label>
+<select id="ds-convert-mode">
+<option value="add">add</option>
+<option value="sub">sub</option>
+<option value="beaufort">beaufort</option>
+<option value="pure_progressive">pure progressive</option>
+<option value="per_msg_progressive">per-message progressive</option>
+</select>
+<label for="ds-convert-plain">Plaintext</label>
+<input type="text" id="ds-convert-plain" placeholder="10 20 30 or glyphs">
+<label for="ds-convert-key">Key</label>
+<input type="text" id="ds-convert-key" placeholder="7 3 (optional)">
+<label for="ds-convert-base">Base</label>
+<input type="number" id="ds-convert-base" value="0" min="0" max="82">
+<button type="button" class="btn" id="ds-convert-btn">Convert &amp; show output</button>
+<pre class="terminal" id="ds-convert-out" style="margin-top:8px;min-height:72px">(single-message cipher output)</pre>
+</div>
+<div>
+<div class="meta" id="ds-findings-header">Structure findings</div>
+<pre class="terminal" id="ds-findings">(import or analyze a dataset)</pre>
+<pre class="terminal" id="ds-preview" style="margin-top:10px;min-height:120px">(message preview)</pre>
+</div>
+</div>
+</section>
+
 <section id="panel-tools" class="panel">
 <div class="filter">
 <input type="search" id="tool-search" placeholder="Search tools…" aria-label="Search tools">
@@ -220,7 +298,7 @@ def render_html(data: dict) -> str:
 </section>
 
 <section id="panel-ciphers" class="panel">
-<p class="meta">Test whether your known cipher reproduces the corpus at a message offset. Uses the same <code>cipher_ops</code> combiners as EyeStat/EyeCrack.</p>
+<p class="meta">Validate a known cipher against the <strong>active dataset</strong> (not limited to Noita headers). Plant test data in the Datasets tab, then verify your implementation matches.</p>
 <div class="cipher-grid">
 <div class="cipher-form card">
 <label for="cv-mode">Cipher mode</label>
@@ -408,6 +486,173 @@ function renderWorkflowMap() {{
     block.appendChild(row);
     list.appendChild(block);
   }});
+}}
+
+function renderDatasetBanner(ds) {{
+  const el = document.getElementById("dataset-banner");
+  const a = ds || DATA.active_dataset || {{}};
+  const an = DATA.dataset_analysis || {{}};
+  el.innerHTML = `<strong>Active dataset:</strong> ${{esc(a.name || DATA.active_dataset_id || "?")}}` +
+    ` · ${{a.num_messages || "?"}} msgs · N=${{a.deck_size || 83}}` +
+    (an.has_noita_header ? ` · <span style="color:var(--green)">Noita header</span>` :
+     ` · <span style="color:var(--amber)">no universal 66,5 header</span>`);
+}}
+
+function _fillMessageSelect(selId, labels) {{
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = "";
+  (labels || []).forEach(l => {{
+    const o = document.createElement("option");
+    o.value = l; o.textContent = l;
+    sel.appendChild(o);
+  }});
+  if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+}}
+
+function initDatasets() {{
+  const sel = document.getElementById("ds-active-select");
+  (DATA.datasets || []).forEach(d => {{
+    const o = document.createElement("option");
+    o.value = d.id;
+    o.textContent = d.name + " (" + d.num_messages + " msgs)";
+    if (d.id === DATA.active_dataset_id) o.selected = true;
+    sel.appendChild(o);
+  }});
+  renderDatasetBanner(DATA.active_dataset);
+  _renderDatasetFindings(DATA.dataset_analysis, DATA.active_dataset);
+  document.getElementById("ds-set-active").addEventListener("click", async () => {{
+    try {{
+      const r = await api("/api/datasets/active", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{id: document.getElementById("ds-active-select").value}}),
+      }});
+      await refreshDatasets();
+    }} catch (e) {{ alert(e.message); }}
+  }});
+  document.getElementById("ds-analyze").addEventListener("click", async () => {{
+    try {{
+      const a = await api("/api/datasets/analyze");
+      _renderDatasetFindings(a, DATA.active_dataset);
+    }} catch (e) {{ alert(e.message); }}
+  }});
+  document.getElementById("ds-import-btn").addEventListener("click", async () => {{
+    try {{
+      const r = await api("/api/datasets/import", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{
+          name: document.getElementById("ds-import-name").value,
+          format: document.getElementById("ds-import-format").value,
+          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+          content: document.getElementById("ds-import-body").value,
+          activate: true,
+        }}),
+      }});
+      await refreshDatasets();
+      _renderDatasetFindings(r.analysis, r.dataset);
+    }} catch (e) {{ alert(e.message); }}
+  }});
+  document.getElementById("ds-plant-btn").addEventListener("click", async () => {{
+    try {{
+      let bases = [];
+      const btxt = document.getElementById("ds-plant-bases").value.trim();
+      if (btxt) bases = JSON.parse(btxt);
+      let hdr = null;
+      const htxt = document.getElementById("ds-plant-header").value.trim();
+      if (htxt) hdr = JSON.parse(htxt);
+      const r = await api("/api/datasets/plant", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{
+          name: "Planted " + document.getElementById("ds-plant-mode").value,
+          mode: document.getElementById("ds-plant-mode").value,
+          plaintexts: document.getElementById("ds-plant-plain").value,
+          keys: document.getElementById("ds-plant-keys").value,
+          bases: bases,
+          inject_header: hdr,
+          activate: true,
+        }}),
+      }});
+      await refreshDatasets();
+      _renderDatasetFindings(r.analysis, r.dataset);
+      if (r.preview_glyphs) {{
+        document.getElementById("ds-preview").textContent =
+          r.preview_glyphs.map((g, i) => (r.dataset.labels || [])[i] + ": " + g).join("\\n");
+      }}
+    }} catch (e) {{ alert(e.message); }}
+  }});
+  document.getElementById("ds-convert-btn").addEventListener("click", async () => {{
+    try {{
+      const r = await api("/api/datasets/convert", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{
+          mode: document.getElementById("ds-convert-mode").value,
+          plaintext: document.getElementById("ds-convert-plain").value,
+          key: document.getElementById("ds-convert-key").value,
+          base: parseInt(document.getElementById("ds-convert-base").value, 10) || 0,
+          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+        }}),
+      }});
+      document.getElementById("ds-convert-out").textContent =
+        "mode: " + r.mode + "\\n" +
+        "length: " + r.length + "\\n" +
+        "glyphs: " + r.glyphs + "\\n" +
+        "decimal: " + r.decimal;
+    }} catch (e) {{ alert(e.message); }}
+  }});
+}}
+
+function _renderDatasetFindings(analysis, meta) {{
+  if (!analysis) return;
+  const lines = [
+    "deck_size: " + analysis.deck_size,
+    "messages: " + analysis.num_messages,
+    "total glyphs: " + analysis.total_glyphs,
+    "pooled IoC: " + (analysis.pooled_ioc || 0).toFixed(4),
+    "symbols used: " + analysis.symbol_usage,
+    "has_noita_header: " + analysis.has_noita_header,
+    "universal positions: " + (analysis.universal_positions || []).length,
+  ];
+  (analysis.universal_positions || []).slice(0, 12).forEach(u => {{
+    lines.push("  @" + u.position + " = " + u.symbol + " (" + u.glyph + ")");
+  }});
+  (analysis.eye_puzzle_notes || []).forEach(n => lines.push("note: " + n));
+  document.getElementById("ds-findings").textContent = lines.join("\\n");
+  document.getElementById("ds-findings-header").textContent =
+    "Structure findings — " + (meta && meta.name ? meta.name : "active");
+}}
+
+async function refreshDatasets() {{
+  try {{
+    const pack = await api("/api/datasets");
+    DATA.datasets = pack.datasets;
+    DATA.active_dataset_id = pack.active_id;
+    DATA.active_dataset = pack.active;
+    const full = await api("/api/datasets/active");
+    DATA.dataset_analysis = full.analysis;
+    DATA.message_labels = full.labels || DATA.message_labels;
+    const sel = document.getElementById("ds-active-select");
+    sel.innerHTML = "";
+    DATA.datasets.forEach(d => {{
+      const o = document.createElement("option");
+      o.value = d.id; o.textContent = d.name + " (" + d.num_messages + " msgs)";
+      if (d.id === DATA.active_dataset_id) o.selected = true;
+      sel.appendChild(o);
+    }});
+    renderDatasetBanner(DATA.active_dataset);
+    _fillMessageSelect("cv-message", DATA.message_labels);
+    if (full.preview_glyphs) {{
+      document.getElementById("ds-preview").textContent =
+        full.preview_glyphs.map((g, i) => (full.labels || [])[i] + ": " + g).join("\\n");
+    }}
+    _renderDatasetFindings(full.analysis, full);
+  }} catch (_) {{
+    renderDatasetBanner(DATA.active_dataset);
+  }}
 }}
 
 function initCipherForm() {{
@@ -608,6 +853,7 @@ async function refreshAll() {{
     activeJobId = snap.active_job_id || activeJobId;
     const wfs = await api("/api/workflows");
     DATA.workflows = wfs;
+    await refreshDatasets();
     renderJobs(DATA.jobs);
     renderWorkflows(DATA.workflows);
     if (activeJobId) await selectJob(activeJobId);
@@ -616,6 +862,7 @@ async function refreshAll() {{
   }} catch (_) {{
     renderJobs(DATA.jobs);
     renderWorkflows(DATA.workflows);
+    renderDatasetBanner(DATA.active_dataset);
     if (activeJobId) {{
       const j = DATA.jobs.find(x => x.id === activeJobId);
       if (j) {{
@@ -640,11 +887,13 @@ document.getElementById("btn-refresh-jobs").addEventListener("click", refreshAll
 
 initTabs();
 renderWorkflowMap();
+initDatasets();
 renderTools();
 initCipherForm();
 renderWorkflows(DATA.workflows);
 renderJobs(DATA.jobs);
 renderLinks();
+renderDatasetBanner(DATA.active_dataset);
 serverLive().then(live => {{
   if (live) {{ refreshAll(); startPolling(); }}
   else {{

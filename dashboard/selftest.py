@@ -33,6 +33,8 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
 
     from dashboard.build import _collect_snapshot, render_html
     from dashboard.cipher_validate import selftest as cv_selftest
+    from dashboard.dataset_store import get_active_id, list_datasets
+    from dashboard.eye_puzzle import selftest as ep_selftest
     from dashboard.workflow_map import workflow_map_payload
 
     data = _collect_snapshot()
@@ -40,11 +42,17 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("build render_html non-empty", len(html) > 5000))
     out.append(("build HTML includes workflow map tab", "panel-map" in html))
     out.append(("build HTML includes cipher tab", "panel-ciphers" in html))
+    out.append(("build HTML includes datasets tab", "panel-datasets" in html))
     out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) >= 5))
     out.append(("tools have global numbers", all("num" in t for t in data["tools"])))
+    out.append(("active dataset in snapshot", data.get("active_dataset_id") is not None))
+    out.append(("dataset list includes builtin", any(
+        d["id"] == "noita-eye-corpus" for d in list_datasets())))
 
     cv = cv_selftest()
     out.append(("cipher_validate selftest", all(ok for _, ok in cv)))
+    ep = ep_selftest()
+    out.append(("eye_puzzle selftest", all(ok for _, ok in ep)))
 
     # Optional live run when venv exists (fast tool only)
     if have_venv() and not quick:
