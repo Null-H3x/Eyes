@@ -259,14 +259,20 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 if action == "step":
                     try:
                         st = orch.run_workflow_step(
-                            wf_id, dataset_id=body.get("dataset_id"))
+                            wf_id,
+                            dataset_id=body.get("dataset_id"),
+                            continue_on_fail=body.get("continue_on_fail"),
+                        )
                         return _json_response(self, 200, st)
                     except (KeyError, RuntimeError) as e:
                         return _json_response(self, 409, {"error": str(e)})
                 if action == "auto":
                     try:
                         orch.run_workflow_auto(
-                            wf_id, dataset_id=body.get("dataset_id"))
+                            wf_id,
+                            dataset_id=body.get("dataset_id"),
+                            continue_on_fail=body.get("continue_on_fail"),
+                        )
                         st = orch.get_workflow(wf_id)
                         return _json_response(self, 200, st)
                     except KeyError as e:

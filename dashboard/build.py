@@ -113,7 +113,10 @@ background:var(--panel)}
 .wf-steps li.failed{border-color:var(--red);background:rgba(255,68,68,.06)}
 .status{font-size:.75rem;font-family:var(--mono)}
 .status.running{color:var(--cyan)}.status.completed{color:var(--green)}
+.status.completed_with_failures{color:var(--orange)}
 .status.failed{color:var(--red)}.status.pending{color:var(--dim)}
+.wf-continue{font-size:.72rem;color:var(--dim);display:flex;align-items:center;gap:6px;margin:8px 0}
+.wf-continue input{accent-color:var(--cyan);width:auto}
 .layout-split{display:grid;grid-template-columns:320px 1fr;gap:16px;min-height:420px}
 @media(max-width:900px){.layout-split{grid-template-columns:1fr}}
 .job-list{max-height:520px;overflow:auto}
@@ -442,6 +445,11 @@ async function ensureActiveDataset() {{
 async function _runPayload(extra = {{}}) {{
   const dataset_id = await ensureActiveDataset();
   return dataset_id ? {{...extra, dataset_id}} : extra;
+}}
+
+function _workflowContinueChecked(wfId) {{
+  const el = document.querySelector('input.wf-continue-toggle[data-id="' + wfId + '"]');
+  return el ? el.checked : true;
 }}
 
 function updateCorpusBanners(ds) {{
@@ -967,7 +975,9 @@ function renderWorkflows(wflows) {{
   grid.innerHTML = "";
   (wflows || DATA.workflows).forEach(wf => {{
     const done = wf.steps.filter(s => s.status === "completed").length;
+    const failed = wf.steps.filter(s => s.status === "failed").length;
     const total = wf.steps.length;
+    const cont = wf.continue_on_fail !== false;
     const steps = wf.steps.map((s, i) => {{
       const tool = DATA.tools.find(t => t.id === s.tool_id);
       const title = tool ? tool.title : s.tool_id;
@@ -979,7 +989,10 @@ function renderWorkflows(wflows) {{
     el.innerHTML = `
       <h3>${{esc(wf.title)}}</h3>
       <p class="meta">${{esc(wf.description || "")}}</p>
-      <p class="meta">Progress: ${{done}} / ${{total}} · status: <span class="status ${{esc(wf.status)}}">${{esc(wf.status)}}</span></p>
+      <p class="meta">Progress: ${{done}} / ${{total}} done${{failed ? " · " + failed + " failed" : ""}}
+        · status: <span class="status ${{esc(wf.status)}}">${{esc(wf.status)}}</span></p>
+      <label class="wf-continue"><input type="checkbox" class="wf-continue-toggle" data-id="${{esc(wf.id)}}"
+        ${{cont ? "checked" : ""}}> Continue on failure (skip to next scan)</label>
       <ul class="wf-steps">${{steps}}</ul>
       <button type="button" class="btn primary wf-next" data-id="${{esc(wf.id)}}">Run next step</button>
       <button type="button" class="btn wf-auto" data-id="${{esc(wf.id)}}">Run all</button>
@@ -1031,7 +1044,7 @@ async function runTool(id) {{
 
 async function wfStep(id) {{
   try {{
-    const payload = await _runPayload();
+    const payload = await _runPayload({{continue_on_fail: _workflowContinueChecked(id)}});
     await api("/api/workflows/" + encodeURIComponent(id) + "/step", {{
       method: "POST",
       headers: {{"Content-Type": "application/json"}},
@@ -1043,7 +1056,7 @@ async function wfStep(id) {{
 
 async function wfAuto(id) {{
   try {{
-    const payload = await _runPayload();
+    const payload = await _runPayload({{continue_on_fail: _workflowContinueChecked(id)}});
     await api("/api/workflows/" + encodeURIComponent(id) + "/auto", {{
       method: "POST",
       headers: {{"Content-Type": "application/json"}},

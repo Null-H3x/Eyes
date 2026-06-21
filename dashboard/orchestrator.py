@@ -493,11 +493,29 @@ class Orchestrator:
                 "started_at": None,
                 "updated_at": ISO(),
                 "last_job_id": None,
+                "continue_on_fail": True,
             }
             self._save_state()
         else:
             self._sync_workflow_with_preset(wf[workflow_id], preset)
+            if "continue_on_fail" not in wf[workflow_id]:
+                wf[workflow_id]["continue_on_fail"] = True
+                self._save_state()
         return wf[workflow_id]
+
+    def _apply_workflow_options(
+        self,
+        wstate: dict,
+        *,
+        dataset_id: Optional[str] = None,
+        continue_on_fail: Optional[bool] = None,
+    ) -> None:
+        if dataset_id:
+            wstate["dataset_id"] = dataset_id
+        if continue_on_fail is not None:
+            wstate["continue_on_fail"] = bool(continue_on_fail)
+        if dataset_id is not None or continue_on_fail is not None:
+            self._save_state()
 
     def get_workflow(self, workflow_id: str) -> dict:
         if workflow_id not in preset_by_id():
@@ -514,13 +532,17 @@ class Orchestrator:
         self._save_state()
         return self._workflow_state(workflow_id)
 
-    def run_workflow_step(self, workflow_id: str, *, dataset_id: Optional[str] = None) -> dict:
+    def run_workflow_step(
+        self,
+        workflow_id: str,
+        *,
+        dataset_id: Optional[str] = None,
+        continue_on_fail: Optional[bool] = None,
+    ) -> dict:
         preset = preset_by_id()[workflow_id]
         wstate = self._workflow_state(workflow_id)
-
-        if dataset_id:
-            wstate["dataset_id"] = dataset_id
-            self._save_state()
+        self._apply_workflow_options(
+            wstate, dataset_id=dataset_id, continue_on_fail=continue_on_fail)
 
         blocking = self._active_job_blocks()
         if blocking:
@@ -554,16 +576,21 @@ class Orchestrator:
         self._save_state()
         return wstate
 
-    def run_workflow_auto(self, workflow_id: str, *, dataset_id: Optional[str] = None) -> None:
+    def run_workflow_auto(
+        self,
+        workflow_id: str,
+        *,
+        dataset_id: Optional[str] = None,
+        continue_on_fail: Optional[bool] = None,
+    ) -> None:
         """Background thread: run all pending steps sequentially."""
         with self._lock:
             if workflow_id in self._wf_auto_running:
                 return
             self._wf_auto_running.add(workflow_id)
-        if dataset_id:
-            wstate = self._workflow_state(workflow_id)
-            wstate["dataset_id"] = dataset_id
-            self._save_state()
+        wstate = self._workflow_state(workflow_id)
+        self._apply_workflow_options(
+            wstate, dataset_id=dataset_id, continue_on_fail=continue_on_fail)
 
         def worker():
             try:
@@ -589,8 +616,7 @@ class Orchestrator:
                             break
                         time.sleep(0.5)
                     wstate = self.get_workflow(workflow_id)
-                    if wstate["current_step"] > 0 and wstate["steps"][wstate["current_step"] - 1]["status"] == "failed":
-                        break
+                    # Step failure advances when continue_on_fail is enabled.
                 self.get_workflow(workflow_id)
             finally:
                 with self._lock:
@@ -610,10 +636,18 @@ class Orchestrator:
         step["exit_code"] = rec.exit_code
         step["job_id"] = rec.id
         wf["updated_at"] = ISO()
+        continue_on_fail = wf.get("continue_on_fail", True)
         if rec.exit_code == 0:
             wf["current_step"] = idx + 1
             if wf["current_step"] >= len(wf["steps"]):
-                wf["status"] = "completed"
+                failed = sum(1 for s in wf["steps"] if s["status"] == "failed")
+                wf["status"] = "completed_with_failures" if failed else "completed"
+            else:
+                wf["status"] = "idle"
+        elif continue_on_fail:
+            wf["current_step"] = idx + 1
+            if wf["current_step"] >= len(wf["steps"]):
+                wf["status"] = "completed_with_failures"
             else:
                 wf["status"] = "idle"
         else:
@@ -641,6 +675,34 @@ def selftest() -> List[tuple[str, bool]]:
     out.append(("orchestrator reconciles startup", orch.state.get("active_job_id") is None))
     rec = orch._read_job("not-a-job")
     out.append(("_read_job rejects bad id", rec is None))
+
+    # continue-on-failure advances workflow past failed steps
+    orch.state["workflows"] = {
+        "quick-validate": {
+            "id": "quick-validate",
+            "title": "Quick Validate",
+            "description": "",
+            "current_step": 0,
+            "status": "running",
+            "continue_on_fail": True,
+            "steps": [
+                {"tool_id": "a", "status": "running", "job_id": "j1", "exit_code": None},
+                {"tool_id": "b", "status": "pending", "job_id": None, "exit_code": None},
+            ],
+            "started_at": ISO(),
+            "updated_at": ISO(),
+            "last_job_id": "j1",
+        }
+    }
+    orch._on_workflow_step_done(JobRecord(
+        id="j1", tool_id="a", title="t", group="g", cwd=".", argv=[], command="",
+        status="failed", exit_code=1, workflow_id="quick-validate", workflow_step=0,
+    ))
+    wf = orch.state["workflows"]["quick-validate"]
+    out.append(("continue_on_fail advances step", wf["current_step"] == 1))
+    out.append(("failed step marked", wf["steps"][0]["status"] == "failed"))
+    out.append(("workflow stays idle for next step", wf["status"] == "idle"))
+
     return out
 
 
