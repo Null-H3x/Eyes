@@ -9,6 +9,10 @@ venv/
 # report runtime ledger
 report/ledger.json
 
+# workbench runtime artifacts
+dashboard/jobs/
+dashboard/data/state.json
+
 # keyscan generated report
 keyscan_report.html
 

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EYES Workbench</title>
+<style>
+:root{--bg:#0f0d0a;--bg2:#17130d;--panel:#1c160f;--ink:#e8dcc0;--dim:#a99c80;
+--gold:#c9a227;--teal:#4ec9b0;--red:#f85149;--blue:#58a6ff;--amber:#d29922;
+--green:#3fb950;--term-bg:#0a0c0f;--term-ink:#c9d1d9;--term-gold:#e3b341;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#241c11,#0f0d0a 70%);
+color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.5}
+a{color:var(--gold)}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 18px 80px}
+header{text-align:center;border-bottom:1px solid #3a3220;padding-bottom:16px;margin-bottom:20px}
+header h1{font-size:2rem;letter-spacing:.14em;margin:.2em 0;color:var(--gold);
+text-shadow:0 0 16px rgba(201,162,39,.3)}
+header .sub{color:var(--dim);font-style:italic}
+.meta{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;color:var(--dim)}
+.banner{margin:12px 0;padding:10px 14px;border-radius:6px;font-size:.9rem}
+.banner.ok{border:1px solid #3fb95044;background:#3fb95018}
+.banner.warn{border:1px solid #d2992244;background:#d2992218}
+.banner.err{border:1px solid #f8514944;background:#f8514918}
+nav.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 14px}
+nav.tabs button{font:inherit;cursor:pointer;padding:8px 14px;border-radius:6px;
+border:1px solid #3a3220;background:var(--panel);color:var(--dim)}
+nav.tabs button.active{border-color:var(--gold);color:var(--gold);background:#2a2215}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid #3a3220;border-radius:8px;padding:12px 14px}
+.card h3{margin:0 0 6px;font-size:.95rem;color:var(--gold)}
+.card .grp{font-size:.72rem;color:var(--teal);text-transform:uppercase;letter-spacing:.06em}
+.card .cmd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.68rem;
+color:var(--dim);word-break:break-all;margin:8px 0}
+.card .tags{margin:6px 0}
+.tag{display:inline-block;font-size:.65rem;padding:2px 6px;border-radius:4px;
+margin:0 4px 4px 0;background:#2a2215;color:var(--dim)}
+.tag.fast{color:var(--green)}.tag.long{color:var(--amber)}
+.btn{font:inherit;cursor:pointer;padding:6px 12px;border-radius:5px;border:1px solid #3a3220;
+background:#2a2215;color:var(--ink);margin-right:6px}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn.primary{border-color:var(--teal);color:var(--teal)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.wf-steps{margin:10px 0;padding:0;list-style:none}
+.wf-steps li{padding:8px 10px;margin:6px 0;border-radius:6px;border:1px solid #3a3220;
+display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wf-steps li.pending{opacity:.65}
+.wf-steps li.running{border-color:var(--teal);background:#4ec9b010}
+.wf-steps li.completed{border-color:var(--green);background:#3fb95010}
+.wf-steps li.failed{border-color:var(--red);background:#f8514910}
+.status{font-size:.75rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+.status.running{color:var(--teal)}.status.completed{color:var(--green)}
+.status.failed{color:var(--red)}.status.pending{color:var(--dim)}
+.layout-split{display:grid;grid-template-columns:320px 1fr;gap:14px;min-height:420px}
+@media(max-width:900px){.layout-split{grid-template-columns:1fr}}
+.job-list{max-height:520px;overflow:auto}
+.job-item{padding:8px 10px;margin:4px 0;border-radius:6px;border:1px solid #3a3220;
+cursor:pointer;font-size:.82rem}
+.job-item:hover,.job-item.sel{border-color:var(--gold);background:#2a2215}
+.job-item .title{color:var(--ink)}.job-item .meta{color:var(--dim);font-size:.7rem}
+.terminal{background:var(--term-bg);color:var(--term-ink);font-family:ui-monospace,
+Menlo,Consolas,'Courier New',monospace;font-size:.72rem;line-height:1.45;
+padding:12px;border-radius:8px;border:1px solid #30363d;white-space:pre-wrap;
+word-break:break-word;max-height:520px;overflow:auto;min-height:280px}
+.terminal .prompt{color:var(--term-gold)}
+.links a{display:block;margin:6px 0}
+.filter{margin:8px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter input,.filter select{font:inherit;padding:6px 8px;border-radius:5px;
+border:1px solid #3a3220;background:var(--bg2);color:var(--ink)}
+footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>E Y E S · WORKBENCH</h1>
+<p class="sub">Run tools · saved job output · automated workflows</p>
+<p class="meta" id="meta-status">Loading…</p>
+</header>
+<div class="banner ok">Environment ready (.venv) — Run buttons work when the workbench server is active.</div>
+
+<div id="server-banner" class="banner warn" style="display:none">
+  Static snapshot — start the server for live runs:
+  <code>python3 dashboard/server.py</code>
+</div>
+<nav class="tabs" role="tablist">
+<button type="button" class="active" data-tab="tools">Tools</button>
+<button type="button" data-tab="workflows">Workflows</button>
+<button type="button" data-tab="jobs">Jobs &amp; Output</button>
+<button type="button" data-tab="links">Reports &amp; Links</button>
+</nav>
+
+<section id="panel-tools" class="panel active">
+<div class="filter">
+<input type="search" id="tool-search" placeholder="Search tools…" aria-label="Search tools">
+<select id="tool-group"><option value="">All groups</option></select>
+<select id="tool-duration"><option value="">Any duration</option>
+<option value="fast">Fast</option><option value="medium">Medium</option><option value="long">Long (GPU/seed scans)</option></select>
+</div>
+<div id="tool-grid" class="grid"></div>
+</section>
+
+<section id="panel-workflows" class="panel">
+<p class="meta">Automated pipelines run one step at a time. Progress is saved to <code>dashboard/data/state.json</code>.</p>
+<div id="workflow-grid" class="grid"></div>
+</section>
+
+<section id="panel-jobs" class="panel">
+<div style="margin-bottom:10px">
+<button type="button" class="btn danger" id="btn-cancel">Cancel active job</button>
+<button type="button" class="btn" id="btn-refresh-jobs">Refresh</button>
+</div>
+<div class="layout-split">
+<div class="job-list" id="job-list"></div>
+<div>
+<div class="meta" id="job-header">Select a job</div>
+<pre class="terminal" id="job-output"></pre>
+</div>
+</div>
+</section>
+
+<section id="panel-links" class="panel">
+<div class="card links" id="link-list"></div>
+<p class="meta">Rebuild evidence ledger: <code>python3 report/build.py --open</code></p>
+</section>
+
+<footer>EYES Workbench · re-run <code>python3 dashboard/build.py</code> to refresh embedded snapshot</footer>
+</div>
+
+<script>
+const DATA = {"have_venv":true,"tools":[{"id":"map-cipher-type-what-family-is-this","title":"Cipher type \u2014 what family is this?","group":"Map the structure","cwd":"noita_eye_core","argv":["classify.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-keystream-scope-global-vs-per-triplet","title":"Keystream scope \u2014 global vs per-triplet","group":"Map the structure","cwd":"eyewitness","argv":["keystream_scope_test.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-header-test-is-66-5-keystreamed-or-a-literal-mar","title":"Header test \u2014 is (66,5) keystreamed or a literal marker?","group":"Map the structure","cwd":"eyewitness","argv":["header_test.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-number-test-does-the-header-66-5-encode-34","title":"Number test \u2014 does the header (66,5) encode 34?","group":"Map the structure","cwd":"eyewitness","argv":["number_test.py","--target","34"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-depth-map-how-much-shared-keystream-is-provable","title":"Depth map \u2014 how much shared keystream is provable?","group":"Map the structure","cwd":"eyewitness","argv":["depth_map.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-salakieli-aes-test-is-the-eye-cipher-aes-128-ctr","title":"Salakieli AES test \u2014 is the eye cipher AES-128-CTR?","group":"Map the structure","cwd":"eyewitness","argv":["salakieli_aes.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-repeat-census-stream-vs-block-periodic-transposi","title":"Repeat census \u2014 stream vs block/periodic/transposition","group":"Map the structure","cwd":"eyewitness","argv":["repeat_census.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-isomorph-chaining-interrelated-alphabets-progres","title":"Isomorph chaining \u2014 interrelated alphabets / progressive test","group":"Map the structure","cwd":"eyewitness","argv":["isomorph_chain.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-maximal-aligned-isomorph-extractor-contamination","title":"Maximal-aligned-isomorph extractor (contamination-resistant)","group":"Map the structure","cwd":"eyewitness","argv":["iso_extract.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-triplet-embedded-key-test-pair-key","title":"Triplet embedded-key test (pair + key)","group":"Map the structure","cwd":"eyewitness","argv":["triplet_keytest.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-structural-fingerprint-eyewitness","title":"Structural fingerprint (EyeWitness)","group":"Map the structure","cwd":"eyewitness","argv":["eyewitness.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-verify-fingerprint-independent-re-check","title":"Verify fingerprint \u2014 independent re-check","group":"Map the structure","cwd":"eyewitness","argv":["verify_fingerprint.py"],"duration":"fast","tags":["map-the-structure"]},{"id":"map-datastream-consistency-check-integrity-warfairy-","title":"Datastream consistency check (integrity + WarFairy cross-check)","group":"Map the structure","cwd":"eyewitness","argv":["datastream_check.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-header-base-deduction-progressive-contamination-","title":"Header-base deduction + progressive contamination correction","group":"Map the structure","cwd":"eyewitness","argv":["header_base.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-pure-progressive-recovery-decryption-attempt-ioc","title":"Pure-progressive recovery + decryption attempt (IoC test)","group":"Map the structure","cwd":"eyewitness","argv":["pure_progressive.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-digit-level-fractionation-trifid-analysis-of-eye","title":"Digit-level / fractionation (Trifid) analysis of eye-marks","group":"Map the structure","cwd":"eyewitness","argv":["trifid_scan.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-binary-provenance-decompiled-spawnsecreteyes-cor","title":"Binary provenance (decompiled SpawnSecretEyes -> corpus, 9/9)","group":"Map the structure","cwd":"eyewitness","argv":["binary_provenance.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-depth-crib-drag-analysis","title":"Depth / crib-drag analysis","group":"Map the structure","cwd":"noita_eye_core","argv":["analyze.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-cipher-fingerprint-keyless-transform-stack-test","title":"Cipher fingerprint \u2014 keyless transform-stack test","group":"Map the structure","cwd":"eyecrack","argv":["cipher_fingerprint.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"attack-eyecrack-crib-drag-noita-wordlist-unknown-alphab","title":"EyeCrack \u2014 crib-drag (Noita wordlist, unknown alphabet)","group":"Attack","cwd":"eyecrack","argv":["cribdrag.py"],"duration":"medium","tags":["attack"]},{"id":"attack-eyecrack-crib-placement-tester-4x-repeated-isomo","title":"EyeCrack \u2014 crib-placement tester (4x repeated isomorph target)","group":"Attack","cwd":"eyecrack","argv":["crib_fit.py","--list-targets"],"duration":"fast","tags":["attack"]},{"id":"attack-eyecrack-refrain-known-position-crib-attack-pins","title":"EyeCrack \u2014 refrain known-position crib attack (pins C, IoC-scored)","group":"Attack","cwd":"eyecrack","argv":["refrain_attack.py","--constraints"],"duration":"medium","tags":["attack","refrain"]},{"id":"attack-eyecrack-crib-seeded-english-n-gram-solver","title":"EyeCrack \u2014 crib-seeded English n-gram solver","group":"Attack","cwd":"eyecrack","argv":["ngram_solve.py","trueknowledge"],"duration":"medium","tags":["attack","heavy"]},{"id":"attack-eyecrack-ordering-search-solver-recovers-orderin","title":"EyeCrack \u2014 ordering-search solver (recovers ordering from a crib)","group":"Attack","cwd":"eyecrack","argv":["order_solve.py","trueknowledgeofthegods"],"duration":"medium","tags":["attack"]},{"id":"attack-eyecrack-template-guided-refrain-sweep-wordlist-","title":"EyeCrack \u2014 template-guided refrain sweep (wordlist + enum)","group":"Attack","cwd":"eyecrack","argv":["refrain_sweep.py","--wordlist","../eyestat/noita_wordlist.txt","--top","20"],"duration":"medium","tags":["attack","refrain","template"]},{"id":"attack-eyecrack-refrain-template-constraints-only","title":"EyeCrack \u2014 refrain template constraints only","group":"Attack","cwd":"eyecrack","argv":["refrain_sweep.py","--show-template"],"duration":"fast","tags":["attack","refrain","template"]},{"id":"attack-eyecrack-anchored-refrain-composer-double-letter","title":"EyeCrack \u2014 anchored refrain composer (double-letter map + wcov)","group":"Attack","cwd":"eyecrack","argv":["refrain_compose.py","--doubles"],"duration":"fast","tags":["attack","refrain"]},{"id":"attack-eyecrack-residual-ordering-exhaust-phase-2","title":"EyeCrack \u2014 residual ordering exhaust (Phase 2)","group":"Attack","cwd":"eyecrack","argv":["ordering_exhaust.py","--phrase","trueknowledgeofthegods"],"duration":"medium","tags":["attack"]},{"id":"map-keyspace-ledger-block-structure-key-hypotheses","title":"Keyspace ledger (block structure -> key hypotheses)","group":"Map the structure","cwd":"eyewitness","argv":["keyspace_ledger.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-eyescoreboard-cipher-candidate-ranking-plant-cor","title":"EyeScoreboard \u2014 cipher candidate ranking (plant + corpus + premise)","group":"Map the structure","cwd":"eyewitness","argv":["eyescoreboard.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-refrain-repeat-template-forced-same-different-po","title":"Refrain repeat-template (forced same/different positions, dof)","group":"Map the structure","cwd":"eyewitness","argv":["refrain_template.py"],"duration":"medium","tags":["map-the-structure","refrain","template"]},{"id":"map-model-verification-per-msg-progressive-vs-null-h","title":"Model verification (per-msg-progressive vs null; honest verdict)","group":"Map the structure","cwd":"eyewitness","argv":["model_audit.py"],"duration":"fast","tags":["map-the-structure"]},{"id":"map-model-independent-shared-structure-map-triplet-o","title":"Model-independent shared-structure map (triplet openings, repeats)","group":"Map the structure","cwd":"eyewitness","argv":["shared_structure.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"map-passage-template-pipeline-discover-extend-crib-v","title":"Passage template pipeline (discover \u00b7 extend \u00b7 crib validate)","group":"Map the structure","cwd":"eyewitness","argv":["passage_template.py","--html"],"duration":"medium","tags":["map-the-structure","report","template"]},{"id":"validate-passage-template-paranoia-audit-real-corpus-inva","title":"Passage template \u2014 paranoia audit (real corpus invariants)","group":"Validate","cwd":"eyewitness","argv":["passage_template.py","--audit"],"duration":"fast","tags":["audit","template","validate"]},{"id":"map-isomorph-viewer-anchor-candidacy-discover-classi","title":"Isomorph Viewer \u2192 anchor candidacy (discover + classify)","group":"Map the structure","cwd":"eyewitness","argv":["viewer_anchor.py","--html"],"duration":"medium","tags":["map-the-structure","report","template"]},{"id":"validate-isomorph-viewer-anchor-paranoia-audit","title":"Isomorph Viewer anchor \u2014 paranoia audit","group":"Validate","cwd":"eyewitness","argv":["viewer_anchor.py","--audit"],"duration":"fast","tags":["audit","template","validate"]},{"id":"map-cipher-construction-lattice-what-fits-excludes-c","title":"Cipher-construction lattice (what fits; excludes ciphertext-autokey)","group":"Map the structure","cwd":"eyewitness","argv":["cipher_lattice.py"],"duration":"medium","tags":["map-the-structure"]},{"id":"attack-eyecrack-salakieli-crib-battery-register-globali","title":"EyeCrack \u2014 salakieli crib battery (register + globality commands)","group":"Attack","cwd":"eyecrack","argv":["salakieli_crib.py"],"duration":"medium","tags":["attack","heavy"]},{"id":"attack-eyecrack-keystream-seed-scan-structure-additive-","title":"EyeCrack \u2014 keystream seed-scan (structure, additive, writes HTML)","group":"Attack","cwd":"eyecrack","argv":["keyscan.py","--count","1000000","--html","../keyscan_report.html"],"duration":"long","tags":["attack","heavy","report"]},{"id":"attack-eyecrack-keystream-seed-scan-injective-rotor-bra","title":"EyeCrack \u2014 keystream seed-scan (injective/rotor branch)","group":"Attack","cwd":"eyecrack","argv":["keyscan.py","--combiner","subst","--generators","nolla","--count","200000","--html","../keyscan_report.html"],"duration":"medium","tags":["attack","heavy","report"]},{"id":"attack-eyecrack-crib-seed-bridge-guessed-word-filters-s","title":"EyeCrack \u2014 crib->seed bridge (guessed word filters seeds)","group":"Attack","cwd":"eyecrack","argv":["keyscan.py","--crib-word","eye","--crib-pos","3","--generators","nolla","--count","1000000","--html","../keyscan_cribword_report.html"],"duration":"long","tags":["attack","heavy","report"]},{"id":"attack-eyecrack-crib-globality-test-is-the-keystream-gl","title":"EyeCrack \u2014 crib-globality test (is the keystream global?)","group":"Attack","cwd":"eyecrack","argv":["globality.py","--crib-word","messages","--crib-msg","East 1","--crib-pos","3","--crib-pos-end","40","--generators","all","--count","1000000","--html","../globality_report.html"],"duration":"long","tags":["attack","heavy","report"]},{"id":"attack-eyestat-crib-globality-on-gpu-cupy-validate-then","title":"EyeStat \u2014 crib-globality on GPU (CuPy; validate then scan)","group":"Attack","cwd":"eyestat","argv":["globality_gpu.py","--crib-word","messages","--crib-msg","East 1","--crib-pos","3","--crib-pos-end","40","--generators","all","--seed-end","100000000","--html","../globality_gpu_report.html"],"duration":"long","tags":["attack","heavy","report"]},{"id":"attack-eyecrack-recover-a-planted-seed-demo","title":"EyeCrack \u2014 recover a planted seed (demo)","group":"Attack","cwd":"eyecrack","argv":["eyecrack.py","demo"],"duration":"medium","tags":["attack","heavy"]},{"id":"attack-calibrate-eyestat-results-decoy-char-lm-trust-ga","title":"Calibrate EyeStat results (decoy + char-LM trust gate)","group":"Attack","cwd":"eyestat","argv":["calibrate_report.py","triplet-results/ctak_right_park_miller_v0_report.html"],"duration":"medium","tags":["attack","report"]},{"id":"attack-eyecrack-per-triplet-seed-scan-1m-triplet-0","title":"EyeCrack \u2014 per-triplet seed scan (1M, triplet 0)","group":"Attack","cwd":"eyecrack","argv":["eyecrack.py","structscan","--count","1000000","--triplet","0"],"duration":"long","tags":["attack","heavy"]},{"id":"validate-run-the-full-math-gate-validate-everything","title":"Run the full math gate (validate everything)","group":"Validate","cwd":"noita_eye_core","argv":["selftest.py"],"duration":"fast","tags":["audit","validate"]}],"presets":[{"id":"quick-validate","title":"Quick Validate","description":"Math gate plus the two paranoia audits (passage template + viewer anchor).","steps":["validate-run-the-full-math-gate-validate-everything","validate-passage-template-paranoia-audit-real-corpus-inva","validate-isomorph-viewer-anchor-paranoia-audit"],"tags":["audit","fast"]},{"id":"structure-map","title":"Structure Map","description":"Cipher family, isomorphs, shared openings, and passage template discovery.","steps":["map-cipher-type-what-family-is-this","map-isomorph-chaining-interrelated-alphabets-progres","map-model-independent-shared-structure-map-triplet-o","map-passage-template-pipeline-discover-extend-crib-v"],"tags":["structure","medium"]},{"id":"refrain-pipeline","title":"Refrain Attack Pipeline","description":"Template constraints, crib attack, composer doubles, and ordering solver.","steps":["attack-eyecrack-refrain-template-constraints-only","attack-eyecrack-refrain-known-position-crib-attack-pins","attack-eyecrack-anchored-refrain-composer-double-letter","attack-eyecrack-ordering-search-solver-recovers-orderin"],"tags":["refrain","attack"]},{"id":"anchor-discovery","title":"Anchor Discovery","description":"Isomorph viewer patterns, passage template report, and refrain template.","steps":["map-isomorph-viewer-anchor-candidacy-discover-classi","map-passage-template-pipeline-discover-extend-crib-v","map-refrain-repeat-template-forced-same-different-po"],"tags":["template","medium"]},{"id":"evidence-ledger","title":"Evidence Ledger Build","description":"Run math gate modules then rebuild the static evidence dashboard.","steps":["validate-run-the-full-math-gate-validate-everything"],"tags":["report","fast"]}],"missing_preset_tools":[],"snapshot":{"have_venv":true,"active_job_id":null,"updated_at":"2026-06-21T00:13:59.603135+00:00","workflows":{"quick-validate":{"id":"quick-validate","title":"Quick Validate","description":"Math gate plus the two paranoia audits (passage template + viewer anchor).","current_step":0,"status":"idle","steps":[{"tool_id":"validate-run-the-full-math-gate-validate-everything","status":"pending","job_id":null,"exit_code":null},{"tool_id":"validate-passage-template-paranoia-audit-real-corpus","status":"pending","job_id":null,"exit_code":null},{"tool_id":"validate-isomorph-viewer-anchor-paranoia-audit","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.056775+00:00","last_job_id":null},"structure-map":{"id":"structure-map","title":"Structure Map","description":"Cipher family, isomorphs, shared openings, and passage template discovery.","current_step":0,"status":"idle","steps":[{"tool_id":"map-cipher-type-what-family-is-this","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-isomorph-chaining-interrelated-alphabets-progres","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-model-independent-shared-structure-map-triplet-o","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-passage-template-pipeline-discover-extend-crib-v","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.056914+00:00","last_job_id":null},"refrain-pipeline":{"id":"refrain-pipeline","title":"Refrain Attack Pipeline","description":"Template constraints, crib attack, composer doubles, and ordering solver.","current_step":0,"status":"idle","steps":[{"tool_id":"attack-eyecrack-refrain-template-constraints-only","status":"pending","job_id":null,"exit_code":null},{"tool_id":"attack-eyecrack-refrain-known-position-crib-attack-pins","status":"pending","job_id":null,"exit_code":null},{"tool_id":"attack-eyecrack-anchored-refrain-composer-double-letter","status":"pending","job_id":null,"exit_code":null},{"tool_id":"attack-eyecrack-ordering-search-solver-recovers-orderin","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.057024+00:00","last_job_id":null},"anchor-discovery":{"id":"anchor-discovery","title":"Anchor Discovery","description":"Isomorph viewer patterns, passage template report, and refrain template.","current_step":0,"status":"idle","steps":[{"tool_id":"map-isomorph-viewer-anchor-candidacy-discover-classi","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-passage-template-pipeline-discover-extend-crib-v","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-refrain-repeat-template-forced-same-different-po","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.057513+00:00","last_job_id":null},"evidence-ledger":{"id":"evidence-ledger","title":"Evidence Ledger Build","description":"Run math gate modules then rebuild the static evidence dashboard.","current_step":0,"status":"idle","steps":[{"tool_id":"validate-run-the-full-math-gate-validate-everything","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.058227+00:00","last_job_id":null}},"recent_jobs":[{"id":"20260621-001359-9d84f9d0","tool_id":"attack-eyecrack-refrain-template-constraints-only","title":"EyeCrack \u2014 refrain template constraints only","group":"Attack","cwd":"eyecrack","argv":["refrain_sweep.py","--show-template"],"command":"python3 eyecrack/refrain_sweep.py --show-template","status":"completed","exit_code":0,"started_at":"2026-06-21T00:13:59.552921+00:00","finished_at":"2026-06-21T00:13:59.602944+00:00","stdout_bytes":618,"stderr_bytes":0,"workflow_id":null,"workflow_step":null,"duration_hint":"fast","error":null},{"id":"20260621-001152-a2423045","tool_id":"validate-run-the-full-math-gate-validate-everything","title":"Run the full math gate (validate everything)","group":"Validate","cwd":"noita_eye_core","argv":["selftest.py"],"command":"python3 noita_eye_core/selftest.py","status":"completed","exit_code":0,"started_at":"2026-06-21T00:11:52.248054+00:00","finished_at":"2026-06-21T00:13:40.455531+00:00","stdout_bytes":1418,"stderr_bytes":0,"workflow_id":null,"workflow_step":null,"duration_hint":"fast","error":null}],"tools_count":48,"presets_count":5},"workflows":[{"id":"quick-validate","title":"Quick Validate","description":"Math gate plus the two paranoia audits (passage template + viewer anchor).","current_step":0,"status":"idle","steps":[{"tool_id":"validate-run-the-full-math-gate-validate-everything","status":"pending","job_id":null,"exit_code":null},{"tool_id":"validate-passage-template-paranoia-audit-real-corpus","status":"pending","job_id":null,"exit_code":null},{"tool_id":"validate-isomorph-viewer-anchor-paranoia-audit","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.056775+00:00","last_job_id":null},{"id":"structure-map","title":"Structure Map","description":"Cipher family, isomorphs, shared openings, and passage template discovery.","current_step":0,"status":"idle","steps":[{"tool_id":"map-cipher-type-what-family-is-this","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-isomorph-chaining-interrelated-alphabets-progres","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-model-independent-shared-structure-map-triplet-o","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-passage-template-pipeline-discover-extend-crib-v","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.056914+00:00","last_job_id":null},{"id":"refrain-pipeline","title":"Refrain Attack Pipeline","description":"Template constraints, crib attack, composer doubles, and ordering solver.","current_step":0,"status":"idle","steps":[{"tool_id":"attack-eyecrack-refrain-template-constraints-only","status":"pending","job_id":null,"exit_code":null},{"tool_id":"attack-eyecrack-refrain-known-position-crib-attack-pins","status":"pending","job_id":null,"exit_code":null},{"tool_id":"attack-eyecrack-anchored-refrain-composer-double-letter","status":"pending","job_id":null,"exit_code":null},{"tool_id":"attack-eyecrack-ordering-search-solver-recovers-orderin","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.057024+00:00","last_job_id":null},{"id":"anchor-discovery","title":"Anchor Discovery","description":"Isomorph viewer patterns, passage template report, and refrain template.","current_step":0,"status":"idle","steps":[{"tool_id":"map-isomorph-viewer-anchor-candidacy-discover-classi","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-passage-template-pipeline-discover-extend-crib-v","status":"pending","job_id":null,"exit_code":null},{"tool_id":"map-refrain-repeat-template-forced-same-different-po","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.057513+00:00","last_job_id":null},{"id":"evidence-ledger","title":"Evidence Ledger Build","description":"Run math gate modules then rebuild the static evidence dashboard.","current_step":0,"status":"idle","steps":[{"tool_id":"validate-run-the-full-math-gate-validate-everything","status":"pending","job_id":null,"exit_code":null}],"started_at":null,"updated_at":"2026-06-21T00:11:45.058227+00:00","last_job_id":null}],"jobs":[{"id":"20260621-001359-9d84f9d0","tool_id":"attack-eyecrack-refrain-template-constraints-only","title":"EyeCrack \u2014 refrain template constraints only","group":"Attack","cwd":"eyecrack","argv":["refrain_sweep.py","--show-template"],"command":"python3 eyecrack/refrain_sweep.py --show-template","status":"completed","exit_code":0,"started_at":"2026-06-21T00:13:59.552921+00:00","finished_at":"2026-06-21T00:13:59.602944+00:00","stdout_bytes":618,"stderr_bytes":0,"workflow_id":null,"workflow_step":null,"duration_hint":"fast","error":null},{"id":"20260621-001152-a2423045","tool_id":"validate-run-the-full-math-gate-validate-everything","title":"Run the full math gate (validate everything)","group":"Validate","cwd":"noita_eye_core","argv":["selftest.py"],"command":"python3 noita_eye_core/selftest.py","status":"completed","exit_code":0,"started_at":"2026-06-21T00:11:52.248054+00:00","finished_at":"2026-06-21T00:13:40.455531+00:00","stdout_bytes":1418,"stderr_bytes":0,"workflow_id":null,"workflow_step":null,"duration_hint":"fast","error":null}],"links":[{"title":"Evidence Ledger (report.html)","href":"report.html"},{"title":"State of the Solve","href":"STATE_OF_THE_SOLVE.md"},{"title":"Fingerprint","href":"FINGERPRINT.md"},{"title":"Passage template report","href":"report/passage_template_report.md"},{"title":"Viewer anchor report","href":"report/viewer_anchor_report.md"}]};
+const API = "";  // same origin when served by dashboard/server.py
+
+let activeJobId = DATA.snapshot.active_job_id || null;
+let pollTimer = null;
+
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s == null ? "" : String(s);
+  return d.innerHTML;
+}
+
+async function api(path, opts) {
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  const ct = r.headers.get("content-type") || "";
+  if (ct.includes("application/json")) return r.json();
+  return r.text();
+}
+
+function serverLive() {
+  return fetch(API + "/api/health").then(r => r.ok).catch(() => false);
+}
+
+function setMeta(text) {
+  document.getElementById("meta-status").textContent = text;
+}
+
+function initTabs() {
+  document.querySelectorAll("nav.tabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+}
+
+function renderTools() {
+  const grid = document.getElementById("tool-grid");
+  const groups = [...new Set(DATA.tools.map(t => t.group))];
+  const sel = document.getElementById("tool-group");
+  groups.forEach(g => {
+    const o = document.createElement("option");
+    o.value = g; o.textContent = g;
+    sel.appendChild(o);
+  });
+  function draw() {
+    const q = (document.getElementById("tool-search").value || "").toLowerCase();
+    const g = document.getElementById("tool-group").value;
+    const d = document.getElementById("tool-duration").value;
+    grid.innerHTML = "";
+    DATA.tools.filter(t => {
+      if (g && t.group !== g) return false;
+      if (d && t.duration !== d) return false;
+      if (q && !(t.title + t.id + t.command).toLowerCase().includes(q)) return false;
+      return true;
+    }).forEach(t => {
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `
+        <div class="grp">${esc(t.group)}</div>
+        <h3>${esc(t.title)}</h3>
+        <div class="cmd">${esc(t.command)}</div>
+        <div class="tags">
+          <span class="tag ${t.duration}">${esc(t.duration)}</span>
+          ${(t.tags||[]).map(x => `<span class="tag">${esc(x)}</span>`).join("")}
+        </div>
+        <button type="button" class="btn primary run-tool" data-id="${esc(t.id)}">Run</button>`;
+      grid.appendChild(el);
+    });
+    grid.querySelectorAll(".run-tool").forEach(btn => {
+      btn.addEventListener("click", () => runTool(btn.dataset.id));
+    });
+  }
+  ["input","change"].forEach(ev => {
+    document.getElementById("tool-search").addEventListener(ev, draw);
+    document.getElementById("tool-group").addEventListener(ev, draw);
+    document.getElementById("tool-duration").addEventListener(ev, draw);
+  });
+  draw();
+}
+
+function renderWorkflows(wflows) {
+  const grid = document.getElementById("workflow-grid");
+  grid.innerHTML = "";
+  (wflows || DATA.workflows).forEach(wf => {
+    const done = wf.steps.filter(s => s.status === "completed").length;
+    const total = wf.steps.length;
+    const steps = wf.steps.map((s, i) => {
+      const tool = DATA.tools.find(t => t.id === s.tool_id);
+      const title = tool ? tool.title : s.tool_id;
+      return `<li class="${esc(s.status)}"><span>${i+1}. ${esc(title)}</span>
+        <span class="status ${esc(s.status)}">${esc(s.status)}</span></li>`;
+    }).join("");
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <h3>${esc(wf.title)}</h3>
+      <p class="meta">${esc(wf.description || "")}</p>
+      <p class="meta">Progress: ${done} / ${total} · status: <span class="status ${esc(wf.status)}">${esc(wf.status)}</span></p>
+      <ul class="wf-steps">${steps}</ul>
+      <button type="button" class="btn primary wf-next" data-id="${esc(wf.id)}">Run next step</button>
+      <button type="button" class="btn wf-auto" data-id="${esc(wf.id)}">Run all</button>
+      <button type="button" class="btn wf-reset" data-id="${esc(wf.id)}">Reset</button>`;
+    grid.appendChild(el);
+  });
+  grid.querySelectorAll(".wf-next").forEach(b => b.addEventListener("click", () => wfStep(b.dataset.id)));
+  grid.querySelectorAll(".wf-auto").forEach(b => b.addEventListener("click", () => wfAuto(b.dataset.id)));
+  grid.querySelectorAll(".wf-reset").forEach(b => b.addEventListener("click", () => wfReset(b.dataset.id)));
+}
+
+function renderJobs(jobs) {
+  const list = document.getElementById("job-list");
+  list.innerHTML = "";
+  (jobs || DATA.jobs).forEach(j => {
+    const el = document.createElement("div");
+    el.className = "job-item" + (j.id === activeJobId ? " sel" : "");
+    el.dataset.id = j.id;
+    el.innerHTML = `<div class="title">${esc(j.title)}</div>
+      <div class="meta">${esc(j.id)} · <span class="status ${esc(j.status)}">${esc(j.status)}</span>
+      ${j.exit_code != null ? "· exit " + j.exit_code : ""}</div>`;
+    el.addEventListener("click", () => selectJob(j.id));
+    list.appendChild(el);
+  });
+}
+
+function renderLinks() {
+  const box = document.getElementById("link-list");
+  box.innerHTML = (DATA.links || []).map(l =>
+    `<a href="${esc(l.href)}">${esc(l.title)}</a>`).join("");
+}
+
+async function runTool(id) {
+  try {
+    const j = await api("/api/run", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({tool_id: id}),
+    });
+    activeJobId = j.id;
+    document.querySelector('[data-tab="jobs"]').click();
+    await refreshAll();
+  } catch (e) {
+    alert("Run failed: " + e.message + "\n\nStart server: python3 dashboard/server.py");
+  }
+}
+
+async function wfStep(id) {
+  try {
+    await api("/api/workflows/" + encodeURIComponent(id) + "/step", {method: "POST"});
+    await refreshAll();
+  } catch (e) { alert(e.message); }
+}
+
+async function wfAuto(id) {
+  try {
+    await api("/api/workflows/" + encodeURIComponent(id) + "/auto", {method: "POST"});
+    await refreshAll();
+  } catch (e) { alert(e.message); }
+}
+
+async function wfReset(id) {
+  if (!confirm("Reset saved progress for this workflow?")) return;
+  try {
+    await api("/api/workflows/" + encodeURIComponent(id) + "/reset", {method: "POST"});
+    await refreshAll();
+  } catch (e) { alert(e.message); }
+}
+
+async function selectJob(id) {
+  activeJobId = id;
+  document.querySelectorAll(".job-item").forEach(el => {
+    el.classList.toggle("sel", el.dataset.id === id);
+  });
+  const j = DATA.jobs.find(x => x.id === id) || {};
+  document.getElementById("job-header").textContent =
+    (j.title || id) + " · " + (j.status || "") + (j.command ? " · " + j.command : "");
+  try {
+    const out = await api("/api/jobs/" + encodeURIComponent(id) + "/stdout");
+    document.getElementById("job-output").textContent = out || "(no output yet)";
+  } catch (_) {
+    document.getElementById("job-output").textContent = "(start server to stream output)";
+  }
+}
+
+async function refreshAll() {
+  try {
+    const snap = await api("/api/snapshot");
+    DATA.snapshot = snap;
+    DATA.jobs = snap.recent_jobs;
+    activeJobId = snap.active_job_id || activeJobId;
+    const wfs = await api("/api/workflows");
+    DATA.workflows = wfs;
+    renderJobs(DATA.jobs);
+    renderWorkflows(DATA.workflows);
+    if (activeJobId) await selectJob(activeJobId);
+    setMeta("Live · updated " + (snap.updated_at || ""));
+    document.getElementById("server-banner").style.display = "none";
+  } catch (_) {
+    renderJobs(DATA.jobs);
+    renderWorkflows(DATA.workflows);
+    if (activeJobId) {
+      const j = DATA.jobs.find(x => x.id === activeJobId);
+      if (j) {
+        document.getElementById("job-header").textContent = j.title + " · " + j.status;
+      }
+    }
+    document.getElementById("server-banner").style.display = "block";
+    setMeta("Static snapshot · " + (DATA.snapshot.updated_at || "embedded"));
+  }
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(refreshAll, 2000);
+}
+
+document.getElementById("btn-cancel").addEventListener("click", async () => {
+  try { await api("/api/cancel", {method: "POST"}); await refreshAll(); }
+  catch (e) { alert(e.message); }
+});
+document.getElementById("btn-refresh-jobs").addEventListener("click", refreshAll);
+
+initTabs();
+renderTools();
+renderWorkflows(DATA.workflows);
+renderJobs(DATA.jobs);
+renderLinks();
+serverLive().then(live => {
+  if (live) { refreshAll(); startPolling(); }
+  else {
+    setMeta("Static snapshot · start python3 dashboard/server.py for live runs");
+    document.getElementById("server-banner").style.display = "block";
+    if (DATA.jobs.length) selectJob(DATA.jobs[0].id);
+  }
+});
+</script>
+</body>
+</html>
