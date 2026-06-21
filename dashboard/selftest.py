@@ -33,7 +33,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
 
     from dashboard.build import _collect_snapshot, render_html
     from dashboard.cipher_validate import selftest as cv_selftest
-    from dashboard.dataset_store import get_active_id, list_datasets
+    from dashboard.dataset_store import get_active_id, list_datasets, selftest as ds_selftest
     from dashboard.eye_puzzle import selftest as ep_selftest
     from dashboard.workflow_map import workflow_map_payload
 
@@ -51,6 +51,8 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
 
     cv = cv_selftest()
     out.append(("cipher_validate selftest", all(ok for _, ok in cv)))
+    ds = ds_selftest()
+    out.append(("dataset_store selftest", all(ok for _, ok in ds)))
     ep = ep_selftest()
     out.append(("eye_puzzle selftest", all(ok for _, ok in ep)))
 

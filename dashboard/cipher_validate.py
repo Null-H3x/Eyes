@@ -104,20 +104,25 @@ def _glyph(v: int) -> str:
     return GLYPHS[v] if 0 <= v < len(GLYPHS) else "?"
 
 
-def parse_values(text: str, *, N: int = 83) -> List[int]:
-    """Parse comma/space-separated integers or single-char glyph tokens."""
+def parse_values(text: str, *, N: int = 83, strict: bool = False) -> List[int]:
+    """Parse comma/space-separated integers or single-char glyph tokens.
+
+    When ``strict`` is True (ciphertext import), values outside ``[0, N)`` raise
+    instead of being reduced mod N — avoids silently corrupting imported data.
+    """
     text = text.strip()
     if not text:
         return []
-    # Try all integers first
     parts = re.split(r"[\s,;]+", text)
     vals = []
     for p in parts:
         if not p:
             continue
         if p.isdigit() or (p.startswith("-") and p[1:].isdigit()):
-            v = int(p) % N
-            vals.append(v)
+            v = int(p)
+            if strict and not (0 <= v < N):
+                raise ValueError(f"value {v} outside [0, {N})")
+            vals.append(v % N)
         elif len(p) == 1 and p in GLYPHS:
             vals.append(GLYPHS.index(p))
         else:
@@ -381,6 +386,12 @@ def selftest() -> List[Tuple[str, bool]]:
     vals = parse_values("10 20 30")
     out.append(("parse_values integers", vals == [10, 20, 30]))
     out.append(("parse_values glyphs", parse_values("o % 5") == [50, 66, 5]))
+
+    try:
+        parse_values("999", N=83, strict=True)
+        out.append(("parse_values strict rejects OOR", False))
+    except ValueError:
+        out.append(("parse_values strict rejects OOR", True))
 
     sweep = sweep_linear_modes(
         M2, cor.labels, message="East 1", offset=off, plaintext=plain, key=key, N=cor.N)

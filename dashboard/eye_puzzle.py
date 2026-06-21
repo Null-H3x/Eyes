@@ -16,9 +16,10 @@ if str(ROOT) not in sys.path:
 
 from collections import Counter
 from dataclasses import dataclass, field
+import uuid
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from dashboard.cipher_validate import GLYPHS, encrypt_mode, parse_values
+from dashboard.cipher_validate import GLYPHS, KNOWN_MODES, encrypt_mode, parse_values
 from dashboard.dataset_store import Dataset
 
 
@@ -130,6 +131,26 @@ def plant_message(
                         offset=offset, N=N)
 
 
+def _validate_plant_mode(mode: str) -> None:
+    if mode not in KNOWN_MODES or mode in ("user_ciphertext",):
+        raise ValueError(
+            f"invalid plant mode {mode!r}; use one of: add, sub, beaufort, "
+            "pure_progressive, per_msg_progressive, identity")
+
+
+def _validate_inject_header(inject_header: Optional[Sequence[int]]) -> None:
+    if inject_header is None:
+        return
+    if len(inject_header) % 2 != 0:
+        raise ValueError(
+            f"inject_header must be an even-length [pos,sym,...] list, "
+            f"got {len(inject_header)} values")
+    for j in range(0, len(inject_header), 2):
+        pos = int(inject_header[j])
+        if pos < 0:
+            raise ValueError(f"inject_header position {pos} must be >= 0")
+
+
 def plant_dataset(
     plaintexts: Sequence[Sequence[int]],
     labels: Sequence[str],
@@ -139,11 +160,15 @@ def plant_dataset(
     bases: Optional[Sequence[int]] = None,
     deck_size: int = 83,
     name: str = "Planted eye-puzzle dataset",
-    inject_header: Optional[Tuple[int, int]] = None,
+    inject_header: Optional[Sequence[int]] = None,
 ) -> Dataset:
     """Build ciphertext messages from plaintext using an eye-puzzle-like model."""
     if not plaintexts:
         raise ValueError("at least one plaintext message required")
+    if deck_size < 2 or deck_size > 256:
+        raise ValueError("deck_size must be in [2, 256]")
+    _validate_plant_mode(mode)
+    _validate_inject_header(inject_header)
     N = deck_size
     keys = keys or [[0] for _ in plaintexts]
     bases = bases or [0] * len(plaintexts)
@@ -154,16 +179,22 @@ def plant_dataset(
 
     ciphertexts = []
     for i, plain in enumerate(plaintexts):
+        for v in plain:
+            if not (0 <= v < N):
+                raise ValueError(f"plaintext value {v} outside [0, {N})")
         ct = plant_message(
             plain, mode=mode, key=keys[i], base=bases[i], offset=0, N=N)
         if inject_header:
-            for j in range(0, len(inject_header) - 1, 2):
+            for j in range(0, len(inject_header), 2):
                 pos, sym = int(inject_header[j]), int(inject_header[j + 1])
                 if 0 <= pos < len(ct):
                     ct[pos] = sym % N
+                else:
+                    raise ValueError(
+                        f"inject_header position {pos} out of range "
+                        f"for message length {len(ct)}")
         ciphertexts.append(list(ct))
 
-    import uuid
     lbls = list(labels) if labels else [f"Msg {i + 1}" for i in range(len(plaintexts))]
     if len(lbls) < len(plaintexts):
         lbls.extend(f"Msg {i + 1}" for i in range(len(lbls), len(plaintexts)))
@@ -193,6 +224,9 @@ def convert_plaintext_to_ciphertext(
     N: int = 83,
 ) -> dict:
     """Single-message convert for display / copy-paste."""
+    _validate_plant_mode(mode)
+    if N < 2 or N > 256:
+        raise ValueError("deck_size must be in [2, 256]")
     plain = parse_values(plaintext_text, N=N)
     key = parse_values(key_text, N=N) if key_text.strip() else [0]
     ct = plant_message(plain, mode=mode, key=key, base=base, N=N)
@@ -246,6 +280,26 @@ def selftest() -> List[Tuple[str, bool]]:
 
     labels, msgs = parse_plaintext_messages("A: 1 2 3\n4 5 6", N=83)
     out.append(("parse plaintext messages", len(msgs) == 2 and labels[0] == "A"))
+
+    try:
+        plant_dataset([[1, 2, 3]], ["A"], mode="add", inject_header=(1, 2, 3))
+        out.append(("odd inject_header rejected", False))
+    except ValueError:
+        out.append(("odd inject_header rejected", True))
+
+    from dashboard.cipher_validate import validate_cipher
+    pds = plant_dataset(plain, ["A", "B"], mode="add", keys=[[7], [8]], bases=[0, 3])
+    r = validate_cipher(
+        pds.ciphertexts, pds.labels, mode="add", message="A", offset=0,
+        plaintext=plain[0], key=[7], N=83)
+    out.append(("planted corpus validates exact", r.verdict == "EXACT_MATCH"))
+
+    try:
+        plant_dataset([[1, 2, 3]], ["A"], mode="not_a_mode")
+        out.append(("invalid plant mode rejected", False))
+    except ValueError:
+        out.append(("invalid plant mode rejected", True))
+
     return out
 
 

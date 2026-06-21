@@ -211,7 +211,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             try:
                 ds = set_active(body.get("id", ""))
                 return _json_response(self, 200, ds.to_dict(include_messages=False))
-            except KeyError as e:
+            except (KeyError, ValueError) as e:
                 return _json_response(self, 404, {"error": str(e)})
 
         if path == "/api/datasets/import":
@@ -313,11 +313,14 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
 
     def _dataset_import(self, body: dict):
         try:
+            deck_size = int(body.get("deck_size", 83))
+            if deck_size < 2 or deck_size > 256:
+                raise ValueError("deck_size must be in [2, 256]")
             ds = import_and_save(
                 body.get("content", ""),
                 fmt=body.get("format", "auto"),
                 name=body.get("name", "Imported dataset"),
-                deck_size=int(body.get("deck_size", 83)),
+                deck_size=deck_size,
                 activate=bool(body.get("activate", True)),
             )
             return _json_response(self, 200, {
@@ -330,6 +333,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
     def _dataset_plant(self, body: dict):
         try:
             N = int(body.get("deck_size", 83))
+            if N < 2 or N > 256:
+                raise ValueError("deck_size must be in [2, 256]")
             labels, plains = parse_plaintext_messages(
                 body.get("plaintexts", ""), N=N)
             if not plains:
@@ -343,7 +348,12 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             hdr = body.get("inject_header")
             inject = None
             if hdr:
-                inject = tuple(int(x) for x in hdr) if isinstance(hdr, list) else None
+                if isinstance(hdr, str):
+                    hdr = json.loads(hdr)
+                if isinstance(hdr, list):
+                    inject = tuple(int(x) for x in hdr)
+                else:
+                    raise ValueError("inject_header must be a JSON array [pos,sym,...]")
             ds = plant_dataset(
                 plains, labels,
                 mode=body.get("mode", "add"),
@@ -368,6 +378,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
     def _dataset_convert(self, body: dict):
         try:
             N = int(body.get("deck_size", 83))
+            if N < 2 or N > 256:
+                raise ValueError("deck_size must be in [2, 256]")
             out = convert_plaintext_to_ciphertext(
                 body.get("plaintext", ""),
                 mode=body.get("mode", "add"),

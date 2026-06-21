@@ -573,6 +573,7 @@ function initDatasets() {{
           keys: document.getElementById("ds-plant-keys").value,
           bases: bases,
           inject_header: hdr,
+          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
           activate: true,
         }}),
       }});
