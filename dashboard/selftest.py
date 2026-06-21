@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 
-def selftest() -> List[Tuple[str, bool]]:
+def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     from dashboard.registry import load_tools
     from dashboard.workflows import PRESETS, validate_presets
     from dashboard.orchestrator import have_venv, get_orchestrator
@@ -38,7 +38,7 @@ def selftest() -> List[Tuple[str, bool]]:
     out.append(("build HTML includes tool grid", "tool-grid" in html))
 
     # Optional live run when venv exists (fast tool only)
-    if have_venv():
+    if have_venv() and not quick:
         rec = orch.start_tool("validate-run-the-full-math-gate-validate-everything", wait=True)
         out.append(("orchestrator runs selftest job", rec.status == "completed"))
         out.append(("orchestrator captures stdout",
@@ -51,8 +51,13 @@ def selftest() -> List[Tuple[str, bool]]:
 
 
 if __name__ == "__main__":
+    import argparse
     import sys
-    results = selftest()
+    ap = argparse.ArgumentParser(description="Dashboard selftest")
+    ap.add_argument("--quick", action="store_true",
+                    help="skip live subprocess job (registry/build only)")
+    args = ap.parse_args()
+    results = selftest(quick=args.quick)
     for label, ok in results:
         print(f"  [{'PASS' if ok else 'FAIL'}] {label}")
     n = sum(1 for _, ok in results if ok)

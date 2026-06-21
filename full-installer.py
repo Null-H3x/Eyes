@@ -176,6 +176,8 @@ def build_tests(quick: bool, gpu: bool, tmp_fp: str) -> List[Test]:
              ["triplet_keytest.py"], 180, True),
         Test("EyeCrack end-to-end demo", "eyecrack",
              ["eyecrack.py", "demo"], 180, True),
+        Test("Workbench dashboard build", "dashboard",
+             ["build.py"], 60, True),
     ]
     if not quick:
         tests += [

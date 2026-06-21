@@ -20,14 +20,10 @@ from urllib.parse import parse_qs, unquote, urlparse
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from dashboard.build import main as build_dashboard  # noqa: E402
+from dashboard.build import build_workbench  # noqa: E402
 from dashboard.orchestrator import get_orchestrator  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
 from dashboard.workflows import PRESETS  # noqa: E402
-
-# Ensure dashboard exists on first launch
-if not (ROOT / "workbench.html").is_file():
-    build_dashboard()
 
 
 def _json_response(handler: BaseHTTPRequestHandler, code: int, obj) -> None:
@@ -182,7 +178,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                         return _json_response(self, 404, {"error": str(e)})
 
         if path == "/api/rebuild":
-            build_dashboard()
+            build_workbench()
             return _json_response(self, 200, {"ok": True})
 
         return _json_response(self, 404, {"error": "not found"})
@@ -197,7 +193,7 @@ def main() -> int:
 
     if not (ROOT / "workbench.html").is_file():
         print("Building workbench.html …")
-        build_dashboard()
+        build_workbench()
 
     url = f"http://{args.host}:{args.port}/workbench.html"
     httpd = ThreadingHTTPServer((args.host, args.port), WorkbenchHandler)

@@ -446,25 +446,30 @@ serverLive().then(live => {{
 """
 
 
+def build_workbench(out: Path | str | None = None) -> Path:
+    """Build workbench HTML; safe to call from server (no argparse)."""
+    missing = validate_presets([t.id for t in load_tools()])
+    if missing:
+        print("WARNING: workflow presets reference missing tool IDs:")
+        for m in missing:
+            print(f"  - {m}")
+    data = _collect_snapshot()
+    out_path = Path(out) if out else OUT_DEFAULT
+    out_path.write_text(render_html(data), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(data['tools'])} tools, {len(data['presets'])} workflows)")
+    return out_path
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build EYES Workbench HTML dashboard")
     ap.add_argument("--out", default=str(OUT_DEFAULT))
     ap.add_argument("--open", action="store_true")
     args = ap.parse_args()
 
-    missing = validate_presets([t.id for t in load_tools()])
-    if missing:
-        print("WARNING: workflow presets reference missing tool IDs:")
-        for m in missing:
-            print(f"  - {m}")
-
-    data = _collect_snapshot()
-    out_path = Path(args.out)
-    out_path.write_text(render_html(data), encoding="utf-8")
-    print(f"Wrote {out_path} ({len(data['tools'])} tools, {len(data['presets'])} workflows)")
+    build_workbench(args.out)
     print("  Live mode: python3 dashboard/server.py")
     if args.open:
-        webbrowser.open(out_path.resolve().as_uri())
+        webbrowser.open(Path(args.out).resolve().as_uri())
     return 0
 
 
