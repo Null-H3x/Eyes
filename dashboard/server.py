@@ -21,8 +21,15 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from dashboard.build import build_workbench  # noqa: E402
+from dashboard.cipher_validate import (  # noqa: E402
+    catalog as cipher_catalog,
+    parse_values,
+    sweep_linear_modes,
+    validate_cipher,
+)
 from dashboard.orchestrator import get_orchestrator  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
+from dashboard.workflow_map import workflow_map_payload  # noqa: E402
 from dashboard.workflows import PRESETS  # noqa: E402
 
 
@@ -74,6 +81,12 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         if route == "/api/tools":
             tools = [t.__dict__ for t in load_tools()]
             return _json_response(self, 200, {"tools": tools})
+
+        if route == "/api/workflow-map":
+            return _json_response(self, 200, workflow_map_payload())
+
+        if route == "/api/cipher/catalog":
+            return _json_response(self, 200, {"modes": cipher_catalog()})
 
         if route == "/api/workflows":
             return _json_response(self, 200, orch.list_workflows())
@@ -151,6 +164,12 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             rec = orch.cancel_active()
             return _json_response(self, 200, {"cancelled": rec.to_dict() if rec else None})
 
+        if path == "/api/cipher/validate":
+            return self._cipher_validate(body)
+
+        if path == "/api/cipher/sweep":
+            return self._cipher_sweep(body)
+
         if path.startswith("/api/workflows/"):
             parts = [p for p in path.split("/") if p]
             # api, workflows, {id}, {action}
@@ -182,6 +201,62 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             return _json_response(self, 200, {"ok": True})
 
         return _json_response(self, 404, {"error": "not found"})
+
+    def _load_corpus(self):
+        sys.path.insert(0, str(ROOT / "noita_eye_core"))
+        import corpus as corpus_mod
+        c = corpus_mod.load()
+        return c, [list(x) for x in c.ciphertexts]
+
+    def _cipher_validate(self, body: dict):
+        try:
+            c, messages = self._load_corpus()
+            mode = body.get("mode", "add")
+            plain = parse_values(body.get("plaintext", ""), N=c.N) if body.get("plaintext") else None
+            key = parse_values(body.get("key", ""), N=c.N) if body.get("key") else []
+            uct = (parse_values(body.get("user_ciphertext", ""), N=c.N)
+                   if body.get("user_ciphertext") else None)
+            if mode == "user_ciphertext":
+                if not uct:
+                    return _json_response(self, 400, {"error": "ciphertext required"})
+                r = validate_cipher(
+                    messages, c.labels, mode=mode,
+                    message=body.get("message", "East 1"),
+                    offset=int(body.get("offset", 0)),
+                    user_ciphertext=uct, N=c.N)
+            else:
+                if not plain:
+                    return _json_response(self, 400, {"error": "plaintext required"})
+                r = validate_cipher(
+                    messages, c.labels, mode=mode,
+                    message=body.get("message", "East 1"),
+                    offset=int(body.get("offset", 0)),
+                    plaintext=plain, key=key,
+                    base=int(body.get("base", 0)), N=c.N)
+            return _json_response(self, 200, r.to_dict())
+        except ValueError as e:
+            return _json_response(self, 400, {"error": str(e)})
+        except Exception as e:
+            return _json_response(self, 500, {"error": str(e)})
+
+    def _cipher_sweep(self, body: dict):
+        try:
+            c, messages = self._load_corpus()
+            plain = parse_values(body.get("plaintext", ""), N=c.N)
+            if not plain:
+                return _json_response(self, 400, {"error": "plaintext required"})
+            key = parse_values(body.get("key", ""), N=c.N) if body.get("key") else []
+            rows = sweep_linear_modes(
+                messages, c.labels,
+                message=body.get("message", "East 1"),
+                offset=int(body.get("offset", 0)),
+                plaintext=plain, key=key,
+                base=int(body.get("base", 0)), N=c.N)
+            return _json_response(self, 200, rows)
+        except ValueError as e:
+            return _json_response(self, 400, {"error": str(e)})
+        except Exception as e:
+            return _json_response(self, 500, {"error": str(e)})
 
 
 def main() -> int:

@@ -32,10 +32,19 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
                 len(orch.list_workflows()) == len(PRESETS)))
 
     from dashboard.build import _collect_snapshot, render_html
+    from dashboard.cipher_validate import selftest as cv_selftest
+    from dashboard.workflow_map import workflow_map_payload
+
     data = _collect_snapshot()
     html = render_html(data)
     out.append(("build render_html non-empty", len(html) > 5000))
-    out.append(("build HTML includes tool grid", "tool-grid" in html))
+    out.append(("build HTML includes workflow map tab", "panel-map" in html))
+    out.append(("build HTML includes cipher tab", "panel-ciphers" in html))
+    out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) >= 5))
+    out.append(("tools have global numbers", all("num" in t for t in data["tools"])))
+
+    cv = cv_selftest()
+    out.append(("cipher_validate selftest", all(ok for _, ok in cv)))
 
     # Optional live run when venv exists (fast tool only)
     if have_venv() and not quick:

@@ -20,8 +20,10 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
+from dashboard.cipher_validate import catalog as cipher_catalog  # noqa: E402
 from dashboard.orchestrator import get_orchestrator, have_venv  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
+from dashboard.workflow_map import annotate_tools, render_workflow_svg, workflow_map_payload  # noqa: E402
 from dashboard.workflows import PRESETS, validate_presets  # noqa: E402
 
 OUT_DEFAULT = ROOT / "workbench.html"
@@ -91,17 +93,52 @@ word-break:break-word;max-height:520px;overflow:auto;min-height:280px}
 .filter{margin:8px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .filter input,.filter select{font:inherit;padding:6px 8px;border-radius:5px;
 border:1px solid #3a3220;background:var(--bg2);color:var(--ink)}
+.tool-num{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;
+font-size:.72rem;font-weight:bold;color:var(--gold);border:1px solid var(--gold);
+border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle}
+.workflow-wrap{overflow:auto;border:1px solid #3a3220;border-radius:8px;
+background:var(--panel);padding:12px;margin:12px 0}
+.workflow-svg{width:100%;min-width:900px;height:auto}
+.wf-node{cursor:pointer}.wf-node:hover rect{stroke-width:2.5;filter:drop-shadow(0 0 4px rgba(201,162,39,.4))}
+.wf-node.sel rect{stroke:var(--gold);stroke-width:2.5}
+.phase-list{margin:14px 0}
+.phase-list h4{margin:10px 0 6px;color:var(--teal);font-size:.9rem}
+.phase-tools{display:flex;flex-wrap:wrap;gap:6px}
+.phase-tool{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;
+padding:4px 8px;border-radius:5px;border:1px solid #3a3220;background:#2a2215;
+cursor:pointer;color:var(--ink)}
+.phase-tool:hover{border-color:var(--gold);color:var(--gold)}
+.cipher-form label{display:block;margin:8px 0 4px;font-size:.82rem;color:var(--dim)}
+.cipher-form input,.cipher-form select,.cipher-form textarea{width:100%;max-width:520px;
+font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:8px;
+border-radius:6px;border:1px solid #3a3220;background:var(--bg2);color:var(--ink)}
+.cipher-form textarea{min-height:64px;resize:vertical}
+.cipher-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.cipher-grid{grid-template-columns:1fr}}
+.cipher-pos{max-height:240px;overflow:auto;font-size:.68rem}
+.cipher-pos table{width:100%;border-collapse:collapse}
+.cipher-pos th,.cipher-pos td{border:1px solid #3a3220;padding:3px 6px;text-align:center}
+.cipher-pos .ok{color:var(--green)}.cipher-pos .bad{color:var(--red)}
 footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.78rem}
 """
 
 
 def _collect_snapshot() -> dict:
-    tools = load_tools()
-    missing = validate_presets([t.id for t in tools])
+    sys.path.insert(0, str(ROOT / "noita_eye_core"))
+    import corpus as corpus_mod  # noqa: E402
+
+    tools = annotate_tools(load_tools())
+    missing = validate_presets([t["id"] for t in tools])
     orch = get_orchestrator()
+    cor = corpus_mod.load()
+    wf = workflow_map_payload()
     return {
         "have_venv": have_venv(),
-        "tools": [t.__dict__ for t in tools],
+        "tools": tools,
+        "workflow_map": wf,
+        "workflow_svg": render_workflow_svg(wf),
+        "cipher_catalog": cipher_catalog(),
+        "message_labels": list(cor.labels),
         "presets": [
             {"id": p.id, "title": p.title, "description": p.description,
              "steps": list(p.steps), "tags": list(p.tags)}
@@ -158,13 +195,21 @@ def render_html(data: dict) -> str:
   <code>python3 dashboard/server.py</code>
 </div>
 <nav class="tabs" role="tablist">
-<button type="button" class="active" data-tab="tools">Tools</button>
+<button type="button" class="active" data-tab="map">Workflow Map</button>
+<button type="button" data-tab="tools">Tools</button>
+<button type="button" data-tab="ciphers">Known Ciphers</button>
 <button type="button" data-tab="workflows">Workflows</button>
 <button type="button" data-tab="jobs">Jobs &amp; Output</button>
 <button type="button" data-tab="links">Reports &amp; Links</button>
 </nav>
 
-<section id="panel-tools" class="panel active">
+<section id="panel-map" class="panel active">
+<p class="meta">Global tool numbers match the investigation flow. Click a node to jump to that tool.</p>
+<div class="workflow-wrap" id="workflow-svg-wrap"></div>
+<div id="phase-list" class="phase-list"></div>
+</section>
+
+<section id="panel-tools" class="panel">
 <div class="filter">
 <input type="search" id="tool-search" placeholder="Search tools…" aria-label="Search tools">
 <select id="tool-group"><option value="">All groups</option></select>
@@ -172,6 +217,35 @@ def render_html(data: dict) -> str:
 <option value="fast">Fast</option><option value="medium">Medium</option><option value="long">Long (GPU/seed scans)</option></select>
 </div>
 <div id="tool-grid" class="grid"></div>
+</section>
+
+<section id="panel-ciphers" class="panel">
+<p class="meta">Test whether your known cipher reproduces the corpus at a message offset. Uses the same <code>cipher_ops</code> combiners as EyeStat/EyeCrack.</p>
+<div class="cipher-grid">
+<div class="cipher-form card">
+<label for="cv-mode">Cipher mode</label>
+<select id="cv-mode"></select>
+<label for="cv-message">Message</label>
+<select id="cv-message"></select>
+<label for="cv-offset">Start offset</label>
+<input type="number" id="cv-offset" value="0" min="0" max="200">
+<label for="cv-base">Base (progressive modes)</label>
+<input type="number" id="cv-base" value="0" min="0" max="82">
+<label for="cv-plain">Plaintext values (0–82, glyphs, or spaces)</label>
+<textarea id="cv-plain" placeholder="e.g. 50 66 5  or  o % 5"></textarea>
+<label for="cv-key">Key values (repeating if shorter)</label>
+<textarea id="cv-key" placeholder="e.g. 7 3 7 3"></textarea>
+<label for="cv-ct">Optional: your ciphertext output (compare mode)</label>
+<textarea id="cv-ct" placeholder="Paste external cipher output to compare"></textarea>
+<button type="button" class="btn primary" id="cv-run">Validate against corpus</button>
+<button type="button" class="btn" id="cv-sweep">Sweep add / sub / beaufort</button>
+</div>
+<div>
+<div class="meta" id="cv-header">Results appear here</div>
+<pre class="terminal" id="cv-output">(run a validation)</pre>
+<div class="cipher-pos" id="cv-pos"></div>
+</div>
+</div>
 </section>
 
 <section id="panel-workflows" class="panel">
@@ -254,18 +328,21 @@ function renderTools() {{
     const q = (document.getElementById("tool-search").value || "").toLowerCase();
     const g = document.getElementById("tool-group").value;
     const d = document.getElementById("tool-duration").value;
+    const numFilter = window._toolNumFilter || null;
     grid.innerHTML = "";
     DATA.tools.filter(t => {{
+      if (numFilter && t.num !== numFilter) return false;
       if (g && t.group !== g) return false;
       if (d && t.duration !== d) return false;
-      if (q && !(t.title + t.id + t.command).toLowerCase().includes(q)) return false;
+      if (q && !(t.title + t.id + t.command + t.num_label).toLowerCase().includes(q)) return false;
       return true;
     }}).forEach(t => {{
       const el = document.createElement("div");
       el.className = "card";
+      el.id = "tool-card-" + t.num;
       el.innerHTML = `
-        <div class="grp">${{esc(t.group)}}</div>
-        <h3>${{esc(t.title)}}</h3>
+        <div class="grp">${{esc(t.num_label)}} · ${{esc(t.group)}} · ${{esc(t.phase_title || "")}}</div>
+        <h3><span class="tool-num">${{esc(t.num_label)}}</span>${{esc(t.title)}}</h3>
         <div class="cmd">${{esc(t.command)}}</div>
         <div class="tags">
           <span class="tag ${{t.duration}}">${{esc(t.duration)}}</span>
@@ -278,12 +355,146 @@ function renderTools() {{
       btn.addEventListener("click", () => runTool(btn.dataset.id));
     }});
   }}
+  window._renderToolsDraw = draw;
   ["input","change"].forEach(ev => {{
-    document.getElementById("tool-search").addEventListener(ev, draw);
+    document.getElementById("tool-search").addEventListener(ev, () => {{
+      if (ev === "input") window._toolNumFilter = null;
+      draw();
+    }});
     document.getElementById("tool-group").addEventListener(ev, draw);
     document.getElementById("tool-duration").addEventListener(ev, draw);
   }});
   draw();
+}}
+
+function focusToolByNum(num) {{
+  window._toolNumFilter = num;
+  document.getElementById("tool-search").value = "";
+  document.querySelector('[data-tab="tools"]').click();
+  if (window._renderToolsDraw) window._renderToolsDraw();
+  const card = document.getElementById("tool-card-" + num);
+  if (card) card.scrollIntoView({{behavior:"smooth", block:"center"}});
+  document.querySelectorAll(".wf-node").forEach(n => {{
+    n.classList.toggle("sel", parseInt(n.dataset.num, 10) === num);
+  }});
+}}
+
+function renderWorkflowMap() {{
+  const wrap = document.getElementById("workflow-svg-wrap");
+  wrap.innerHTML = DATA.workflow_svg || "";
+  wrap.querySelectorAll(".wf-node").forEach(node => {{
+    const num = parseInt(node.dataset.num, 10);
+    node.addEventListener("click", () => focusToolByNum(num));
+    node.addEventListener("keydown", e => {{
+      if (e.key === "Enter" || e.key === " ") {{ e.preventDefault(); focusToolByNum(num); }}
+    }});
+  }});
+  const list = document.getElementById("phase-list");
+  list.innerHTML = "";
+  (DATA.workflow_map.phases || []).forEach(phase => {{
+    const block = document.createElement("div");
+    block.innerHTML = `<h4 style="color:${{esc(phase.color)}}">${{esc(phase.title)}} — ${{esc(phase.subtitle)}}</h4>`;
+    const row = document.createElement("div");
+    row.className = "phase-tools";
+    (phase.tools || []).forEach(t => {{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "phase-tool";
+      b.textContent = t.num_label + " " + t.title.slice(0, 36);
+      b.title = t.title;
+      b.addEventListener("click", () => focusToolByNum(t.num));
+      row.appendChild(b);
+    }});
+    block.appendChild(row);
+    list.appendChild(block);
+  }});
+}}
+
+function initCipherForm() {{
+  const modeSel = document.getElementById("cv-mode");
+  (DATA.cipher_catalog || []).forEach(c => {{
+    const o = document.createElement("option");
+    o.value = c.id; o.textContent = c.label || c.id;
+    modeSel.appendChild(o);
+  }});
+  const msgSel = document.getElementById("cv-message");
+  (DATA.message_labels || []).forEach(l => {{
+    const o = document.createElement("option");
+    o.value = l; o.textContent = l;
+    msgSel.appendChild(o);
+  }});
+  document.getElementById("cv-run").addEventListener("click", runCipherValidate);
+  document.getElementById("cv-sweep").addEventListener("click", runCipherSweep);
+}}
+
+function _cvPayload() {{
+  return {{
+    mode: document.getElementById("cv-mode").value,
+    message: document.getElementById("cv-message").value,
+    offset: parseInt(document.getElementById("cv-offset").value, 10) || 0,
+    base: parseInt(document.getElementById("cv-base").value, 10) || 0,
+    plaintext: document.getElementById("cv-plain").value,
+    key: document.getElementById("cv-key").value,
+    user_ciphertext: document.getElementById("cv-ct").value,
+  }};
+}}
+
+function _renderCipherResult(r) {{
+  document.getElementById("cv-header").textContent =
+    r.verdict + " · " + r.message + " @ " + r.offset + " · " +
+    (r.matches + "/" + r.length) + " (" + Math.round(r.match_rate * 100) + "%)";
+  const lines = [
+    "mode: " + r.mode,
+    "verdict: " + r.verdict,
+    "match: " + r.matches + "/" + r.length,
+    "corpus:  " + (r.corpus_glyphs || r.corpus_slice.join(" ")),
+    "computed:" + (r.computed_glyphs || r.computed.join(" ")),
+  ];
+  if (r.round_trip_ok != null) lines.push("round_trip: " + r.round_trip_ok);
+  if (r.decrypt_ioc != null) lines.push("decrypt_ioc: " + r.decrypt_ioc.toFixed(4));
+  (r.notes || []).forEach(n => lines.push("note: " + n));
+  document.getElementById("cv-output").textContent = lines.join("\\n");
+  const pos = document.getElementById("cv-pos");
+  if (!r.positions || !r.positions.length) {{ pos.innerHTML = ""; return; }}
+  const rows = r.positions.map(p =>
+    `<tr class="${{p.match ? "ok" : "bad"}}"><td>${{p.i}}</td><td>${{p.abs}}</td>` +
+    `<td>${{p.plain != null ? p.plain : ""}}</td><td>${{p.expected}}</td>` +
+    `<td>${{p.observed}}</td><td>${{p.exp_glyph}}</td><td>${{p.obs_glyph}}</td>` +
+    `<td>${{p.match ? "✓" : "✗"}}</td></tr>`).join("");
+  pos.innerHTML = `<table><thead><tr><th>i</th><th>pos</th><th>plain</th>` +
+    `<th>exp</th><th>obs</th><th>exp_g</th><th>obs_g</th><th>ok</th></tr></thead><tbody>${{rows}}</tbody></table>`;
+}}
+
+async function runCipherValidate() {{
+  try {{
+    const r = await api("/api/cipher/validate", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify(_cvPayload()),
+    }});
+    _renderCipherResult(r);
+  }} catch (e) {{
+    document.getElementById("cv-output").textContent = "Error: " + e.message;
+  }}
+}}
+
+async function runCipherSweep() {{
+  try {{
+    const p = _cvPayload();
+    p.mode = "add";
+    const rows = await api("/api/cipher/sweep", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify(p),
+    }});
+    document.getElementById("cv-header").textContent = "Linear mode sweep (best first)";
+    document.getElementById("cv-output").textContent = rows.map(r =>
+      r.mode + ": " + r.verdict + " " + r.matches + "/" + r.length +
+      " (" + Math.round(r.match_rate * 100) + "%)").join("\\n");
+    if (rows.length) _renderCipherResult(rows[0]);
+  }} catch (e) {{
+    document.getElementById("cv-output").textContent = "Error: " + e.message;
+  }}
 }}
 
 function renderWorkflows(wflows) {{
@@ -428,7 +639,9 @@ document.getElementById("btn-cancel").addEventListener("click", async () => {{
 document.getElementById("btn-refresh-jobs").addEventListener("click", refreshAll);
 
 initTabs();
+renderWorkflowMap();
 renderTools();
+initCipherForm();
 renderWorkflows(DATA.workflows);
 renderJobs(DATA.jobs);
 renderLinks();
