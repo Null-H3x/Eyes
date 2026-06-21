@@ -197,6 +197,27 @@ def open_dashboard():
     run(["build.py", "--open"], "report")
 
 
+def open_workbench():
+    if not have_venv():
+        print(RED("No environment yet — run Setup (s) first."))
+        input(DIM("[enter] "))
+        return
+    print(GOLD("\nBuilding workbench.html and starting the local server…"))
+    py = str(venv_python())
+    try:
+        subprocess.run([py, "build.py"], cwd=str(ROOT / "dashboard"), check=False)
+    except KeyboardInterrupt:
+        print(RED("\n(interrupted)"))
+        return
+    print(TEAL("\n  Workbench: http://127.0.0.1:8765/workbench.html"))
+    print(DIM("  (Ctrl+C stops the server)\n"))
+    try:
+        subprocess.run([py, "server.py", "--open"], cwd=str(ROOT / "dashboard"))
+    except KeyboardInterrupt:
+        print(RED("\n(server stopped)"))
+    input(DIM("\n[enter] to return to the menu "))
+
+
 def banner():
     if _TTY:
         os.system("clear" if os.name != "nt" else "cls")
@@ -215,8 +236,10 @@ def banner():
 def menu():
     while True:
         banner()
-        print(GOLD("\n  0) ") + BOLD("Open the HTML dashboard  ")
-              + DIM("(build + launch in browser)"))
+        print(GOLD("\n  0) ") + BOLD("Evidence ledger  ")
+              + DIM("(report.html — structural findings)"))
+        print(GOLD("  w) ") + BOLD("Workbench dashboard  ")
+              + DIM("(run tools, jobs, saved workflows)"))
         n = 0
         last_group = None
         index = {}
@@ -237,6 +260,8 @@ def menu():
             setup()
         elif choice == "0":
             open_dashboard()
+        elif choice == "w":
+            open_workbench()
         elif choice in index:
             if not have_venv():
                 print(RED("\nNo environment yet — run Setup (s) first."))

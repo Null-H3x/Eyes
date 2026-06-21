@@ -1,0 +1,60 @@
+"""Dashboard selftest — registry, presets, orchestrator smoke."""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import List, Tuple
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+
+def selftest() -> List[Tuple[str, bool]]:
+    from dashboard.registry import load_tools
+    from dashboard.workflows import PRESETS, validate_presets
+    from dashboard.orchestrator import have_venv, get_orchestrator
+
+    tools = load_tools()
+    ids = [t.id for t in tools]
+    out: List[Tuple[str, bool]] = []
+
+    out.append(("registry loads tools from eyes.WORKFLOWS", len(tools) >= 40))
+    out.append(("registry tool IDs are unique", len(ids) == len(set(ids))))
+    missing = validate_presets(ids)
+    out.append(("workflow presets reference valid tool IDs", len(missing) == 0))
+    out.append(("at least 4 workflow presets", len(PRESETS) >= 4))
+
+    orch = get_orchestrator()
+    snap = orch.snapshot()
+    out.append(("orchestrator snapshot has tools_count", snap.get("tools_count", 0) >= 40))
+    out.append(("orchestrator list_workflows matches presets",
+                len(orch.list_workflows()) == len(PRESETS)))
+
+    from dashboard.build import _collect_snapshot, render_html
+    data = _collect_snapshot()
+    html = render_html(data)
+    out.append(("build render_html non-empty", len(html) > 5000))
+    out.append(("build HTML includes tool grid", "tool-grid" in html))
+
+    # Optional live run when venv exists (fast tool only)
+    if have_venv():
+        rec = orch.start_tool("validate-run-the-full-math-gate-validate-everything", wait=True)
+        out.append(("orchestrator runs selftest job", rec.status == "completed"))
+        out.append(("orchestrator captures stdout",
+                    len(orch.get_stdout(rec.id)) > 100))
+    else:
+        out.append(("orchestrator run skipped (no .venv)", True))
+        out.append(("orchestrator stdout skipped (no .venv)", True))
+
+    return out
+
+
+if __name__ == "__main__":
+    import sys
+    results = selftest()
+    for label, ok in results:
+        print(f"  [{'PASS' if ok else 'FAIL'}] {label}")
+    n = sum(1 for _, ok in results if ok)
+    print(f"\n{n}/{len(results)} dashboard checks passed")
+    sys.exit(0 if n == len(results) else 1)
