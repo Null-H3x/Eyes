@@ -260,36 +260,66 @@ def active_corpus_path() -> Path:
     return out
 
 
+def _resolve_deck_size(raw) -> Optional[int]:
+    """Return None for unknown/auto deck size."""
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        s = raw.strip().lower()
+        if s in ("", "unknown", "auto", "?"):
+            return None
+        return int(s)
+    if isinstance(raw, bool):
+        return None
+    v = int(raw)
+    return None if v <= 0 else v
+
+
 def parse_import(
     content: str,
     *,
     fmt: str = "auto",
     name: str = "Imported dataset",
-    deck_size: int = 83,
+    deck_size: Optional[int] = 83,
     labels: Optional[Sequence[str]] = None,
 ) -> Dataset:
     """Import ciphertext from any mix of numbers, glyphs, spacing, punctuation."""
     if fmt in ("lines", "glyphs"):
         fmt = "auto"
+    unknown_n = deck_size is None
     parsed = parse_import_content(
         content, fmt=fmt, deck_size=deck_size, labels=labels, strict=True)
+    inference = None
+    resolved_n = parsed.deck_size
+    if unknown_n:
+        from dashboard.deck_infer import infer_deck_size
+        inference = infer_deck_size(parsed.messages)
+        resolved_n = inference["inferred_N"]
     ds_id = str(uuid.uuid4())[:12]
+    meta: Dict[str, Any] = {
+        "import_format": parsed.detected_format,
+        "import_diagnostics": {
+            "per_message": parsed.per_message,
+            "notes": parsed.notes,
+        },
+    }
+    if inference:
+        meta["deck_size_inferred"] = True
+        meta["deck_inference"] = inference
+        meta["import_diagnostics"]["deck_inference"] = inference
     ds = Dataset(
         id=f"import-{ds_id}",
         name=name,
         source="imported",
-        deck_size=parsed.deck_size,
+        deck_size=resolved_n,
         labels=list(parsed.labels),
         ciphertexts=[list(ct) for ct in parsed.messages],
         created_at=_now(),
-        notes=f"Imported {len(parsed.messages)} message(s), format={parsed.detected_format}",
-        metadata={
-            "import_format": parsed.detected_format,
-            "import_diagnostics": {
-                "per_message": parsed.per_message,
-                "notes": parsed.notes,
-            },
-        },
+        notes=(
+            f"Imported {len(parsed.messages)} message(s), "
+            f"N={resolved_n}" + (" (inferred)" if inference else "")
+        ),
+        metadata=meta,
     )
     _validate_dataset(ds)
     return ds
@@ -299,25 +329,36 @@ def preview_import(
     content: str,
     *,
     fmt: str = "auto",
-    deck_size: int = 83,
+    deck_size: Optional[int] = 83,
 ) -> dict:
     """Dry-run parse — returns diagnostics without saving."""
     if fmt in ("lines", "glyphs"):
         fmt = "auto"
+    unknown_n = deck_size is None
     parsed = parse_import_content(
         content, fmt=fmt, deck_size=deck_size, strict=True)
-    return {
+    out = {
         "detected_format": parsed.detected_format,
         "num_messages": len(parsed.messages),
         "labels": parsed.labels,
         "lengths": [len(m) for m in parsed.messages],
         "per_message": parsed.per_message,
-        "notes": parsed.notes,
+        "notes": list(parsed.notes),
+        "deck_size_unknown": unknown_n,
         "preview_decimals": [
             " ".join(str(v) for v in m[:40]) + ("…" if len(m) > 40 else "")
             for m in parsed.messages
         ],
     }
+    if unknown_n:
+        from dashboard.deck_infer import infer_deck_size
+        inf = infer_deck_size(parsed.messages)
+        out["deck_inference"] = inf
+        out["inferred_N"] = inf["inferred_N"]
+        out["notes"].append(f"Inferred N={inf['inferred_N']} ({inf['confidence']} confidence)")
+    else:
+        out["inferred_N"] = parsed.deck_size
+    return out
 
 
 def import_and_save(
@@ -325,7 +366,7 @@ def import_and_save(
     *,
     fmt: str = "auto",
     name: str = "Imported dataset",
-    deck_size: int = 83,
+    deck_size: Optional[int] = 83,
     activate: bool = False,
 ) -> Dataset:
     ds = parse_import(content, fmt=fmt, name=name, deck_size=deck_size)
@@ -374,6 +415,11 @@ def selftest() -> List[Tuple[str, bool]]:
     from dashboard.cipher_validate import GLYPHS
     out.append(("mixed glued digits", mixed.ciphertexts[2] == [10, 66, 5]))
     out.append(("mixed glyphs", mixed.ciphertexts[1][0] == GLYPHS.index("o")))
+
+    unk = parse_import("10 20 30\n40 50 60", fmt="auto", deck_size=None)
+    out.append(("unknown N import infers deck", unk.deck_size >= 61))
+    out.append(("unknown marks inferred metadata",
+                  unk.metadata.get("deck_size_inferred") is True))
 
     orig_dir = DATA_DIR
     tmp = Path(tempfile.mkdtemp())

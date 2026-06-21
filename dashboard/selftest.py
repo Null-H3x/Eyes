@@ -33,6 +33,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
 
     from dashboard.build import _collect_snapshot, render_html
     from dashboard.cipher_validate import selftest as cv_selftest
+    from dashboard.deck_infer import selftest as di_selftest
     from dashboard.import_parse import selftest as ip_selftest
     from dashboard.dataset_store import get_active_id, list_datasets, selftest as ds_selftest
     from dashboard.eye_puzzle import selftest as ep_selftest
@@ -45,6 +46,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("build HTML includes cipher tab", "panel-ciphers" in html))
     out.append(("build HTML includes datasets tab", "panel-datasets" in html))
     out.append(("build HTML includes import preview", "ds-preview-btn" in html))
+    out.append(("build HTML includes infer deck", "ds-infer-deck-btn" in html))
     out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) >= 5))
     out.append(("tools have global numbers", all("num" in t for t in data["tools"])))
     out.append(("active dataset in snapshot", data.get("active_dataset_id") is not None))
@@ -55,6 +57,8 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("cipher_validate selftest", all(ok for _, ok in cv)))
     ip = ip_selftest()
     out.append(("import_parse selftest", all(ok for _, ok in ip)))
+    di = di_selftest()
+    out.append(("deck_infer selftest", all(ok for _, ok in di)))
     ds = ds_selftest()
     out.append(("dataset_store selftest", all(ok for _, ok in ds)))
     ep = ep_selftest()

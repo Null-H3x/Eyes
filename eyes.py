@@ -111,6 +111,8 @@ WORKFLOWS = [
      "eyewitness", ["viewer_anchor.py", "--html"]),
     ("Isomorph Viewer anchor — paranoia audit", "Validate",
      "eyewitness", ["viewer_anchor.py", "--audit"]),
+    ("Infer deck size N — active corpus alphabet", "Validate",
+     "dashboard", ["deck_infer.py", "--active", "--json"]),
     ("Cipher-construction lattice (what fits; excludes ciphertext-autokey)", "Map the structure",
      "eyewitness", ["cipher_lattice.py"]),
     ("EyeCrack — salakieli crib battery (register + globality commands)", "Attack",

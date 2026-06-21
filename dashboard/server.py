@@ -36,7 +36,9 @@ from dashboard.dataset_store import (  # noqa: E402
     preview_import,
     save_planted,
     set_active,
+    _resolve_deck_size,
 )
+from dashboard.deck_infer import infer_active_dataset, infer_from_text  # noqa: E402
 from dashboard.eye_puzzle import (  # noqa: E402
     analyze_dataset,
     convert_plaintext_to_ciphertext,
@@ -125,6 +127,12 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
 
         if route == "/api/datasets/analyze":
             return _json_response(self, 200, analyze_dataset(get_active()).to_dict())
+
+        if route == "/api/datasets/infer-deck":
+            try:
+                return _json_response(self, 200, infer_active_dataset())
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
 
         if route == "/api/workflows":
             return _json_response(self, 200, orch.list_workflows())
@@ -221,6 +229,9 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         if path == "/api/datasets/preview":
             return self._dataset_preview(body)
 
+        if path == "/api/datasets/infer-deck":
+            return self._dataset_infer_deck(body)
+
         if path == "/api/datasets/plant":
             return self._dataset_plant(body)
 
@@ -315,11 +326,35 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         except Exception as e:
             return _json_response(self, 500, {"error": str(e)})
 
+    def _dataset_preview(self, body: dict):
+        try:
+            deck_size = _resolve_deck_size(body.get("deck_size", 83))
+            out = preview_import(
+                body.get("content", ""),
+                fmt=body.get("format", "auto"),
+                deck_size=deck_size,
+            )
+            return _json_response(self, 200, out)
+        except ValueError as e:
+            return _json_response(self, 400, {"error": str(e)})
+
+    def _dataset_infer_deck(self, body: dict):
+        try:
+            content = (body.get("content") or "").strip()
+            if content:
+                result = infer_from_text(
+                    content,
+                    fmt=body.get("format", "auto"),
+                )
+            else:
+                result = infer_active_dataset()
+            return _json_response(self, 200, result)
+        except ValueError as e:
+            return _json_response(self, 400, {"error": str(e)})
+
     def _dataset_import(self, body: dict):
         try:
-            deck_size = int(body.get("deck_size", 83))
-            if deck_size < 2 or deck_size > 256:
-                raise ValueError("deck_size must be in [2, 256]")
+            deck_size = _resolve_deck_size(body.get("deck_size", 83))
             ds = import_and_save(
                 body.get("content", ""),
                 fmt=body.get("format", "auto"),
@@ -331,21 +366,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 "dataset": ds.to_dict(include_messages=False),
                 "analysis": analyze_dataset(ds).to_dict(),
                 "import_diagnostics": ds.metadata.get("import_diagnostics"),
+                "deck_inference": ds.metadata.get("deck_inference"),
             })
-        except ValueError as e:
-            return _json_response(self, 400, {"error": str(e)})
-
-    def _dataset_preview(self, body: dict):
-        try:
-            deck_size = int(body.get("deck_size", 83))
-            if deck_size < 2 or deck_size > 256:
-                raise ValueError("deck_size must be in [2, 256]")
-            out = preview_import(
-                body.get("content", ""),
-                fmt=body.get("format", "auto"),
-                deck_size=deck_size,
-            )
-            return _json_response(self, 200, out)
         except ValueError as e:
             return _json_response(self, 400, {"error": str(e)})
 

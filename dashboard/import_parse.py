@@ -23,6 +23,8 @@ if str(_REPO) not in sys.path:
 
 from dashboard.cipher_validate import GLYPHS  # noqa: E402
 
+PARSE_CEILING = 256
+
 _GLYPH_INDEX = {ch: i for i, ch in enumerate(GLYPHS)}
 _WRAPPER_CHARS = set("[](){}<>\"'`")
 # Separators that are never ciphertext symbols in typical pasted data
@@ -262,23 +264,31 @@ def parse_import_content(
     content: str,
     *,
     fmt: str = "auto",
-    deck_size: int = 83,
+    deck_size: Optional[int] = 83,
     labels: Optional[Sequence[str]] = None,
     strict: bool = True,
 ) -> ParseImportResult:
-    """Parse arbitrary import text into ciphertext messages."""
+    """Parse arbitrary import text into ciphertext messages.
+
+    Pass ``deck_size=None`` to parse with a safe ceiling (256) for unknown N;
+    the caller should run ``deck_infer.infer_deck_size`` on the result.
+    """
     content = content.strip()
     if not content:
         raise ValueError("empty import")
-    if deck_size < 2 or deck_size > 256:
-        raise ValueError("deck_size must be in [2, 256]")
+    unknown_n = deck_size is None
+    parse_n = PARSE_CEILING if unknown_n else deck_size
+    if parse_n is None or parse_n < 2 or parse_n > PARSE_CEILING:
+        raise ValueError(f"deck_size must be in [2, {PARSE_CEILING}] or unknown")
 
     if fmt == "auto":
         fmt = detect_import_format(content)
 
     if fmt == "corpus_json":
         raw = json.loads(content)
-        N = int(raw.get("deck_size", deck_size))
+        N = int(raw.get("deck_size", deck_size or 83))
+        if N < 2 or N > PARSE_CEILING:
+            raise ValueError(f"deck_size must be in [2, {PARSE_CEILING}]")
         if "ciphertexts" not in raw:
             raise ValueError("corpus JSON missing ciphertexts")
         messages = [list(int(v) for v in ct) for ct in raw["ciphertexts"]]
@@ -308,7 +318,7 @@ def parse_import_content(
         label, body = _split_label(line)
         if not body:
             continue
-        parsed = parse_ciphertext_line(body, N=deck_size, strict=strict)
+        parsed = parse_ciphertext_line(body, N=parse_n, strict=strict)
         if not parsed.values:
             continue
         if label:
@@ -324,7 +334,8 @@ def parse_import_content(
             "count": len(parsed.values),
             "notes": parsed.notes,
             "preview": "".join(
-                GLYPHS[v] if 0 <= v < len(GLYPHS) else "?" for v in parsed.values[:60]),
+                GLYPHS[v] if 0 <= v < len(GLYPHS) else "?"
+                for v in parsed.values[:60]),
         })
         msg_num += 1
 
@@ -334,13 +345,18 @@ def parse_import_content(
     if len(lbls) < len(messages):
         lbls.extend(f"Message {i + 1}" for i in range(len(lbls), len(messages)))
 
+    resolved_n = parse_n
+    notes = [f"Parsed {len(messages)} message(s) with universal import parser"]
+    if unknown_n:
+        notes.append(f"Parsed with unknown N (ceiling={PARSE_CEILING}); infer deck size next")
+
     return ParseImportResult(
         messages=messages,
         labels=lbls[:len(messages)],
-        deck_size=deck_size,
+        deck_size=resolved_n,
         detected_format=fmt,
         per_message=per,
-        notes=[f"Parsed {len(messages)} message(s) with universal import parser"],
+        notes=notes,
     )
 
 
@@ -380,6 +396,9 @@ def selftest() -> List[Tuple[str, bool]]:
         out.append(("strict rejects OOR", False))
     except ValueError:
         out.append(("strict rejects OOR", True))
+
+    unk = parse_import_content("10 20 30", deck_size=None)
+    out.append(("unknown N uses ceiling", unk.deck_size == PARSE_CEILING))
 
     return out
 

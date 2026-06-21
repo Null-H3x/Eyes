@@ -236,8 +236,14 @@ def render_html(data: dict) -> str:
 <option value="auto">Auto-detect (any mix)</option>
 <option value="corpus_json">Corpus JSON</option>
 </select>
-<label for="ds-import-n">Deck size N</label>
-<input type="number" id="ds-import-n" value="83" min="2" max="256">
+<label for="ds-import-n-mode">Deck size N</label>
+<select id="ds-import-n-mode">
+<option value="unknown" selected>Unknown (auto-detect on import)</option>
+<option value="83">83 (Noita eye deck)</option>
+<option value="custom">Custom…</option>
+</select>
+<input type="number" id="ds-import-n-custom" value="83" min="2" max="256" style="display:none;margin-top:6px">
+<button type="button" class="btn" id="ds-infer-deck-btn">Find deck size N</button>
 <label for="ds-import-body">Ciphertext data</label>
 <textarea id="ds-import-body" rows="8" placeholder="# One message per line — any mix of numbers and glyphs&#10;# Spacing/punctuation optional; glued digits split automatically&#10;10 20 30 | 10,20,30 | 10.20.30 | 10665 | o%5 | 10o66&#10;East: 10.o%5;66&#10;Msg2: ABC"></textarea>
 <button type="button" class="btn" id="ds-preview-btn">Preview parse</button>
@@ -510,6 +516,38 @@ function _fillMessageSelect(selId, labels) {{
   if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
 }}
 
+function getImportDeckSize() {{
+  const mode = document.getElementById("ds-import-n-mode").value;
+  if (mode === "unknown") return null;
+  if (mode === "83") return 83;
+  return parseInt(document.getElementById("ds-import-n-custom").value, 10) || 83;
+}}
+
+function _renderDeckInference(inf) {{
+  if (!inf) return;
+  const lines = [
+    "inferred N: " + inf.inferred_N + " (" + (inf.confidence || "?") + " confidence)",
+    "min_N: " + inf.min_N + "  max_symbol: " + inf.max_symbol +
+      "  symbols used: " + inf.symbol_usage,
+  ];
+  if (inf.matches_current === false) {{
+    lines.push("WARNING: active dataset has N=" + inf.current_deck_size);
+  }}
+  (inf.notes || []).forEach(n => lines.push("note: " + n));
+  lines.push("", "Top candidates:");
+  (inf.candidates || []).slice(0, 6).forEach(c => {{
+    lines.push("  N=" + c.N + "  score=" + c.score + "  cov=" +
+      Math.round(c.coverage * 100) + "%  " + (c.reasons && c.reasons[0] || ""));
+  }});
+  document.getElementById("ds-findings").textContent = lines.join("\\n");
+  document.getElementById("ds-findings-header").textContent = "Deck size inference";
+  if (inf.inferred_N) {{
+    document.getElementById("ds-import-n-mode").value = "custom";
+    document.getElementById("ds-import-n-custom").style.display = "block";
+    document.getElementById("ds-import-n-custom").value = inf.inferred_N;
+  }}
+}}
+
 function _renderImportDiagnostics(diag, meta) {{
   if (!diag) return;
   const lines = [];
@@ -520,6 +558,12 @@ function _renderImportDiagnostics(diag, meta) {{
       (m.preview ? " · " + m.preview.slice(0, 48) : ""));
   }});
   (diag.notes || meta.notes || []).forEach(n => lines.push("note: " + n));
+  if (meta && meta.deck_inference) {{
+    lines.push("inferred N: " + meta.deck_inference.inferred_N +
+      " (" + meta.deck_inference.confidence + ")");
+  }} else if (meta && meta.inferred_N) {{
+    lines.push("inferred N: " + meta.inferred_N);
+  }}
   if (meta && meta.preview_decimals) {{
     meta.preview_decimals.forEach((d, i) => lines.push("dec " + (i + 1) + ": " + d));
   }}
@@ -530,6 +574,11 @@ function _renderImportDiagnostics(diag, meta) {{
 }}
 
 function initDatasets() {{
+  const modeSel = document.getElementById("ds-import-n-mode");
+  const customN = document.getElementById("ds-import-n-custom");
+  modeSel.addEventListener("change", () => {{
+    customN.style.display = modeSel.value === "custom" ? "block" : "none";
+  }});
   const sel = document.getElementById("ds-active-select");
   (DATA.datasets || []).forEach(d => {{
     const o = document.createElement("option");
@@ -556,6 +605,20 @@ function initDatasets() {{
       _renderDatasetFindings(a, DATA.active_dataset);
     }} catch (e) {{ alert(e.message); }}
   }});
+  document.getElementById("ds-infer-deck-btn").addEventListener("click", async () => {{
+    try {{
+      const content = document.getElementById("ds-import-body").value.trim();
+      const r = await api("/api/datasets/infer-deck", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify(content ? {{
+          content: content,
+          format: document.getElementById("ds-import-format").value,
+        }} : {{}}),
+      }});
+      _renderDeckInference(r);
+    }} catch (e) {{ alert(e.message); }}
+  }});
   document.getElementById("ds-preview-btn").addEventListener("click", async () => {{
     try {{
       const r = await api("/api/datasets/preview", {{
@@ -563,7 +626,7 @@ function initDatasets() {{
         headers: {{"Content-Type": "application/json"}},
         body: JSON.stringify({{
           format: document.getElementById("ds-import-format").value,
-          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+          deck_size: getImportDeckSize(),
           content: document.getElementById("ds-import-body").value,
         }}),
       }});
@@ -582,7 +645,7 @@ function initDatasets() {{
         body: JSON.stringify({{
           name: document.getElementById("ds-import-name").value,
           format: document.getElementById("ds-import-format").value,
-          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+          deck_size: getImportDeckSize(),
           content: document.getElementById("ds-import-body").value,
           activate: true,
         }}),
@@ -610,7 +673,7 @@ function initDatasets() {{
           keys: document.getElementById("ds-plant-keys").value,
           bases: bases,
           inject_header: hdr,
-          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+          deck_size: getImportDeckSize() || 83,
           activate: true,
         }}),
       }});
@@ -632,7 +695,7 @@ function initDatasets() {{
           plaintext: document.getElementById("ds-convert-plain").value,
           key: document.getElementById("ds-convert-key").value,
           base: parseInt(document.getElementById("ds-convert-base").value, 10) || 0,
-          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+          deck_size: getImportDeckSize() || 83,
         }}),
       }});
       document.getElementById("ds-convert-out").textContent =
