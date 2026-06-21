@@ -33,98 +33,126 @@ OUT_DEFAULT = ROOT / "workbench.html"
 _CSS = """
 :root{--bg:#0f0d0a;--bg2:#17130d;--panel:#1c160f;--ink:#e8dcc0;--dim:#a99c80;
 --gold:#c9a227;--teal:#4ec9b0;--red:#f85149;--blue:#58a6ff;--amber:#d29922;
---green:#3fb950;--term-bg:#0a0c0f;--term-ink:#c9d1d9;--term-gold:#e3b341;}
+--green:#3fb950;--term-bg:#0a0c0f;--term-ink:#c9d1d9;--term-gold:#e3b341;
+--card-edge:#2d2615;--glow:rgba(201,162,39,.28)}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(circle at 50% -10%,#241c11,#0f0d0a 70%);
-color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.5}
+color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.5;
+min-height:100vh}
 a{color:var(--gold)}
-.wrap{max-width:1200px;margin:0 auto;padding:24px 18px 80px}
-header{text-align:center;border-bottom:1px solid #3a3220;padding-bottom:16px;margin-bottom:20px}
-header h1{font-size:2rem;letter-spacing:.14em;margin:.2em 0;color:var(--gold);
-text-shadow:0 0 16px rgba(201,162,39,.3)}
-header .sub{color:var(--dim);font-style:italic}
-.meta{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;color:var(--dim)}
-.banner{margin:12px 0;padding:10px 14px;border-radius:6px;font-size:.9rem}
-.banner.ok{border:1px solid #3fb95044;background:#3fb95018}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+header.grim.dash-header{text-align:center;border-bottom:1px solid #3a3220;
+padding-bottom:18px;margin-bottom:8px}
+.brand-row{margin-bottom:6px;font-family:ui-monospace,Menlo,Consolas,monospace;
+letter-spacing:.22em;font-size:.78rem}
+.h3x-mark{color:var(--teal);font-weight:bold}
+.h3x-dash{color:var(--dim);margin-left:.35em}
+header.grim h1{font-size:2.35rem;letter-spacing:.2em;margin:.15em 0;
+text-shadow:0 0 18px var(--glow);color:var(--gold)}
+header .sub{color:var(--dim);font-style:italic;letter-spacing:.05em}
+header .seq-sub{font-size:.82rem;margin-top:4px}
+.meta{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;color:var(--dim);
+margin-top:10px}
+.summary{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 6px}
+.pill{padding:5px 12px;border-radius:20px;font-size:.76rem;border:1px solid #ffffff14;
+font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em}
+.pill-total{border-color:var(--gold)55;color:var(--gold)}
+.banner{margin:12px 0;padding:10px 14px;border-radius:6px;font-size:.88rem;
+letter-spacing:.02em}
+.banner.ok{border:1px solid #3fb95044;background:#3fb95018;text-align:center}
 .banner.warn{border:1px solid #d2992244;background:#d2992218}
-.banner.err{border:1px solid #f8514944;background:#f8514918}
-nav.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 14px}
-nav.tabs button{font:inherit;cursor:pointer;padding:8px 14px;border-radius:6px;
-border:1px solid #3a3220;background:var(--panel);color:var(--dim)}
-nav.tabs button.active{border-color:var(--gold);color:var(--gold);background:#2a2215}
-.panel{display:none}.panel.active{display:block}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-.card{background:var(--panel);border:1px solid #3a3220;border-radius:8px;padding:12px 14px}
-.card h3{margin:0 0 6px;font-size:.95rem;color:var(--gold)}
-.card .grp{font-size:.72rem;color:var(--teal);text-transform:uppercase;letter-spacing:.06em}
+.banner.err{border:1px solid #f8514944;background:#f8514918;text-align:center}
+.dataset-active{margin:10px 0;padding:10px 14px;border-radius:8px;
+border:1px solid var(--card-edge);background:linear-gradient(180deg,#2a2215,#1a150e);
+font-size:.82rem;box-shadow:0 2px 10px #00000044}
+.dataset-active strong{color:var(--gold)}
+nav.tabbar{display:flex;flex-wrap:wrap;gap:4px;margin:16px 0 0;padding-bottom:0;
+border-bottom:1px solid #3a3220}
+nav.tabbar button{font:inherit;cursor:pointer;padding:9px 16px;border-radius:6px 6px 0 0;
+border:1px solid transparent;border-bottom:none;background:transparent;color:var(--dim);
+letter-spacing:.04em;font-size:.88rem;margin-bottom:-1px}
+nav.tabbar button:hover{color:var(--ink)}
+nav.tabbar button.active{color:var(--gold);border-color:#3a3220;background:var(--panel)}
+.panel{display:none;padding-top:16px}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.card{background:linear-gradient(180deg,var(--panel),#140f0a);border:1px solid var(--card-edge);
+border-radius:10px;padding:14px 16px;box-shadow:0 2px 14px #00000055;
+transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:#4a4028;box-shadow:0 4px 18px #00000066}
+.card h3{margin:0 0 6px;font-size:.98rem;color:var(--ink)}
+.card .grp{font-size:.7rem;color:var(--teal);text-transform:uppercase;letter-spacing:.07em}
 .card .cmd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.68rem;
-color:var(--dim);word-break:break-all;margin:8px 0}
-.card .tags{margin:6px 0}
-.tag{display:inline-block;font-size:.65rem;padding:2px 6px;border-radius:4px;
-margin:0 4px 4px 0;background:#2a2215;color:var(--dim)}
-.tag.fast{color:var(--green)}.tag.long{color:var(--amber)}
-.btn{font:inherit;cursor:pointer;padding:6px 12px;border-radius:5px;border:1px solid #3a3220;
-background:#2a2215;color:var(--ink);margin-right:6px}
+color:var(--dim);word-break:break-all;margin:8px 0;padding:6px 8px;
+background:#0c0a07;border-radius:4px;border-left:2px solid var(--gold)}
+.card .tags{margin:8px 0 6px}
+.tag{display:inline-block;font-size:.65rem;padding:2px 7px;border-radius:4px;
+margin:0 4px 4px 0;background:#2a2215;color:var(--dim);border:1px solid #3a322018}
+.tag.fast{color:var(--green);border-color:#3fb95033}.tag.long{color:var(--amber);border-color:#d2992233}
+.btn{font:inherit;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid #3a3220;
+background:#2a2215;color:var(--ink);margin-right:6px;margin-top:4px;letter-spacing:.02em}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
-.btn.primary{border-color:var(--teal);color:var(--teal)}
+.btn.primary{border-color:var(--teal);color:var(--teal);background:#4ec9b010}
 .btn.danger{border-color:var(--red);color:var(--red)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .wf-steps{margin:10px 0;padding:0;list-style:none}
-.wf-steps li{padding:8px 10px;margin:6px 0;border-radius:6px;border:1px solid #3a3220;
-display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wf-steps li{padding:10px 12px;margin:6px 0;border-radius:8px;border:1px solid var(--card-edge);
+display:flex;justify-content:space-between;align-items:center;gap:10px;
+background:linear-gradient(180deg,#1c160f,#140f0a)}
 .wf-steps li.pending{opacity:.65}
-.wf-steps li.running{border-color:var(--teal);background:#4ec9b010}
+.wf-steps li.running{border-color:var(--teal);background:#4ec9b012}
 .wf-steps li.completed{border-color:var(--green);background:#3fb95010}
 .wf-steps li.failed{border-color:var(--red);background:#f8514910}
 .status{font-size:.75rem;font-family:ui-monospace,Menlo,Consolas,monospace}
 .status.running{color:var(--teal)}.status.completed{color:var(--green)}
 .status.failed{color:var(--red)}.status.pending{color:var(--dim)}
-.layout-split{display:grid;grid-template-columns:320px 1fr;gap:14px;min-height:420px}
+.layout-split{display:grid;grid-template-columns:320px 1fr;gap:16px;min-height:420px}
 @media(max-width:900px){.layout-split{grid-template-columns:1fr}}
 .job-list{max-height:520px;overflow:auto}
-.job-item{padding:8px 10px;margin:4px 0;border-radius:6px;border:1px solid #3a3220;
-cursor:pointer;font-size:.82rem}
+.job-item{padding:9px 11px;margin:4px 0;border-radius:8px;border:1px solid var(--card-edge);
+cursor:pointer;font-size:.82rem;background:#1a150e}
 .job-item:hover,.job-item.sel{border-color:var(--gold);background:#2a2215}
 .job-item .title{color:var(--ink)}.job-item .meta{color:var(--dim);font-size:.7rem}
 .terminal{background:var(--term-bg);color:var(--term-ink);font-family:ui-monospace,
 Menlo,Consolas,'Courier New',monospace;font-size:.72rem;line-height:1.45;
 padding:12px;border-radius:8px;border:1px solid #30363d;white-space:pre-wrap;
-word-break:break-word;max-height:520px;overflow:auto;min-height:280px}
+word-break:break-word;max-height:520px;overflow:auto;min-height:280px;
+box-shadow:inset 0 1px 8px #00000055}
 .terminal .prompt{color:var(--term-gold)}
-.links a{display:block;margin:6px 0}
+.links a{display:block;margin:6px 0;padding:4px 0}
 .filter{margin:8px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.filter input,.filter select{font:inherit;padding:6px 8px;border-radius:5px;
+.filter input,.filter select{font:inherit;padding:7px 10px;border-radius:6px;
 border:1px solid #3a3220;background:var(--bg2);color:var(--ink)}
 .tool-num{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;
-font-size:.72rem;font-weight:bold;color:var(--gold);border:1px solid var(--gold);
-border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle}
-.workflow-wrap{overflow:auto;border:1px solid #3a3220;border-radius:8px;
-background:var(--panel);padding:12px;margin:12px 0}
+font-size:.7rem;font-weight:bold;color:var(--gold);border:1px solid var(--gold);
+border-radius:4px;padding:2px 7px;margin-right:6px;vertical-align:middle;
+background:#2a221510}
+.tool-phase{font-size:.68rem;color:var(--dim);letter-spacing:.04em}
+.workflow-wrap{overflow:auto;border:1px solid var(--card-edge);border-radius:10px;
+background:linear-gradient(180deg,var(--panel),#120e09);padding:14px;margin:12px 0;
+box-shadow:0 2px 14px #00000044}
 .workflow-svg{width:100%;min-width:900px;height:auto}
-.wf-node{cursor:pointer}.wf-node:hover rect{stroke-width:2.5;filter:drop-shadow(0 0 4px rgba(201,162,39,.4))}
+.wf-node{cursor:pointer}.wf-node:hover rect{stroke-width:2.5;filter:drop-shadow(0 0 6px var(--glow))}
 .wf-node.sel rect{stroke:var(--gold);stroke-width:2.5}
-.phase-list{margin:14px 0}
-.phase-list h4{margin:10px 0 6px;color:var(--teal);font-size:.9rem}
+.phase-list{margin:16px 0}
+.phase-list h4{margin:12px 0 8px;font-size:.88rem;letter-spacing:.04em}
 .phase-tools{display:flex;flex-wrap:wrap;gap:6px}
 .phase-tool{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;
-padding:4px 8px;border-radius:5px;border:1px solid #3a3220;background:#2a2215;
-cursor:pointer;color:var(--ink)}
+padding:5px 10px;border-radius:6px;border:1px solid var(--card-edge);
+cursor:pointer;color:var(--ink);background:#2a2215}
 .phase-tool:hover{border-color:var(--gold);color:var(--gold)}
-.cipher-form label{display:block;margin:8px 0 4px;font-size:.82rem;color:var(--dim)}
+.cipher-form label{display:block;margin:10px 0 4px;font-size:.82rem;color:var(--dim)}
 .cipher-form input,.cipher-form select,.cipher-form textarea{width:100%;max-width:520px;
-font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:8px;
+font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:9px 10px;
 border-radius:6px;border:1px solid #3a3220;background:var(--bg2);color:var(--ink)}
 .cipher-form textarea{min-height:64px;resize:vertical}
-.cipher-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cipher-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:900px){.cipher-grid{grid-template-columns:1fr}}
 .cipher-pos{max-height:240px;overflow:auto;font-size:.68rem}
 .cipher-pos table{width:100%;border-collapse:collapse}
-.cipher-pos th,.cipher-pos td{border:1px solid #3a3220;padding:3px 6px;text-align:center}
+.cipher-pos th,.cipher-pos td{border:1px solid #3a3220;padding:4px 7px;text-align:center}
 .cipher-pos .ok{color:var(--green)}.cipher-pos .bad{color:var(--red)}
-.dataset-active{margin:10px 0;padding:8px 12px;border-radius:6px;border:1px solid #3a3220;
-background:#2a2215;font-size:.82rem}
-.dataset-active strong{color:var(--gold)}
-footer{margin-top:40px;text-align:center;color:var(--dim);font-size:.78rem}
+footer{margin-top:44px;text-align:center;color:var(--dim);font-size:.74rem;
+letter-spacing:.03em}
 """
 
 
@@ -187,16 +215,19 @@ def render_html(data: dict) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EYES Workbench</title>
+<title>EYES · H3x dash workbench</title>
 <style>{_CSS}</style>
 </head>
 <body>
 <div class="wrap">
-<header>
-<h1>E Y E S · WORKBENCH</h1>
-<p class="sub">Run tools · saved job output · automated workflows</p>
+<header class="grim dash-header">
+<div class="brand-row"><span class="h3x-mark">H3x</span><span class="h3x-dash">dash</span></div>
+<div class="sub">the noita eye cipher · workbench</div>
+<h1>E Y E S</h1>
+<div class="sub seq-sub">01 datastream → 02 family → 03 anchors → 04 attack → 05 validate</div>
 <p class="meta" id="meta-status">Loading…</p>
 </header>
+<div class="summary" id="phase-summary"></div>
 {venv_banner}
 {preset_warn}
 <div id="server-banner" class="banner warn" style="display:none">
@@ -204,7 +235,7 @@ def render_html(data: dict) -> str:
   <code>python3 dashboard/server.py</code>
 </div>
 <div class="dataset-active" id="dataset-banner">Active dataset: loading…</div>
-<nav class="tabs" role="tablist">
+<nav class="tabbar" role="tablist">
 <button type="button" class="active" data-tab="map">Workflow Map</button>
 <button type="button" data-tab="datasets">Datasets</button>
 <button type="button" data-tab="tools">Tools</button>
@@ -215,7 +246,7 @@ def render_html(data: dict) -> str:
 </nav>
 
 <section id="panel-map" class="panel active">
-<p class="meta">Global tool numbers match the investigation flow. Click a node to jump to that tool.</p>
+<p class="meta">Global numbers follow investigation sequencing (datastream → validate). Click a node to jump to that tool.</p>
 <div class="workflow-wrap" id="workflow-svg-wrap"></div>
 <div id="phase-list" class="phase-list"></div>
 </section>
@@ -388,14 +419,34 @@ function setMeta(text) {{
 }}
 
 function initTabs() {{
-  document.querySelectorAll("nav.tabs button").forEach(btn => {{
+  document.querySelectorAll("nav.tabbar button").forEach(btn => {{
     btn.addEventListener("click", () => {{
-      document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll("nav.tabbar button").forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
     }});
   }});
+}}
+
+function renderPhaseSummary() {{
+  const box = document.getElementById("phase-summary");
+  if (!box || !DATA.workflow_map) return;
+  box.innerHTML = "";
+  (DATA.workflow_map.phases || []).forEach(p => {{
+    const n = (p.tools || []).length;
+    if (!n) return;
+    const el = document.createElement("span");
+    el.className = "pill";
+    el.style.borderColor = (p.color || "#888") + "77";
+    el.style.color = p.color || "#888";
+    el.textContent = p.title + ": " + n;
+    box.appendChild(el);
+  }});
+  const total = document.createElement("span");
+  total.className = "pill pill-total";
+  total.textContent = (DATA.tools || []).length + " tools";
+  box.appendChild(total);
 }}
 
 function renderTools() {{
@@ -424,8 +475,9 @@ function renderTools() {{
       el.className = "card";
       el.id = "tool-card-" + t.num;
       el.innerHTML = `
-        <div class="grp">${{esc(t.num_label)}} · ${{esc(t.group)}} · ${{esc(t.phase_title || "")}}</div>
+        <div class="grp">${{esc(t.seq_label || t.num_label)}} · ${{esc(t.phase_label || t.phase_title || "")}}</div>
         <h3><span class="tool-num">${{esc(t.num_label)}}</span>${{esc(t.title)}}</h3>
+        <div class="tool-phase">${{esc(t.group)}}</div>
         <div class="cmd">${{esc(t.command)}}</div>
         <div class="tags">
           <span class="tag ${{t.duration}}">${{esc(t.duration)}}</span>
@@ -483,7 +535,7 @@ function renderWorkflowMap() {{
       const b = document.createElement("button");
       b.type = "button";
       b.className = "phase-tool";
-      b.textContent = t.num_label + " " + t.title.slice(0, 36);
+      b.textContent = (t.seq_label || t.num_label) + " " + t.title.slice(0, 36);
       b.title = t.title;
       b.addEventListener("click", () => focusToolByNum(t.num));
       row.appendChild(b);
@@ -987,6 +1039,7 @@ document.getElementById("btn-cancel").addEventListener("click", async () => {{
 document.getElementById("btn-refresh-jobs").addEventListener("click", refreshAll);
 
 initTabs();
+renderPhaseSummary();
 renderWorkflowMap();
 initDatasets();
 renderTools();

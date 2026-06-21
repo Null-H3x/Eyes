@@ -37,7 +37,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     from dashboard.import_parse import selftest as ip_selftest
     from dashboard.dataset_store import get_active_id, list_datasets, selftest as ds_selftest
     from dashboard.eye_puzzle import selftest as ep_selftest
-    from dashboard.workflow_map import workflow_map_payload
+    from dashboard.workflow_map import selftest as wm_selftest, workflow_map_payload
 
     data = _collect_snapshot()
     html = render_html(data)
@@ -47,7 +47,10 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("build HTML includes datasets tab", "panel-datasets" in html))
     out.append(("build HTML includes import preview", "ds-preview-btn" in html))
     out.append(("build HTML includes infer deck", "ds-infer-deck-btn" in html))
-    out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) >= 5))
+    out.append(("build HTML h3x dash header", "h3x-mark" in html))
+    out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) == 5))
+    wm = wm_selftest()
+    out.append(("workflow_map selftest", all(ok for _, ok in wm)))
     out.append(("tools have global numbers", all("num" in t for t in data["tools"])))
     out.append(("active dataset in snapshot", data.get("active_dataset_id") is not None))
     out.append(("dataset list includes builtin", any(
