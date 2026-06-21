@@ -12,8 +12,9 @@ if str(ROOT) not in sys.path:
 
 def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     from dashboard.registry import load_tools
-    from dashboard.workflows import PRESETS, validate_presets
-    from dashboard.orchestrator import have_venv, get_orchestrator
+    from dashboard.workflows import PRESETS, validate_presets, preset_by_id
+    from dashboard.orchestrator import have_venv, get_orchestrator, selftest as orch_selftest
+    from dashboard.dataset_store import BUILTIN_ID, get_active_id, list_datasets, selftest as ds_selftest
 
     tools = load_tools()
     ids = [t.id for t in tools]
@@ -25,17 +26,41 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("workflow presets reference valid tool IDs", len(missing) == 0))
     out.append(("at least 4 workflow presets", len(PRESETS) >= 4))
 
+    ochecks = orch_selftest()
+    out.append(("orchestrator selftest", all(ok for _, ok in ochecks)))
+
+    # Dependency wiring — import every dashboard module without cycles.
+    try:
+        import dashboard.build  # noqa: F401
+        import dashboard.cipher_validate  # noqa: F401
+        import dashboard.dataset_store  # noqa: F401
+        import dashboard.deck_infer  # noqa: F401
+        import dashboard.eye_puzzle  # noqa: F401
+        import dashboard.import_parse  # noqa: F401
+        import dashboard.orchestrator  # noqa: F401
+        import dashboard.registry  # noqa: F401
+        import dashboard.server  # noqa: F401
+        import dashboard.workflow_map  # noqa: F401
+        import dashboard.workflows  # noqa: F401
+        out.append(("dashboard modules import cleanly", True))
+    except Exception as exc:
+        out.append(("dashboard modules import cleanly", False))
+        out.append((f"import error: {exc}", False))
+
     orch = get_orchestrator()
     snap = orch.snapshot()
     out.append(("orchestrator snapshot has tools_count", snap.get("tools_count", 0) >= 40))
     out.append(("orchestrator list_workflows matches presets",
                 len(orch.list_workflows()) == len(PRESETS)))
+    qv = orch.get_workflow("quick-validate")
+    preset = preset_by_id()["quick-validate"]
+    out.append(("workflow steps sync with preset ids",
+                [s["tool_id"] for s in qv["steps"]] == list(preset.steps)))
 
     from dashboard.build import _collect_snapshot, render_html
     from dashboard.cipher_validate import selftest as cv_selftest
     from dashboard.deck_infer import selftest as di_selftest
     from dashboard.import_parse import selftest as ip_selftest
-    from dashboard.dataset_store import get_active_id, list_datasets, selftest as ds_selftest
     from dashboard.eye_puzzle import selftest as ep_selftest
     from dashboard.workflow_map import selftest as wm_selftest, workflow_map_payload
 
@@ -48,6 +73,8 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("build HTML includes import preview", "ds-preview-btn" in html))
     out.append(("build HTML includes infer deck", "ds-infer-deck-btn" in html))
     out.append(("build HTML h3x dash header", "h3x-mark" in html))
+    out.append(("build HTML includes corpus bridge", "ensureActiveDataset" in html))
+    out.append(("build HTML workflow corpus banner", "wf-corpus-banner" in html))
     out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) == 5))
     wm = wm_selftest()
     out.append(("workflow_map selftest", all(ok for _, ok in wm)))
@@ -67,12 +94,23 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     ep = ep_selftest()
     out.append(("eye_puzzle selftest", all(ok for _, ok in ep)))
 
-    # Optional live run when venv exists (fast tool only)
+    # Optional live run when venv exists (fast tool only; always use Noita builtin)
     if have_venv() and not quick:
-        rec = orch.start_tool("validate-run-the-full-math-gate-validate-everything", wait=True)
+        from dashboard.dataset_store import set_active
+        saved_active = get_active_id()
+        rec = orch.start_tool(
+            "validate-run-the-full-math-gate-validate-everything",
+            dataset_id=BUILTIN_ID,
+            wait=True,
+        )
         out.append(("orchestrator runs selftest job", rec.status == "completed"))
+        out.append(("orchestrator job uses builtin corpus",
+                    rec.dataset_id == BUILTIN_ID))
         out.append(("orchestrator captures stdout",
                     len(orch.get_stdout(rec.id)) > 100))
+        set_active(saved_active)
+        out.append(("orchestrator restores active after math gate",
+                    get_active_id() == saved_active))
     else:
         out.append(("orchestrator run skipped (no .venv)", True))
         out.append(("orchestrator stdout skipped (no .venv)", True))

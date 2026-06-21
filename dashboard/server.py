@@ -139,24 +139,36 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
 
         if route == "/api/jobs":
             qs = parse_qs(path.query)
-            limit = int(qs.get("limit", ["40"])[0])
+            try:
+                limit = int(qs.get("limit", ["40"])[0])
+            except ValueError:
+                return _json_response(self, 400, {"error": "invalid limit"})
             return _json_response(self, 200, {"jobs": orch.list_jobs(limit)})
 
         if route.startswith("/api/jobs/"):
             parts = route.split("/")
             if len(parts) == 4 and parts[3] not in ("stdout", "stderr"):
-                job = orch.get_job(parts[3])
+                try:
+                    job = orch.get_job(parts[3])
+                except ValueError:
+                    return _json_response(self, 400, {"error": "invalid job id"})
                 if not job:
                     return _json_response(self, 404, {"error": "job not found"})
                 return _json_response(self, 200, job)
             if len(parts) == 5 and parts[3]:
                 jid = parts[3]
                 qs = parse_qs(path.query)
-                tail = int(qs.get("tail", ["0"])[0])
-                if parts[4] == "stdout":
-                    return _text_response(self, 200, orch.get_stdout(jid, tail=tail))
-                if parts[4] == "stderr":
-                    return _text_response(self, 200, orch.get_stderr(jid, tail=tail))
+                try:
+                    tail = int(qs.get("tail", ["0"])[0])
+                except ValueError:
+                    return _json_response(self, 400, {"error": "invalid tail"})
+                try:
+                    if parts[4] == "stdout":
+                        return _text_response(self, 200, orch.get_stdout(jid, tail=tail))
+                    if parts[4] == "stderr":
+                        return _text_response(self, 200, orch.get_stderr(jid, tail=tail))
+                except ValueError:
+                    return _json_response(self, 400, {"error": "invalid job id"})
 
         if route.startswith("/api/workflows/") and route.count("/") == 3:
             wf_id = unquote(route.split("/")[-1])
@@ -199,7 +211,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             if not tool_id:
                 return _json_response(self, 400, {"error": "tool_id required"})
             try:
-                rec = orch.start_tool(tool_id)
+                rec = orch.start_tool(tool_id, dataset_id=body.get("dataset_id"))
                 return _json_response(self, 200, rec.to_dict())
             except RuntimeError as e:
                 return _json_response(self, 409, {"error": str(e)})
@@ -246,13 +258,15 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 action = parts[3] if len(parts) > 3 else ""
                 if action == "step":
                     try:
-                        st = orch.run_workflow_step(wf_id)
+                        st = orch.run_workflow_step(
+                            wf_id, dataset_id=body.get("dataset_id"))
                         return _json_response(self, 200, st)
                     except (KeyError, RuntimeError) as e:
                         return _json_response(self, 409, {"error": str(e)})
                 if action == "auto":
                     try:
-                        orch.run_workflow_auto(wf_id)
+                        orch.run_workflow_auto(
+                            wf_id, dataset_id=body.get("dataset_id"))
                         st = orch.get_workflow(wf_id)
                         return _json_response(self, 200, st)
                     except KeyError as e:
@@ -385,7 +399,15 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             if keys_raw.strip():
                 for line in keys_raw.strip().splitlines():
                     keys.append(parse_values(line, N=N))
-            bases = [int(x) for x in body.get("bases", [])] or [0] * len(plains)
+            bases_raw = body.get("bases", [])
+            if isinstance(bases_raw, list):
+                bases = [int(x) for x in bases_raw]
+            elif bases_raw in (None, "", []):
+                bases = []
+            else:
+                raise ValueError("bases must be a JSON array of integers")
+            if not bases:
+                bases = [0] * len(plains)
             hdr = body.get("inject_header")
             inject = None
             if hdr:
@@ -414,6 +436,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 ],
             })
         except ValueError as e:
+            return _json_response(self, 400, {"error": str(e)})
+        except TypeError as e:
             return _json_response(self, 400, {"error": str(e)})
 
     def _dataset_convert(self, body: dict):

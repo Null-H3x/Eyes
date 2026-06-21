@@ -26,6 +26,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from itertools import combinations
 from pathlib import Path
 
@@ -33,6 +34,11 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_CORPUS = HERE.parent / "noita_eye_core" / "corpus.json"
+
+
+def _default_corpus() -> Path:
+    env = os.environ.get("EYES_CORPUS_PATH")
+    return Path(env) if env else DEFAULT_CORPUS
 
 PAIRS_PLUS_E5 = ((0, 1), (2, 3), (4, 5), (6, 7), (8,))
 TRIPLETS = ((0, 1, 2), (3, 4, 5), (6, 7, 8))
@@ -128,11 +134,12 @@ def main():
     ap = argparse.ArgumentParser(description="verify an EyeWitness fingerprint")
     ap.add_argument("fingerprint", nargs="?",
                     default=str(HERE / "fingerprint.json"))
-    ap.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    ap.add_argument("--corpus", default=None,
+                    help="corpus JSON (default: EYES_CORPUS_PATH or noita_eye_core/corpus.json)")
     args = ap.parse_args()
 
     fp = json.loads(Path(args.fingerprint).read_text(encoding="utf-8"))
-    N, cts = load_corpus(args.corpus)
+    N, cts = load_corpus(args.corpus or str(_default_corpus()))
     checks = []
 
     # 1. corpus identity

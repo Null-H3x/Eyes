@@ -297,8 +297,8 @@ def validate_cipher(
             notes.append("Round-trip encrypt/decrypt does not recover plaintext.")
         try:
             decrypt_ioc = _ioc(co.decrypt_stream(corpus_slice, kexp, mode, N))
-        except Exception:
-            pass
+        except (ValueError, IndexError, TypeError):
+            notes.append("decrypt IoC unavailable for corpus slice")
 
     return CipherValidateResult(
         mode=mode,

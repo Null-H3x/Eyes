@@ -163,8 +163,18 @@ def have_venv() -> bool:
 def run(argv, cwd, use_system=False) -> int:
     py = sys.executable if use_system else str(venv_python())
     print(DIM(f"\n$ {Path(py).name} {' '.join(argv)}   (in {cwd})\n"))
+    env = os.environ.copy()
+    if not use_system:
+        try:
+            from dashboard.dataset_store import active_corpus_path, get_active
+            ds = get_active()
+            env["EYES_CORPUS_PATH"] = str(active_corpus_path())
+            env["EYES_DATASET_ID"] = ds.id
+            print(DIM(f"  corpus: {env['EYES_CORPUS_PATH']} ({ds.name})\n"))
+        except Exception:
+            print(DIM("  warning: corpus bridge unavailable — using default Noita corpus\n"))
     try:
-        proc = subprocess.run([py, *argv], cwd=str(ROOT / cwd))
+        proc = subprocess.run([py, *argv], cwd=str(ROOT / cwd), env=env)
         rc = proc.returncode
     except KeyboardInterrupt:
         print(RED("\n(interrupted)"))
