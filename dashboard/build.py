@@ -221,7 +221,7 @@ def render_html(data: dict) -> str:
 </section>
 
 <section id="panel-datasets" class="panel">
-<p class="meta">Import or <strong>plant</strong> eye-puzzle-like ciphertext (N=83). No universal header required — custom sets are first-class. Tool runs use the active dataset via <code>EYES_CORPUS_PATH</code>.</p>
+<p class="meta">Import or <strong>plant</strong> eye-puzzle-like ciphertext (N=83). Paste numbers and/or glyph letters in any spacing or punctuation — the importer auto-detects and normalizes to ciphertext. Tool runs use the active dataset via <code>EYES_CORPUS_PATH</code>.</p>
 <div class="cipher-grid">
 <div class="card cipher-form">
 <h3>Active dataset</h3>
@@ -233,15 +233,14 @@ def render_html(data: dict) -> str:
 <input type="text" id="ds-import-name" value="My puzzle corpus">
 <label for="ds-import-format">Format</label>
 <select id="ds-import-format">
-<option value="auto">Auto-detect</option>
+<option value="auto">Auto-detect (any mix)</option>
 <option value="corpus_json">Corpus JSON</option>
-<option value="lines">Decimal lines (one message per line)</option>
-<option value="glyphs">Glyph lines</option>
 </select>
 <label for="ds-import-n">Deck size N</label>
 <input type="number" id="ds-import-n" value="83" min="2" max="256">
 <label for="ds-import-body">Ciphertext data</label>
-<textarea id="ds-import-body" rows="8" placeholder="# decimals per line, or full corpus.json, or glyph strings&#10;10 20 30 40&#10;Msg2: 15 25 35"></textarea>
+<textarea id="ds-import-body" rows="8" placeholder="# One message per line — any mix of numbers and glyphs&#10;# Spacing/punctuation optional; glued digits split automatically&#10;10 20 30 | 10,20,30 | 10.20.30 | 10665 | o%5 | 10o66&#10;East: 10.o%5;66&#10;Msg2: ABC"></textarea>
+<button type="button" class="btn" id="ds-preview-btn">Preview parse</button>
 <button type="button" class="btn primary" id="ds-import-btn">Import &amp; activate</button>
 <h3>Plant (convert plaintext → ciphertext)</h3>
 <label for="ds-plant-mode">Cipher mode</label>
@@ -511,6 +510,25 @@ function _fillMessageSelect(selId, labels) {{
   if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
 }}
 
+function _renderImportDiagnostics(diag, meta) {{
+  if (!diag) return;
+  const lines = [];
+  if (meta && meta.detected_format) lines.push("detected: " + meta.detected_format);
+  (diag.per_message || meta.per_message || []).forEach((m, i) => {{
+    lines.push((m.label || ("Message " + (i + 1))) + ": " +
+      m.count + " symbols · strategy=" + m.strategy +
+      (m.preview ? " · " + m.preview.slice(0, 48) : ""));
+  }});
+  (diag.notes || meta.notes || []).forEach(n => lines.push("note: " + n));
+  if (meta && meta.preview_decimals) {{
+    meta.preview_decimals.forEach((d, i) => lines.push("dec " + (i + 1) + ": " + d));
+  }}
+  if (lines.length) {{
+    document.getElementById("ds-findings").textContent = lines.join("\\n");
+    document.getElementById("ds-findings-header").textContent = "Import parse preview";
+  }}
+}}
+
 function initDatasets() {{
   const sel = document.getElementById("ds-active-select");
   (DATA.datasets || []).forEach(d => {{
@@ -538,6 +556,24 @@ function initDatasets() {{
       _renderDatasetFindings(a, DATA.active_dataset);
     }} catch (e) {{ alert(e.message); }}
   }});
+  document.getElementById("ds-preview-btn").addEventListener("click", async () => {{
+    try {{
+      const r = await api("/api/datasets/preview", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{
+          format: document.getElementById("ds-import-format").value,
+          deck_size: parseInt(document.getElementById("ds-import-n").value, 10) || 83,
+          content: document.getElementById("ds-import-body").value,
+        }}),
+      }});
+      _renderImportDiagnostics(r, r);
+      if (r.preview_decimals) {{
+        document.getElementById("ds-preview").textContent =
+          (r.labels || []).map((l, i) => l + ": " + (r.per_message[i] && r.per_message[i].preview || r.preview_decimals[i] || "")).join("\\n");
+      }}
+    }} catch (e) {{ alert(e.message); }}
+  }});
   document.getElementById("ds-import-btn").addEventListener("click", async () => {{
     try {{
       const r = await api("/api/datasets/import", {{
@@ -552,6 +588,7 @@ function initDatasets() {{
         }}),
       }});
       await refreshDatasets();
+      _renderImportDiagnostics(r.import_diagnostics, r.import_diagnostics);
       _renderDatasetFindings(r.analysis, r.dataset);
     }} catch (e) {{ alert(e.message); }}
   }});

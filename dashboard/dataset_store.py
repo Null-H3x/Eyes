@@ -21,7 +21,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from dashboard import DATA_DIR, ROOT
-from dashboard.cipher_validate import GLYPHS, parse_values
+from dashboard.import_parse import parse_import_content
 
 DATASETS_DIR = DATA_DIR / "datasets"
 ACTIVE_PATH = DATA_DIR / "active_dataset.json"
@@ -260,58 +260,6 @@ def active_corpus_path() -> Path:
     return out
 
 
-def _parse_glyph_line(line: str, *, N: int) -> List[int]:
-    vals: List[int] = []
-    for ch in line:
-        if ch.isspace():
-            continue
-        if ch in GLYPHS:
-            vals.append(GLYPHS.index(ch))
-        elif ch.isdigit():
-            vals.append(int(ch))
-        else:
-            raise ValueError(f"cannot parse glyph {ch!r} (not in alphabet)")
-    for v in vals:
-        if not (0 <= v < N):
-            raise ValueError(f"glyph value {v} outside [0, {N})")
-    return vals
-
-
-def _parse_message_line(line: str, *, N: int, fmt: str) -> List[int]:
-    line = line.strip()
-    if not line or line.startswith("#"):
-        return []
-    if fmt == "glyphs":
-        return _parse_glyph_line(line, N=N)
-    if fmt == "json_array":
-        arr = json.loads(line)
-        vals = [int(v) for v in arr]
-        for v in vals:
-            if not (0 <= v < N):
-                raise ValueError(f"value {v} outside [0, {N})")
-        return vals
-    return parse_values(line, N=N, strict=True)
-
-
-def _detect_import_format(content: str) -> str:
-    if content.startswith("{"):
-        return "corpus_json"
-    sample_lines = [
-        ln.strip() for ln in content.splitlines()
-        if ln.strip() and not ln.strip().startswith("#")
-    ][:5]
-    if not sample_lines:
-        return "lines"
-    glyphish = 0
-    for ln in sample_lines:
-        body = ln.split(":", 1)[-1].strip() if ":" in ln and not ln[0].isdigit() else ln
-        if body and not body[0].isdigit() and any(ch in GLYPHS for ch in body):
-            glyphish += 1
-    if glyphish >= max(1, len(sample_lines) // 2):
-        return "glyphs"
-    return "lines"
-
-
 def parse_import(
     content: str,
     *,
@@ -320,82 +268,56 @@ def parse_import(
     deck_size: int = 83,
     labels: Optional[Sequence[str]] = None,
 ) -> Dataset:
-    """Import ciphertext from JSON, lines of decimals, or glyph strings."""
-    content = content.strip()
-    if not content:
-        raise ValueError("empty import")
-    if deck_size < 2 or deck_size > 256:
-        raise ValueError("deck_size must be in [2, 256]")
-
-    if fmt == "auto":
-        fmt = _detect_import_format(content)
-
-    messages: List[List[int]] = []
-    lbls: List[str] = []
-
-    if fmt == "corpus_json":
-        raw = json.loads(content)
-        N = int(raw.get("deck_size", deck_size))
-        if N < 2 or N > 256:
-            raise ValueError("deck_size must be in [2, 256]")
-        if "ciphertexts" not in raw:
-            raise ValueError("corpus JSON missing ciphertexts")
-        messages = [list(int(v) for v in ct) for ct in raw["ciphertexts"]]
-        lbls = [str(x) for x in raw.get("message_labels", [])]
-        if not lbls:
-            lbls = [f"Message {i + 1}" for i in range(len(messages))]
-        ds_id = str(uuid.uuid4())[:12]
-        ds = Dataset(
-            id=f"import-{ds_id}",
-            name=name,
-            source="imported",
-            deck_size=N,
-            labels=lbls,
-            ciphertexts=messages,
-            created_at=_now(),
-            notes=f"Imported as corpus JSON ({len(messages)} messages)",
-        )
-        _validate_dataset(ds)
-        return ds
-
-    msg_num = 0
-    for line in content.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" in line and not line[0].isdigit() and fmt != "glyphs":
-            label, rest = line.split(":", 1)
-            lbls.append(label.strip())
-            vals = _parse_message_line(rest, N=deck_size, fmt=fmt)
-        else:
-            lbls.append(
-                labels[msg_num] if labels and msg_num < len(labels)
-                else f"Message {msg_num + 1}")
-            vals = _parse_message_line(line, N=deck_size, fmt=fmt)
-        if vals:
-            messages.append(vals)
-            msg_num += 1
-
-    if not messages:
-        raise ValueError("no messages parsed from import")
-
+    """Import ciphertext from any mix of numbers, glyphs, spacing, punctuation."""
+    if fmt in ("lines", "glyphs"):
+        fmt = "auto"
+    parsed = parse_import_content(
+        content, fmt=fmt, deck_size=deck_size, labels=labels, strict=True)
     ds_id = str(uuid.uuid4())[:12]
     ds = Dataset(
         id=f"import-{ds_id}",
         name=name,
         source="imported",
-        deck_size=deck_size,
-        labels=lbls[:len(messages)],
-        ciphertexts=messages,
+        deck_size=parsed.deck_size,
+        labels=list(parsed.labels),
+        ciphertexts=[list(ct) for ct in parsed.messages],
         created_at=_now(),
-        notes=f"Imported {len(messages)} message(s), format={fmt}",
-        metadata={"import_format": fmt},
+        notes=f"Imported {len(parsed.messages)} message(s), format={parsed.detected_format}",
+        metadata={
+            "import_format": parsed.detected_format,
+            "import_diagnostics": {
+                "per_message": parsed.per_message,
+                "notes": parsed.notes,
+            },
+        },
     )
-    if len(ds.labels) < len(messages):
-        ds.labels.extend(
-            f"Message {i + 1}" for i in range(len(ds.labels), len(messages)))
     _validate_dataset(ds)
     return ds
+
+
+def preview_import(
+    content: str,
+    *,
+    fmt: str = "auto",
+    deck_size: int = 83,
+) -> dict:
+    """Dry-run parse — returns diagnostics without saving."""
+    if fmt in ("lines", "glyphs"):
+        fmt = "auto"
+    parsed = parse_import_content(
+        content, fmt=fmt, deck_size=deck_size, strict=True)
+    return {
+        "detected_format": parsed.detected_format,
+        "num_messages": len(parsed.messages),
+        "labels": parsed.labels,
+        "lengths": [len(m) for m in parsed.messages],
+        "per_message": parsed.per_message,
+        "notes": parsed.notes,
+        "preview_decimals": [
+            " ".join(str(v) for v in m[:40]) + ("…" if len(m) > 40 else "")
+            for m in parsed.messages
+        ],
+    }
 
 
 def import_and_save(
@@ -439,13 +361,19 @@ def selftest() -> List[Tuple[str, bool]]:
         out.append(("path traversal blocked", True))
 
     try:
-        parse_import("999 1000", fmt="lines", deck_size=83)
+        parse_import("999 1000", fmt="auto", deck_size=83)
         out.append(("strict import rejects OOR decimals", False))
     except ValueError:
         out.append(("strict import rejects OOR decimals", True))
 
-    imp = parse_import("# comment\nA: 1 2 3\n4 5 6", fmt="lines", deck_size=83)
+    imp = parse_import("# comment\nA: 1 2 3\n4 5 6", fmt="auto", deck_size=83)
     out.append(("import labels with comment line", imp.labels[0] == "A"))
+
+    mixed = parse_import("10o66\no%5\n10665", fmt="auto", deck_size=83)
+    out.append(("mixed import parses 3 messages", len(mixed.ciphertexts) == 3))
+    from dashboard.cipher_validate import GLYPHS
+    out.append(("mixed glued digits", mixed.ciphertexts[2] == [10, 66, 5]))
+    out.append(("mixed glyphs", mixed.ciphertexts[1][0] == GLYPHS.index("o")))
 
     orig_dir = DATA_DIR
     tmp = Path(tempfile.mkdtemp())
@@ -463,7 +391,7 @@ def selftest() -> List[Tuple[str, bool]]:
         globals()["ACTIVE_PATH"] = orig_dir / "active_dataset.json"
         shutil.rmtree(tmp, ignore_errors=True)
 
-    planted = parse_import("10 20 30", fmt="lines", deck_size=83)
+    planted = parse_import("10 20 30", fmt="auto", deck_size=83)
     out.append(("parse single-line import", len(planted.ciphertexts[0]) == 3))
 
     return out

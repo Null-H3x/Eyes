@@ -33,6 +33,7 @@ from dashboard.dataset_store import (  # noqa: E402
     get_active_id,
     import_and_save,
     list_datasets,
+    preview_import,
     save_planted,
     set_active,
 )
@@ -217,6 +218,9 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         if path == "/api/datasets/import":
             return self._dataset_import(body)
 
+        if path == "/api/datasets/preview":
+            return self._dataset_preview(body)
+
         if path == "/api/datasets/plant":
             return self._dataset_plant(body)
 
@@ -326,7 +330,22 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             return _json_response(self, 200, {
                 "dataset": ds.to_dict(include_messages=False),
                 "analysis": analyze_dataset(ds).to_dict(),
+                "import_diagnostics": ds.metadata.get("import_diagnostics"),
             })
+        except ValueError as e:
+            return _json_response(self, 400, {"error": str(e)})
+
+    def _dataset_preview(self, body: dict):
+        try:
+            deck_size = int(body.get("deck_size", 83))
+            if deck_size < 2 or deck_size > 256:
+                raise ValueError("deck_size must be in [2, 256]")
+            out = preview_import(
+                body.get("content", ""),
+                fmt=body.get("format", "auto"),
+                deck_size=deck_size,
+            )
+            return _json_response(self, 200, out)
         except ValueError as e:
             return _json_response(self, 400, {"error": str(e)})
 
