@@ -1,21 +1,19 @@
 """Infer ciphertext deck size (alphabet N) from symbol statistics.
 
-When importing a puzzle corpus without a known N, parse with a safe ceiling
-(256) then rank candidate alphabet sizes using:
-  * minimum N = max(symbol) + 1
-  * symbol coverage vs alphabet size
-  * standard cipher alphabet sizes (26, 52, 83, …)
-  * Noita eye-puzzle markers (N=83, universal header 66,5)
+When importing without a known N, try parsing at each standard alphabet size
+(especially N=83 for eye ciphers) before ranking candidates.  Parsing at a 256
+ceiling mis-splits glued decimals (``10665`` → ``[106, 65]`` instead of
+``[10, 66, 5]``), which inflates min_N to nonsense values like 235.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
-from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 _REPO = Path(__file__).resolve().parent.parent
 if str(_REPO) not in sys.path:
@@ -94,13 +92,17 @@ def _score_candidate(
             score += 8.0
             reasons.append("rich symbol usage for N=83")
 
-    # Penalise alphabets much larger than observed diversity.
+    # Penalise non-standard alphabets far larger than observed symbol diversity.
     if N > usage * 3 and N not in STANDARD_DECKS:
         score -= 15.0
         reasons.append("alphabet much larger than symbol diversity")
 
+    if min_n > NOITA_N and usage < 20 and N >= min_n and N not in STANDARD_DECKS:
+        score -= 30.0
+        reasons.append("large min_N with sparse usage (likely parse artefact)")
+
     # Slight preference for tight fit when not a standard size.
-    if N == min_n and N not in STANDARD_DECKS:
+    if N == min_n and N not in STANDARD_DECKS and min_n <= NOITA_N * 2:
         score += 8.0
         reasons.append("tight minimum fit")
         if coverage >= 0.999:
@@ -184,24 +186,107 @@ def infer_deck_size(
     }
 
 
+def _parse_attempts(content: str, *, fmt: str = "auto"):
+    """Yield (N, ParseImportResult) for each strict parse that succeeds."""
+    from dashboard.import_parse import parse_import_content
+
+    tried: set[int] = set()
+    # Eye ciphers: try standard alphabets first (83 before 256).
+    for N in STANDARD_DECKS:
+        if N in tried:
+            continue
+        tried.add(N)
+        try:
+            parsed = parse_import_content(content, fmt=fmt, deck_size=N, strict=True)
+        except ValueError:
+            continue
+        yield N, parsed
+
+    # Separated-token upper bound for non-standard sizes.
+    max_tok = 0
+    for line in content.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        body = line.split(":", 1)[1].strip() if ":" in line and not re.fullmatch(
+            r"[\d\s,;|.+-]+", line.split(":", 1)[0].strip()) else line
+        for p in re.split(r"[\s,;|]+", body):
+            if not p:
+                continue
+            if p.isdigit() or (p.startswith("-") and p[1:].isdigit()):
+                max_tok = max(max_tok, abs(int(p)))
+    if max_tok >= 0:
+        mn = max_tok + 1
+        for N in range(mn, min(mn + 32, PARSE_CEILING + 1)):
+            if N in tried:
+                continue
+            tried.add(N)
+            try:
+                parsed = parse_import_content(content, fmt=fmt, deck_size=N, strict=True)
+            except ValueError:
+                continue
+            yield N, parsed
+
+
+def _rank_parse_attempt(N: int, parsed, inf: dict) -> float:
+    """Score a (parse deck size, inferred statistics) pair."""
+    pooled = _pooled(parsed.messages)
+    max_v = max(pooled) if pooled else 0
+    score = inf["best"]["score"]
+    if inf["inferred_N"] == N:
+        score += 35.0
+    elif abs(inf["inferred_N"] - N) <= 3:
+        score += 12.0
+    score += len(pooled) * 0.05
+    if N == NOITA_N and inf.get("has_noita_header"):
+        score += 15.0
+    # Prefer eye-cipher-scale parses over false fits on tiny alphabets (e.g. N=26
+    # splitting glued decimals into many single-digit tokens).
+    if N == NOITA_N and max_v >= 40:
+        score += 22.0
+    if N in STANDARD_DECKS:
+        score += max_v * 0.12
+    return score
+
+
 def infer_from_text(
     content: str,
     *,
     fmt: str = "auto",
 ) -> dict:
-    """Parse import text with unknown N, then infer deck size."""
+    """Parse import text at candidate deck sizes, then infer the best N."""
     from dashboard.import_parse import parse_import_content
 
-    parsed = parse_import_content(
-        content, fmt=fmt, deck_size=None, strict=True)
-    inf = infer_deck_size(parsed.messages)
-    inf["labels"] = parsed.labels
-    inf["parse"] = {
-        "detected_format": parsed.detected_format,
-        "per_message": parsed.per_message,
-        "num_messages": len(parsed.messages),
+    best_inf: Optional[dict] = None
+    best_parsed = None
+    best_score = -1e9
+    best_parse_n = None
+
+    for N, parsed in _parse_attempts(content, fmt=fmt):
+        inf = infer_deck_size(parsed.messages)
+        score = _rank_parse_attempt(N, parsed, inf)
+        if score > best_score:
+            best_score = score
+            best_inf = inf
+            best_parsed = parsed
+            best_parse_n = N
+
+    if best_inf is None or best_parsed is None:
+        parsed = parse_import_content(content, fmt=fmt, deck_size=None, strict=True)
+        best_inf = infer_deck_size(parsed.messages)
+        best_parsed = parsed
+        best_parse_n = parsed.deck_size
+
+    assert best_inf is not None and best_parsed is not None
+    best_inf["labels"] = best_parsed.labels
+    best_inf["parse_deck_size"] = best_parse_n
+    best_inf["parse"] = {
+        "detected_format": best_parsed.detected_format,
+        "per_message": best_parsed.per_message,
+        "num_messages": len(best_parsed.messages),
+        "deck_size": best_parse_n,
     }
-    return inf
+    return best_inf
 
 
 def infer_active_dataset() -> dict:
@@ -233,9 +318,13 @@ def selftest() -> List[Tuple[str, bool]]:
     r2 = infer_deck_size(custom)
     out.append(("small corpus min_N=4", r2["inferred_N"] == 4))
 
-    # Unknown import path
-    r3 = infer_from_text("10 20 30\n40 50 60")
-    out.append(("infer_from_text returns N", r3["inferred_N"] >= 61))
+    # Unknown import path — glued Noita header token
+    r3 = infer_from_text("10665")
+    out.append(("glued 10665 infers 83", r3["inferred_N"] == 83))
+
+    r4 = infer_from_text("10 20 30\n40 50 60")
+    out.append(("separated decimals infer standard N",
+                r4["inferred_N"] in STANDARD_DECKS))
 
     try:
         infer_deck_size([[]])

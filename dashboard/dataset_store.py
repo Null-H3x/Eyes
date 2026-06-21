@@ -301,14 +301,18 @@ def parse_import(
     if fmt in ("lines", "glyphs"):
         fmt = "auto"
     unknown_n = deck_size is None
-    parsed = parse_import_content(
-        content, fmt=fmt, deck_size=deck_size, labels=labels, strict=True)
     inference = None
-    resolved_n = parsed.deck_size
+    resolved_n = deck_size if deck_size is not None else 83
     if unknown_n:
-        from dashboard.deck_infer import infer_deck_size
-        inference = infer_deck_size(parsed.messages)
+        from dashboard.deck_infer import infer_from_text
+        inference = infer_from_text(content, fmt=fmt)
         resolved_n = inference["inferred_N"]
+        parsed = parse_import_content(
+            content, fmt=fmt, deck_size=resolved_n, labels=labels, strict=True)
+    else:
+        parsed = parse_import_content(
+            content, fmt=fmt, deck_size=deck_size, labels=labels, strict=True)
+        resolved_n = parsed.deck_size
     ds_id = str(uuid.uuid4())[:12]
     meta: Dict[str, Any] = {
         "import_format": parsed.detected_format,
@@ -349,8 +353,16 @@ def preview_import(
     if fmt in ("lines", "glyphs"):
         fmt = "auto"
     unknown_n = deck_size is None
-    parsed = parse_import_content(
-        content, fmt=fmt, deck_size=deck_size, strict=True)
+    inference = None
+    if unknown_n:
+        from dashboard.deck_infer import infer_from_text
+        inference = infer_from_text(content, fmt=fmt)
+        resolved_n = inference["inferred_N"]
+        parsed = parse_import_content(
+            content, fmt=fmt, deck_size=resolved_n, strict=True)
+    else:
+        parsed = parse_import_content(
+            content, fmt=fmt, deck_size=deck_size, strict=True)
     out = {
         "detected_format": parsed.detected_format,
         "num_messages": len(parsed.messages),
@@ -363,15 +375,12 @@ def preview_import(
             " ".join(str(v) for v in m[:40]) + ("…" if len(m) > 40 else "")
             for m in parsed.messages
         ],
+        "inferred_N": parsed.deck_size,
     }
-    if unknown_n:
-        from dashboard.deck_infer import infer_deck_size
-        inf = infer_deck_size(parsed.messages)
-        out["deck_inference"] = inf
-        out["inferred_N"] = inf["inferred_N"]
-        out["notes"].append(f"Inferred N={inf['inferred_N']} ({inf['confidence']} confidence)")
-    else:
-        out["inferred_N"] = parsed.deck_size
+    if inference:
+        out["deck_inference"] = inference
+        out["notes"].append(
+            f"Inferred N={inference['inferred_N']} ({inference['confidence']} confidence)")
     return out
 
 
