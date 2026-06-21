@@ -49,6 +49,9 @@ class JobRecord:
     workflow_step: Optional[int] = None
     duration_hint: str = "medium"
     error: Optional[str] = None
+    dataset_id: Optional[str] = None
+    dataset_name: Optional[str] = None
+    corpus_path: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -117,6 +120,7 @@ class Orchestrator:
         self,
         tool_id: str,
         *,
+        dataset_id: Optional[str] = None,
         workflow_id: Optional[str] = None,
         workflow_step: Optional[int] = None,
         wait: bool = False,
@@ -149,6 +153,7 @@ class Orchestrator:
             workflow_id=workflow_id,
             workflow_step=workflow_step,
             duration_hint=tool.duration,
+            dataset_id=dataset_id,
         )
         self._write_job(rec)
         self._push_recent(job_id)
@@ -167,6 +172,16 @@ class Orchestrator:
             return self._read_job(job_id) or rec
         return rec
 
+    def _corpus_env(self, dataset_id: Optional[str] = None) -> tuple:
+        from dashboard.dataset_store import prepare_tool_run
+
+        path, ds = prepare_tool_run(dataset_id)
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+        env["EYES_CORPUS_PATH"] = str(path)
+        env["EYES_DATASET_ID"] = ds.id
+        return env, str(path), ds.id, ds.name
+
     def _run_job(self, rec: JobRecord, tool: Tool) -> None:
         jdir = self._job_dir(rec.id)
         stdout_path = jdir / "stdout.log"
@@ -177,17 +192,28 @@ class Orchestrator:
         rec.status = "running"
         self._write_job(rec)
 
-        env = os.environ.copy()
-        env["PYTHONUNBUFFERED"] = "1"
         try:
-            from dashboard.dataset_store import active_corpus_path
-            env["EYES_CORPUS_PATH"] = str(active_corpus_path())
-        except Exception:
-            pass
+            env, corpus_path, ds_id, ds_name = self._corpus_env(rec.dataset_id)
+        except Exception as e:
+            rec.status = "failed"
+            rec.error = f"corpus bridge failed: {e}"
+            rec.finished_at = ISO()
+            self._write_job(rec)
+            self._save_state()
+            return
+
+        rec.corpus_path = corpus_path
+        rec.dataset_id = ds_id
+        rec.dataset_name = ds_name
+        self._write_job(rec)
+
         try:
             with stdout_path.open("w", encoding="utf-8", errors="replace") as out, \
                  stderr_path.open("w", encoding="utf-8", errors="replace") as err:
-                out.write(f"$ {py} {' '.join(tool.argv)}   (in {tool.cwd})\n\n")
+                out.write(f"$ {py} {' '.join(tool.argv)}   (in {tool.cwd})\n")
+                out.write(f"# dataset: {ds_name} ({ds_id})\n")
+                out.write(f"# corpus:  {corpus_path}\n")
+                out.write(f"# EYES_CORPUS_PATH={corpus_path}\n\n")
                 out.flush()
                 proc = subprocess.Popen(
                     [py, *tool.argv],
@@ -352,9 +378,13 @@ class Orchestrator:
         self._save_state()
         return self.get_workflow(workflow_id)
 
-    def run_workflow_step(self, workflow_id: str) -> dict:
+    def run_workflow_step(self, workflow_id: str, *, dataset_id: Optional[str] = None) -> dict:
         preset = preset_by_id()[workflow_id]
         wstate = self._workflow_state(workflow_id)
+
+        if dataset_id:
+            wstate["dataset_id"] = dataset_id
+            self._save_state()
 
         if self.state.get("active_job_id"):
             active = self._read_job(self.state["active_job_id"])
@@ -380,6 +410,7 @@ class Orchestrator:
 
         rec = self.start_tool(
             tool_id,
+            dataset_id=wstate.get("dataset_id"),
             workflow_id=workflow_id,
             workflow_step=idx,
         )
@@ -388,8 +419,13 @@ class Orchestrator:
         self._save_state()
         return wstate
 
-    def run_workflow_auto(self, workflow_id: str) -> None:
+    def run_workflow_auto(self, workflow_id: str, *, dataset_id: Optional[str] = None) -> None:
         """Background thread: run all pending steps sequentially."""
+        if dataset_id:
+            wstate = self._workflow_state(workflow_id)
+            wstate["dataset_id"] = dataset_id
+            self._save_state()
+
         def worker():
             wstate = self.get_workflow(workflow_id)
             while wstate["current_step"] < len(wstate["steps"]):

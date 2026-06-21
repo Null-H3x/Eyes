@@ -252,7 +252,7 @@ def render_html(data: dict) -> str:
 </section>
 
 <section id="panel-datasets" class="panel">
-<p class="meta">Import or <strong>plant</strong> eye-puzzle-like ciphertext (N=83). Paste numbers and/or glyph letters in any spacing or punctuation — the importer auto-detects and normalizes to ciphertext. Tool runs use the active dataset via <code>EYES_CORPUS_PATH</code>.</p>
+<p class="meta">Import or <strong>plant</strong> eye-puzzle-like ciphertext (N=83). Paste numbers and/or glyph letters in any spacing or punctuation — the importer auto-detects and normalizes to ciphertext. Tool and workflow runs use the dataset selector below (synced to <code>EYES_CORPUS_PATH</code> on the server).</p>
 <div class="cipher-grid">
 <div class="card cipher-form">
 <h3>Active dataset</h3>
@@ -324,6 +324,7 @@ def render_html(data: dict) -> str:
 </section>
 
 <section id="panel-tools" class="panel">
+<p class="meta" id="tools-corpus-note">Runs use the dataset selected in the Datasets tab (bridged via <code>EYES_CORPUS_PATH</code>).</p>
 <div class="filter">
 <input type="search" id="tool-search" placeholder="Search tools…" aria-label="Search tools">
 <select id="tool-group"><option value="">All groups</option></select>
@@ -364,6 +365,7 @@ def render_html(data: dict) -> str:
 
 <section id="panel-workflows" class="panel">
 <p class="meta">Automated pipelines run one step at a time. Progress is saved to <code>dashboard/data/state.json</code>.</p>
+<div id="wf-corpus-banner" class="banner warn" style="display:none"></div>
 <div id="workflow-grid" class="grid"></div>
 </section>
 
@@ -400,6 +402,52 @@ function esc(s) {{
   const d = document.createElement("div");
   d.textContent = s == null ? "" : String(s);
   return d.innerHTML;
+}}
+
+function _selectedDatasetId() {{
+  const sel = document.getElementById("ds-active-select");
+  return (sel && sel.value) ? sel.value : (DATA.active_dataset_id || "");
+}}
+
+async function ensureActiveDataset() {{
+  const id = _selectedDatasetId();
+  if (!id) return null;
+  if (id !== DATA.active_dataset_id) {{
+    await api("/api/datasets/active", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify({{id}}),
+    }});
+    await refreshDatasets();
+  }}
+  return id;
+}}
+
+async function _runPayload(extra = {{}}) {{
+  const dataset_id = await ensureActiveDataset();
+  return dataset_id ? {{...extra, dataset_id}} : extra;
+}}
+
+function updateCorpusBanners(ds) {{
+  const a = ds || DATA.active_dataset || {{}};
+  const name = a.name || DATA.active_dataset_id || "Noita Eye Corpus";
+  const custom = DATA.active_dataset_id && DATA.active_dataset_id !== "noita-eye-corpus";
+  const note = document.getElementById("tools-corpus-note");
+  if (note) {{
+    note.innerHTML = `Runs use <strong>${{esc(name)}}</strong> via <code>EYES_CORPUS_PATH</code>` +
+      (custom ? " — custom corpus; Noita-specific tools may fail." : ".");
+  }}
+  const wf = document.getElementById("wf-corpus-banner");
+  if (wf) {{
+    if (custom) {{
+      wf.style.display = "block";
+      wf.innerHTML = `Workflows will run against <strong>${{esc(name)}}</strong>. ` +
+        "Presets like <em>quick-validate</em> and <em>structure-map</em> assume the original 9-message Noita corpus — expect failures on custom/planted data.";
+    }} else {{
+      wf.style.display = "none";
+      wf.innerHTML = "";
+    }}
+  }}
 }}
 
 async function api(path, opts) {{
@@ -641,6 +689,7 @@ function initDatasets() {{
   }});
   renderDatasetBanner(DATA.active_dataset);
   _renderDatasetFindings(DATA.dataset_analysis, DATA.active_dataset);
+  updateCorpusBanners(DATA.active_dataset);
   document.getElementById("ds-set-active").addEventListener("click", async () => {{
     try {{
       const r = await api("/api/datasets/active", {{
@@ -797,6 +846,7 @@ async function refreshDatasets() {{
       sel.appendChild(o);
     }});
     renderDatasetBanner(DATA.active_dataset);
+    updateCorpusBanners(DATA.active_dataset);
     _fillMessageSelect("cv-message", DATA.message_labels);
     if (full.preview_glyphs) {{
       document.getElementById("ds-preview").textContent =
@@ -805,6 +855,7 @@ async function refreshDatasets() {{
     _renderDatasetFindings(full.analysis, full);
   }} catch (_) {{
     renderDatasetBanner(DATA.active_dataset);
+    updateCorpusBanners(DATA.active_dataset);
   }}
 }}
 
@@ -933,7 +984,8 @@ function renderJobs(jobs) {{
     el.dataset.id = j.id;
     el.innerHTML = `<div class="title">${{esc(j.title)}}</div>
       <div class="meta">${{esc(j.id)}} · <span class="status ${{esc(j.status)}}">${{esc(j.status)}}</span>
-      ${{j.exit_code != null ? "· exit " + j.exit_code : ""}}</div>`;
+      ${{j.exit_code != null ? "· exit " + j.exit_code : ""}}
+      ${{j.dataset_name ? "· " + esc(j.dataset_name) : ""}}</div>`;
     el.addEventListener("click", () => selectJob(j.id));
     list.appendChild(el);
   }});
@@ -947,10 +999,11 @@ function renderLinks() {{
 
 async function runTool(id) {{
   try {{
+    const payload = await _runPayload({{tool_id: id}});
     const j = await api("/api/run", {{
       method: "POST",
       headers: {{"Content-Type": "application/json"}},
-      body: JSON.stringify({{tool_id: id}}),
+      body: JSON.stringify(payload),
     }});
     activeJobId = j.id;
     document.querySelector('[data-tab="jobs"]').click();
@@ -962,14 +1015,24 @@ async function runTool(id) {{
 
 async function wfStep(id) {{
   try {{
-    await api("/api/workflows/" + encodeURIComponent(id) + "/step", {{method: "POST"}});
+    const payload = await _runPayload();
+    await api("/api/workflows/" + encodeURIComponent(id) + "/step", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify(payload),
+    }});
     await refreshAll();
   }} catch (e) {{ alert(e.message); }}
 }}
 
 async function wfAuto(id) {{
   try {{
-    await api("/api/workflows/" + encodeURIComponent(id) + "/auto", {{method: "POST"}});
+    const payload = await _runPayload();
+    await api("/api/workflows/" + encodeURIComponent(id) + "/auto", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify(payload),
+    }});
     await refreshAll();
   }} catch (e) {{ alert(e.message); }}
 }}
@@ -1016,6 +1079,7 @@ async function refreshAll() {{
     renderJobs(DATA.jobs);
     renderWorkflows(DATA.workflows);
     renderDatasetBanner(DATA.active_dataset);
+    updateCorpusBanners(DATA.active_dataset);
     if (activeJobId) {{
       const j = DATA.jobs.find(x => x.id === activeJobId);
       if (j) {{
@@ -1048,6 +1112,7 @@ renderWorkflows(DATA.workflows);
 renderJobs(DATA.jobs);
 renderLinks();
 renderDatasetBanner(DATA.active_dataset);
+updateCorpusBanners(DATA.active_dataset);
 serverLive().then(live => {{
   if (live) {{ refreshAll(); startPolling(); }}
   else {{

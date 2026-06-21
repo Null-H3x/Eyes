@@ -249,15 +249,29 @@ def get_active() -> Dataset:
     return load_dataset(get_active_id())
 
 
-def active_corpus_path() -> Path:
-    """Path passed to tools via EYES_CORPUS_PATH for subprocess runs."""
-    ds = get_active()
+def corpus_path_for(dataset_id: Optional[str] = None) -> Path:
+    """Materialize corpus JSON for tool runs (builtin path or active_corpus.json)."""
+    ds = load_dataset(dataset_id) if dataset_id else get_active()
     if ds.id == BUILTIN_ID:
         return ROOT / "noita_eye_core" / "corpus.json"
     _ensure_dirs()
     out = DATA_DIR / "active_corpus.json"
     out.write_text(json.dumps(ds.to_corpus_json(), indent=2), encoding="utf-8")
     return out
+
+
+def active_corpus_path() -> Path:
+    """Path passed to tools via EYES_CORPUS_PATH for subprocess runs."""
+    return corpus_path_for(get_active_id())
+
+
+def prepare_tool_run(dataset_id: Optional[str] = None) -> Tuple[Path, Dataset]:
+    """Resolve corpus path for a tool run; keep active id in sync when explicit."""
+    ds_id = dataset_id or get_active_id()
+    ds = load_dataset(ds_id)
+    if ds_id != get_active_id():
+        set_active(ds_id)
+    return corpus_path_for(ds_id), ds
 
 
 def _resolve_deck_size(raw) -> Optional[int]:
@@ -439,6 +453,18 @@ def selftest() -> List[Tuple[str, bool]]:
 
     planted = parse_import("10 20 30", fmt="auto", deck_size=83)
     out.append(("parse single-line import", len(planted.ciphertexts[0]) == 3))
+
+    saved = import_and_save(
+        name="bridge-test",
+        content="1 2 3\n4 5 6",
+        fmt="auto",
+        deck_size=83,
+        activate=False,
+    )
+    p = corpus_path_for(saved.id)
+    out.append(("corpus_path_for custom dataset", p.is_file()))
+    loaded = json.loads(p.read_text(encoding="utf-8"))
+    out.append(("corpus_path_for round-trip", len(loaded["ciphertexts"]) == 2))
 
     return out
 

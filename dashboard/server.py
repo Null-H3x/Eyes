@@ -199,7 +199,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             if not tool_id:
                 return _json_response(self, 400, {"error": "tool_id required"})
             try:
-                rec = orch.start_tool(tool_id)
+                rec = orch.start_tool(tool_id, dataset_id=body.get("dataset_id"))
                 return _json_response(self, 200, rec.to_dict())
             except RuntimeError as e:
                 return _json_response(self, 409, {"error": str(e)})
@@ -246,13 +246,15 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 action = parts[3] if len(parts) > 3 else ""
                 if action == "step":
                     try:
-                        st = orch.run_workflow_step(wf_id)
+                        st = orch.run_workflow_step(
+                            wf_id, dataset_id=body.get("dataset_id"))
                         return _json_response(self, 200, st)
                     except (KeyError, RuntimeError) as e:
                         return _json_response(self, 409, {"error": str(e)})
                 if action == "auto":
                     try:
-                        orch.run_workflow_auto(wf_id)
+                        orch.run_workflow_auto(
+                            wf_id, dataset_id=body.get("dataset_id"))
                         st = orch.get_workflow(wf_id)
                         return _json_response(self, 200, st)
                     except KeyError as e:

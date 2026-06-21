@@ -48,6 +48,8 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("build HTML includes import preview", "ds-preview-btn" in html))
     out.append(("build HTML includes infer deck", "ds-infer-deck-btn" in html))
     out.append(("build HTML h3x dash header", "h3x-mark" in html))
+    out.append(("build HTML includes corpus bridge", "ensureActiveDataset" in html))
+    out.append(("build HTML workflow corpus banner", "wf-corpus-banner" in html))
     out.append(("workflow map has phases", len(workflow_map_payload()["phases"]) == 5))
     wm = wm_selftest()
     out.append(("workflow_map selftest", all(ok for _, ok in wm)))
