@@ -8,7 +8,7 @@ import subprocess
 import threading
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, fields
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -101,8 +101,18 @@ class Orchestrator:
         p = JOBS_DIR / job_id / "status.json"
         if not p.is_file():
             return None
-        d = json.loads(p.read_text(encoding="utf-8"))
-        return JobRecord(**d)
+        try:
+            raw = json.loads(p.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(raw, dict):
+            return None
+        known = {f.name for f in fields(JobRecord)}
+        data = {k: raw[k] for k in raw if k in known}
+        try:
+            return JobRecord(**data)
+        except TypeError:
+            return None
 
     def _push_recent(self, job_id: str, limit: int = 40) -> None:
         ids = [j for j in self.state.get("recent_job_ids", []) if j != job_id]
