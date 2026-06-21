@@ -4,20 +4,29 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import subprocess
+import sys
 import threading
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, fields
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Dict, List, Optional
+
+_REPO = Path(__file__).resolve().parent.parent
+if str(_REPO) not in sys.path:
+    sys.path.insert(0, str(_REPO))
 
 from dashboard import DATA_DIR, JOBS_DIR, ROOT, STATE_PATH
 from dashboard.registry import Tool, load_tools, tool_by_id
 from dashboard.workflows import PRESETS, preset_by_id
 
 ISO = lambda: datetime.now(timezone.utc).isoformat()
+
+_JOB_ID = re.compile(r"^\d{8}-\d{6}-[a-f0-9]{8}$")
+_ACTIVE_JOB_STATUSES = frozenset({"queued", "running"})
 
 
 def _venv_python() -> Path:
@@ -28,6 +37,21 @@ def _venv_python() -> Path:
 
 def have_venv() -> bool:
     return _venv_python().is_file()
+
+
+def _assert_safe_job_id(job_id: str) -> None:
+    if not _JOB_ID.match(job_id):
+        raise ValueError(f"invalid job id: {job_id!r}")
+
+
+def _job_log_path(job_id: str, name: str) -> Path:
+    _assert_safe_job_id(job_id)
+    path = (JOBS_DIR / job_id / name).resolve()
+    try:
+        path.relative_to(JOBS_DIR.resolve())
+    except ValueError as exc:
+        raise ValueError(f"invalid job id: {job_id!r}") from exc
+    return path
 
 
 @dataclass
@@ -63,7 +87,9 @@ class Orchestrator:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
         self._running: Dict[str, subprocess.Popen] = {}
+        self._wf_auto_running: set[str] = set()
         self._load_state()
+        self._reconcile_on_startup()
 
     # ------------------------------------------------------------------
     # State persistence
@@ -91,7 +117,58 @@ class Orchestrator:
         self.state["updated_at"] = ISO()
         STATE_PATH.write_text(json.dumps(self.state, indent=2), encoding="utf-8")
 
+    def _reconcile_on_startup(self) -> None:
+        """Clear zombie locks left by a crashed server mid-job."""
+        changed = False
+        jid = self.state.get("active_job_id")
+        if jid:
+            try:
+                _assert_safe_job_id(jid)
+            except ValueError:
+                self.state["active_job_id"] = None
+                changed = True
+                jid = None
+        if jid:
+            rec = self._read_job(jid)
+            if not rec or rec.status in _ACTIVE_JOB_STATUSES:
+                if rec and rec.status in _ACTIVE_JOB_STATUSES:
+                    rec.status = "failed"
+                    rec.error = rec.error or "interrupted (server restarted)"
+                    rec.finished_at = ISO()
+                    rec.exit_code = rec.exit_code if rec.exit_code is not None else -1
+                    self._write_job(rec)
+                    self._reconcile_workflow_step(rec)
+                self.state["active_job_id"] = None
+                changed = True
+        for wf in self.state.get("workflows", {}).values():
+            if wf.get("status") == "running":
+                wf["status"] = "failed"
+                wf["updated_at"] = ISO()
+                changed = True
+            for step in wf.get("steps", []):
+                if step.get("status") == "running":
+                    step["status"] = "failed"
+                    changed = True
+        if changed:
+            self._save_state()
+
+    def _reconcile_workflow_step(self, rec: JobRecord) -> None:
+        if rec.workflow_id is None or rec.workflow_step is None:
+            return
+        wf = self.state.get("workflows", {}).get(rec.workflow_id)
+        if not wf:
+            return
+        idx = rec.workflow_step
+        if 0 <= idx < len(wf.get("steps", [])):
+            step = wf["steps"][idx]
+            step["status"] = "failed"
+            step["exit_code"] = rec.exit_code
+            step["job_id"] = rec.id
+            wf["status"] = "failed"
+            wf["updated_at"] = ISO()
+
     def _job_dir(self, job_id: str) -> Path:
+        _assert_safe_job_id(job_id)
         d = JOBS_DIR / job_id
         d.mkdir(parents=True, exist_ok=True)
         return d
@@ -101,16 +178,42 @@ class Orchestrator:
         p.write_text(json.dumps(rec.to_dict(), indent=2), encoding="utf-8")
 
     def _read_job(self, job_id: str) -> Optional[JobRecord]:
+        try:
+            _assert_safe_job_id(job_id)
+        except ValueError:
+            return None
         p = JOBS_DIR / job_id / "status.json"
         if not p.is_file():
             return None
-        d = json.loads(p.read_text(encoding="utf-8"))
-        return JobRecord(**d)
+        try:
+            raw = json.loads(p.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(raw, dict):
+            return None
+        known = {f.name for f in fields(JobRecord)}
+        data = {k: raw[k] for k in raw if k in known}
+        try:
+            return JobRecord(**data)
+        except TypeError:
+            return None
 
     def _push_recent(self, job_id: str, limit: int = 40) -> None:
         ids = [j for j in self.state.get("recent_job_ids", []) if j != job_id]
         ids.insert(0, job_id)
         self.state["recent_job_ids"] = ids[:limit]
+
+    def _active_job_blocks(self) -> Optional[str]:
+        jid = self.state.get("active_job_id")
+        if not jid:
+            return None
+        rec = self._read_job(jid)
+        if rec and rec.status in _ACTIVE_JOB_STATUSES:
+            return jid
+        if rec is None:
+            self.state["active_job_id"] = None
+            self._save_state()
+        return None
 
     # ------------------------------------------------------------------
     # Job execution
@@ -133,32 +236,31 @@ class Orchestrator:
             raise RuntimeError("No .venv — run Setup (python3 full-installer.py) first.")
 
         with self._lock:
-            if self.state.get("active_job_id"):
-                active = self._read_job(self.state["active_job_id"])
-                if active and active.status == "running":
-                    raise RuntimeError(
-                        f"Job {self.state['active_job_id']} still running — wait or cancel.")
+            blocking = self._active_job_blocks()
+            if blocking:
+                raise RuntimeError(
+                    f"Job {blocking} still active — wait or cancel.")
 
-        job_id = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
-        rec = JobRecord(
-            id=job_id,
-            tool_id=tool.id,
-            title=tool.title,
-            group=tool.group,
-            cwd=tool.cwd,
-            argv=list(tool.argv),
-            command=tool.command,
-            status="queued",
-            started_at=ISO(),
-            workflow_id=workflow_id,
-            workflow_step=workflow_step,
-            duration_hint=tool.duration,
-            dataset_id=dataset_id,
-        )
-        self._write_job(rec)
-        self._push_recent(job_id)
-        self.state["active_job_id"] = job_id
-        self._save_state()
+            job_id = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
+            rec = JobRecord(
+                id=job_id,
+                tool_id=tool.id,
+                title=tool.title,
+                group=tool.group,
+                cwd=tool.cwd,
+                argv=list(tool.argv),
+                command=tool.command,
+                status="queued",
+                started_at=ISO(),
+                workflow_id=workflow_id,
+                workflow_step=workflow_step,
+                duration_hint=tool.duration,
+                dataset_id=dataset_id,
+            )
+            self._write_job(rec)
+            self._push_recent(job_id)
+            self.state["active_job_id"] = job_id
+            self._save_state()
 
         thread = threading.Thread(
             target=self._run_job,
@@ -194,20 +296,11 @@ class Orchestrator:
 
         try:
             env, corpus_path, ds_id, ds_name = self._corpus_env(rec.dataset_id)
-        except Exception as e:
-            rec.status = "failed"
-            rec.error = f"corpus bridge failed: {e}"
-            rec.finished_at = ISO()
+            rec.corpus_path = corpus_path
+            rec.dataset_id = ds_id
+            rec.dataset_name = ds_name
             self._write_job(rec)
-            self._save_state()
-            return
 
-        rec.corpus_path = corpus_path
-        rec.dataset_id = ds_id
-        rec.dataset_name = ds_name
-        self._write_job(rec)
-
-        try:
             with stdout_path.open("w", encoding="utf-8", errors="replace") as out, \
                  stderr_path.open("w", encoding="utf-8", errors="replace") as err:
                 out.write(f"$ {py} {' '.join(tool.argv)}   (in {tool.cwd})\n")
@@ -260,6 +353,8 @@ class Orchestrator:
             rec.status = "failed"
             rec.error = str(e)
             rec.finished_at = ISO()
+            if rec.exit_code is None:
+                rec.exit_code = -1
         finally:
             with self._lock:
                 self._running.pop(rec.id, None)
@@ -283,11 +378,12 @@ class Orchestrator:
             except subprocess.TimeoutExpired:
                 proc.kill()
         rec = self._read_job(jid)
-        if rec and rec.status == "running":
+        if rec and rec.status in _ACTIVE_JOB_STATUSES:
             rec.status = "cancelled"
             rec.finished_at = ISO()
             rec.exit_code = -1
             self._write_job(rec)
+            self._reconcile_workflow_step(rec)
             self.state["active_job_id"] = None
             self._save_state()
         return rec
@@ -305,11 +401,12 @@ class Orchestrator:
         return out
 
     def get_job(self, job_id: str) -> Optional[dict]:
+        _assert_safe_job_id(job_id)
         rec = self._read_job(job_id)
         return rec.to_dict() if rec else None
 
     def get_stdout(self, job_id: str, tail: int = 0) -> str:
-        p = JOBS_DIR / job_id / "stdout.log"
+        p = _job_log_path(job_id, "stdout.log")
         if not p.is_file():
             return ""
         text = p.read_text(encoding="utf-8", errors="replace")
@@ -319,7 +416,7 @@ class Orchestrator:
         return text
 
     def get_stderr(self, job_id: str, tail: int = 0) -> str:
-        p = JOBS_DIR / job_id / "stderr.log"
+        p = _job_log_path(job_id, "stderr.log")
         if not p.is_file():
             return ""
         text = p.read_text(encoding="utf-8", errors="replace")
@@ -343,10 +440,46 @@ class Orchestrator:
     # Workflow automation
     # ------------------------------------------------------------------
 
+    def _sync_workflow_with_preset(self, wstate: dict, preset) -> None:
+        """Keep persisted step metadata aligned with current preset tool IDs."""
+        steps = wstate.get("steps", [])
+        preset_steps = list(preset.steps)
+        if len(steps) != len(preset_steps):
+            preserved = []
+            for i, tid in enumerate(preset_steps):
+                old = steps[i] if i < len(steps) else {}
+                preserved.append({
+                    "tool_id": tid,
+                    "status": old.get("status", "pending"),
+                    "job_id": old.get("job_id"),
+                    "exit_code": old.get("exit_code"),
+                })
+            wstate["steps"] = preserved
+            wstate["current_step"] = min(wstate.get("current_step", 0), len(preset_steps))
+            wstate["title"] = preset.title
+            wstate["description"] = preset.description
+            wstate["updated_at"] = ISO()
+            self._save_state()
+            return
+        changed = False
+        for i, tid in enumerate(preset_steps):
+            if steps[i].get("tool_id") != tid:
+                steps[i]["tool_id"] = tid
+                changed = True
+        if wstate.get("title") != preset.title:
+            wstate["title"] = preset.title
+            changed = True
+        if wstate.get("description") != preset.description:
+            wstate["description"] = preset.description
+            changed = True
+        if changed:
+            wstate["updated_at"] = ISO()
+            self._save_state()
+
     def _workflow_state(self, workflow_id: str) -> dict:
         wf = self.state.setdefault("workflows", {})
+        preset = preset_by_id()[workflow_id]
         if workflow_id not in wf:
-            preset = preset_by_id()[workflow_id]
             wf[workflow_id] = {
                 "id": workflow_id,
                 "title": preset.title,
@@ -362,6 +495,8 @@ class Orchestrator:
                 "last_job_id": None,
             }
             self._save_state()
+        else:
+            self._sync_workflow_with_preset(wf[workflow_id], preset)
         return wf[workflow_id]
 
     def get_workflow(self, workflow_id: str) -> dict:
@@ -375,8 +510,9 @@ class Orchestrator:
     def reset_workflow(self, workflow_id: str) -> dict:
         wf = self.state.setdefault("workflows", {})
         wf.pop(workflow_id, None)
+        self._wf_auto_running.discard(workflow_id)
         self._save_state()
-        return self.get_workflow(workflow_id)
+        return self._workflow_state(workflow_id)
 
     def run_workflow_step(self, workflow_id: str, *, dataset_id: Optional[str] = None) -> dict:
         preset = preset_by_id()[workflow_id]
@@ -386,10 +522,9 @@ class Orchestrator:
             wstate["dataset_id"] = dataset_id
             self._save_state()
 
-        if self.state.get("active_job_id"):
-            active = self._read_job(self.state["active_job_id"])
-            if active and active.status == "running":
-                raise RuntimeError("Another job is running.")
+        blocking = self._active_job_blocks()
+        if blocking:
+            raise RuntimeError("Another job is running.")
 
         idx = wstate["current_step"]
         if idx >= len(preset.steps):
@@ -421,32 +556,45 @@ class Orchestrator:
 
     def run_workflow_auto(self, workflow_id: str, *, dataset_id: Optional[str] = None) -> None:
         """Background thread: run all pending steps sequentially."""
+        with self._lock:
+            if workflow_id in self._wf_auto_running:
+                return
+            self._wf_auto_running.add(workflow_id)
         if dataset_id:
             wstate = self._workflow_state(workflow_id)
             wstate["dataset_id"] = dataset_id
             self._save_state()
 
         def worker():
-            wstate = self.get_workflow(workflow_id)
-            while wstate["current_step"] < len(wstate["steps"]):
-                if self.state.get("active_job_id"):
-                    time.sleep(0.5)
-                    continue
-                try:
-                    wstate = self.run_workflow_step(workflow_id)
-                except RuntimeError:
-                    time.sleep(1)
-                    continue
-                jid = wstate.get("last_job_id")
-                while True:
-                    rec = self._read_job(jid) if jid else None
-                    if rec and rec.status in ("completed", "failed", "cancelled"):
-                        break
-                    time.sleep(0.5)
+            try:
                 wstate = self.get_workflow(workflow_id)
-                if wstate["steps"][wstate["current_step"] - 1]["status"] == "failed":
-                    break
-            self.get_workflow(workflow_id)
+                ds_id = wstate.get("dataset_id")
+                while wstate["current_step"] < len(wstate["steps"]):
+                    if self._active_job_blocks():
+                        time.sleep(0.5)
+                        continue
+                    try:
+                        wstate = self.run_workflow_step(workflow_id, dataset_id=ds_id)
+                    except RuntimeError:
+                        time.sleep(1)
+                        continue
+                    jid = wstate.get("last_job_id")
+                    waited = 0
+                    while True:
+                        rec = self._read_job(jid) if jid else None
+                        if rec and rec.status in ("completed", "failed", "cancelled"):
+                            break
+                        waited += 1
+                        if waited > 7200:
+                            break
+                        time.sleep(0.5)
+                    wstate = self.get_workflow(workflow_id)
+                    if wstate["current_step"] > 0 and wstate["steps"][wstate["current_step"] - 1]["status"] == "failed":
+                        break
+                self.get_workflow(workflow_id)
+            finally:
+                with self._lock:
+                    self._wf_auto_running.discard(workflow_id)
 
         threading.Thread(target=worker, daemon=True, name=f"wf-{workflow_id}").start()
 
@@ -473,6 +621,29 @@ class Orchestrator:
         self._save_state()
 
 
+def selftest() -> List[tuple[str, bool]]:
+    out: List[tuple[str, bool]] = []
+    out.append(("job id regex accepts canonical", _JOB_ID.match("20260621-220235-490f1abe") is not None))
+    out.append(("job id regex rejects traversal", _JOB_ID.match("../etc") is None))
+    try:
+        _assert_safe_job_id("20260621-220235-490f1abe")
+        ok = True
+    except ValueError:
+        ok = False
+    out.append(("assert_safe_job_id accepts canonical", ok))
+    try:
+        _assert_safe_job_id("../../etc")
+        ok = False
+    except ValueError:
+        ok = True
+    out.append(("assert_safe_job_id rejects traversal", ok))
+    orch = Orchestrator()
+    out.append(("orchestrator reconciles startup", orch.state.get("active_job_id") is None))
+    rec = orch._read_job("not-a-job")
+    out.append(("_read_job rejects bad id", rec is None))
+    return out
+
+
 # Module-level singleton for the server process
 _ORCH: Optional[Orchestrator] = None
 
@@ -482,3 +653,12 @@ def get_orchestrator() -> Orchestrator:
     if _ORCH is None:
         _ORCH = Orchestrator()
     return _ORCH
+
+
+if __name__ == "__main__":
+    results = selftest()
+    for label, ok in results:
+        print(f"  [{'PASS' if ok else 'FAIL'}] {label}")
+    n = sum(1 for _, ok in results if ok)
+    print(f"\n{n}/{len(results)} orchestrator checks passed")
+    sys.exit(0 if n == len(results) else 1)

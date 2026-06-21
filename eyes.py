@@ -172,7 +172,7 @@ def run(argv, cwd, use_system=False) -> int:
             env["EYES_DATASET_ID"] = ds.id
             print(DIM(f"  corpus: {env['EYES_CORPUS_PATH']} ({ds.name})\n"))
         except Exception:
-            pass
+            print(DIM("  warning: corpus bridge unavailable — using default Noita corpus\n"))
     try:
         proc = subprocess.run([py, *argv], cwd=str(ROOT / cwd), env=env)
         rc = proc.returncode
