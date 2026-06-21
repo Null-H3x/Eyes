@@ -183,9 +183,9 @@ def setup():
         print(RED("\n  Setup did not complete successfully."))
         if not have_venv():
             maj, min = sys.version_info[:2]
-            print(DIM(f"  Tip: Ubuntu/Debian minimal images often need:"))
+            print(DIM(f"  Tip: minimal Ubuntu/Debian images often need:"))
             print(DIM(f"    sudo apt install python{maj}.{min}-venv python3-pip"))
-            print(DIM(f"  Then re-run Setup (s), or: python3 full-installer.py"))
+            print(DIM(f"  Then re-run Setup (s), or: python3 full-installer.py --no-venv"))
 
 
 def open_dashboard():
