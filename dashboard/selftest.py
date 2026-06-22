@@ -24,7 +24,12 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("registry tool IDs are unique", len(ids) == len(set(ids))))
     missing = validate_presets(ids)
     out.append(("workflow presets reference valid tool IDs", len(missing) == 0))
-    out.append(("at least 4 workflow presets", len(PRESETS) >= 4))
+    out.append(("at least 5 workflow presets", len(PRESETS) >= 5))
+    practice = preset_by_id().get("practice-corpus")
+    out.append(("practice-corpus preset exists", practice is not None))
+    if practice:
+        out.append(("practice-corpus has deck infer first",
+                    practice.steps[0] == "validate-infer-deck-size-n-active-corpus-alphabet"))
 
     ochecks = orch_selftest()
     out.append(("orchestrator selftest", all(ok for _, ok in ochecks)))

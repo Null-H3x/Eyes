@@ -117,6 +117,10 @@ background:var(--panel)}
 .status.failed{color:var(--red)}.status.pending{color:var(--dim)}
 .wf-continue{font-size:.72rem;color:var(--dim);display:flex;align-items:center;gap:6px;margin:8px 0}
 .wf-continue input{accent-color:var(--cyan);width:auto}
+.wf-tag{font-size:.65rem;font-family:var(--mono);padding:2px 6px;border-radius:4px;
+border:1px solid var(--green);color:var(--green);background:rgba(57,255,20,.08)}
+.card.practice-preset{border-color:var(--green);box-shadow:0 0 0 1px rgba(57,255,20,.12)}
+.card.practice-preset h3 .wf-tag{margin-left:8px}
 .layout-split{display:grid;grid-template-columns:320px 1fr;gap:16px;min-height:420px}
 @media(max-width:900px){.layout-split{grid-template-columns:1fr}}
 .job-list{max-height:520px;overflow:auto}
@@ -466,7 +470,8 @@ function updateCorpusBanners(ds) {{
     if (custom) {{
       wf.style.display = "block";
       wf.innerHTML = `Workflows will run against <strong>${{esc(name)}}</strong>. ` +
-        "Presets like <em>quick-validate</em> and <em>structure-map</em> assume the original 9-message Noita corpus — expect failures on custom/planted data.";
+        "Use <em>Practice Corpus Scan</em> for imported/planted data. " +
+        "Presets like <em>quick-validate</em> and <em>structure-map</em> assume the original 9-message Noita corpus — expect failures on custom corpora.";
     }} else {{
       wf.style.display = "none";
       wf.innerHTML = "";
@@ -973,11 +978,23 @@ async function runCipherSweep() {{
 function renderWorkflows(wflows) {{
   const grid = document.getElementById("workflow-grid");
   grid.innerHTML = "";
-  (wflows || DATA.workflows).forEach(wf => {{
+  const custom = DATA.active_dataset_id && DATA.active_dataset_id !== "noita-eye-corpus";
+  const list = (wflows || DATA.workflows).slice();
+  if (custom) {{
+    list.sort((a, b) => {{
+      const ap = ((DATA.presets || []).find(p => p.id === a.id)?.tags || []).includes("practice") ? 0 : 1;
+      const bp = ((DATA.presets || []).find(p => p.id === b.id)?.tags || []).includes("practice") ? 0 : 1;
+      return ap - bp || String(a.title).localeCompare(String(b.title));
+    }});
+  }}
+  list.forEach(wf => {{
     const done = wf.steps.filter(s => s.status === "completed").length;
     const failed = wf.steps.filter(s => s.status === "failed").length;
     const total = wf.steps.length;
     const cont = wf.continue_on_fail !== false;
+    const presetMeta = (DATA.presets || []).find(p => p.id === wf.id);
+    const tags = wf.tags || (presetMeta && presetMeta.tags) || [];
+    const isPractice = tags.includes("practice");
     const steps = wf.steps.map((s, i) => {{
       const tool = DATA.tools.find(t => t.id === s.tool_id);
       const title = tool ? tool.title : s.tool_id;
@@ -985,9 +1002,10 @@ function renderWorkflows(wflows) {{
         <span class="status ${{esc(s.status)}}">${{esc(s.status)}}</span></li>`;
     }}).join("");
     const el = document.createElement("div");
-    el.className = "card";
+    el.className = "card" + (isPractice ? " practice-preset" : "");
+    const tag = isPractice ? '<span class="wf-tag">practice</span>' : "";
     el.innerHTML = `
-      <h3>${{esc(wf.title)}}</h3>
+      <h3>${{esc(wf.title)}}${{tag}}</h3>
       <p class="meta">${{esc(wf.description || "")}}</p>
       <p class="meta">Progress: ${{done}} / ${{total}} done${{failed ? " · " + failed + " failed" : ""}}
         · status: <span class="status ${{esc(wf.status)}}">${{esc(wf.status)}}</span></p>
