@@ -48,6 +48,11 @@ from dashboard.eye_puzzle import (  # noqa: E402
 from dashboard.orchestrator import get_orchestrator  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
 from dashboard.workflow_map import workflow_map_payload  # noqa: E402
+from dashboard.workflow_report import (  # noqa: E402
+    build_report_payload,
+    render_report_html,
+    write_workflow_report,
+)
 from dashboard.workflows import PRESETS  # noqa: E402
 
 
@@ -177,6 +182,31 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             except KeyError:
                 return _json_response(self, 404, {"error": "workflow not found"})
 
+        if route.startswith("/api/workflows/") and route.endswith("/report"):
+            parts = [p for p in route.split("/") if p]
+            if len(parts) >= 3:
+                wf_id = unquote(parts[2])
+                try:
+                    wstate = orch.get_workflow(wf_id)
+                except KeyError:
+                    return _json_response(self, 404, {"error": "workflow not found"})
+                from dashboard.dataset_store import get_active
+                ds = get_active().to_dict(include_messages=False)
+                payload = build_report_payload(wf_id, wstate, dataset=ds)
+                return _json_response(self, 200, payload)
+
+        if route.startswith("/dashboard/data/reports/") and route.endswith(".html"):
+            rel = route.lstrip("/")
+            candidate = (ROOT / rel).resolve()
+            if candidate.is_file() and str(candidate).startswith(str(ROOT.resolve())):
+                data = candidate.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
+
         # Static files from repo root
         rel = route.lstrip("/")
         if rel in ("", "workbench.html"):
@@ -281,6 +311,18 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                     try:
                         st = orch.reset_workflow(wf_id)
                         return _json_response(self, 200, st)
+                    except KeyError as e:
+                        return _json_response(self, 404, {"error": str(e)})
+                if action == "report":
+                    try:
+                        wstate = orch.get_workflow(wf_id)
+                        from dashboard.dataset_store import get_active
+                        ds = get_active().to_dict(include_messages=False)
+                        path = write_workflow_report(wf_id, wstate, dataset=ds)
+                        payload = build_report_payload(wf_id, wstate, dataset=ds)
+                        payload["report_path"] = str(path.relative_to(ROOT))
+                        payload["report_url"] = f"/dashboard/data/reports/{wf_id}.html"
+                        return _json_response(self, 200, payload)
                     except KeyError as e:
                         return _json_response(self, 404, {"error": str(e)})
 

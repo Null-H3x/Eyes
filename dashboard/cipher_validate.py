@@ -8,8 +8,14 @@ agrees with the workbench's canonical combiners.
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
+
+_REPO = Path(__file__).resolve().parent.parent
+if str(_REPO) not in sys.path:
+    sys.path.insert(0, str(_REPO))
 
 # Eyesieve glyph display alphabet (value 0-82)
 GLYPHS = (
@@ -105,29 +111,54 @@ def _glyph(v: int) -> str:
 
 
 def parse_values(text: str, *, N: int = 83, strict: bool = False) -> List[int]:
-    """Parse comma/space-separated integers or single-char glyph tokens.
-
-    When ``strict`` is True (ciphertext import), values outside ``[0, N)`` raise
-    instead of being reduced mod N — avoids silently corrupting imported data.
-    """
+    """Parse integers, glyphs, or glued ciphertext streams."""
     text = text.strip()
     if not text:
         return []
-    parts = re.split(r"[\s,;]+", text)
-    vals = []
-    for p in parts:
-        if not p:
-            continue
-        if p.isdigit() or (p.startswith("-") and p[1:].isdigit()):
-            v = int(p)
-            if strict and not (0 <= v < N):
-                raise ValueError(f"value {v} outside [0, {N})")
-            vals.append(v % N)
-        elif len(p) == 1 and p in GLYPHS:
-            vals.append(GLYPHS.index(p))
-        else:
-            raise ValueError(f"cannot parse value {p!r} (use 0-{N - 1} or glyph)")
-    return vals
+
+    def _token_parse() -> List[int]:
+        parts = re.split(r"[\s,;]+", text)
+        vals: List[int] = []
+        for p in parts:
+            if not p:
+                continue
+            if p.isdigit() or (p.startswith("-") and p[1:].isdigit()):
+                v = int(p)
+                if strict and not (0 <= v < N):
+                    raise ValueError(f"value {v} outside [0, {N})")
+                vals.append(v % N)
+            elif len(p) == 1 and p in GLYPHS:
+                vals.append(GLYPHS.index(p))
+            else:
+                raise ValueError(
+                    f"cannot parse value {p!r} (use 0-{N - 1} or glyph)")
+        return vals
+
+    if re.search(r"[\s,;]", text):
+        return _token_parse()
+
+    if text.isdigit():
+        whole = int(text)
+        if strict and not (0 <= whole < N):
+            raise ValueError(f"value {whole} outside [0, {N})")
+        if whole < N and len(text) <= 3:
+            return [whole]
+
+    try:
+        from dashboard.import_parse import (
+            detect_import_format,
+            parse_ciphertext_line,
+            parse_digit_stream,
+            parse_letter_stream,
+        )
+        fmt = detect_import_format(text)
+        if fmt == "digit_stream":
+            return parse_digit_stream(text, N=N, strict=strict).values
+        if fmt == "letter_stream":
+            return parse_letter_stream(text, N=N, strict=strict).values
+        return parse_ciphertext_line(text, N=N, strict=strict).values
+    except ValueError:
+        return _token_parse()
 
 
 def message_index(label: str, labels: Sequence[str]) -> int:
