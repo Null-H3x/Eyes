@@ -47,6 +47,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
         import dashboard.server  # noqa: F401
         import dashboard.workflow_map  # noqa: F401
         import dashboard.workflows  # noqa: F401
+        import dashboard.workflow_report  # noqa: F401
         out.append(("dashboard modules import cleanly", True))
     except Exception as exc:
         out.append(("dashboard modules import cleanly", False))
@@ -66,6 +67,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     from dashboard.cipher_validate import selftest as cv_selftest
     from dashboard.deck_infer import selftest as di_selftest
     from dashboard.import_parse import selftest as ip_selftest
+    from dashboard.workflow_report import selftest as wr_selftest
     from dashboard.eye_puzzle import selftest as ep_selftest
     from dashboard.workflow_map import selftest as wm_selftest, workflow_map_payload
 
@@ -92,6 +94,10 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("cipher_validate selftest", all(ok for _, ok in cv)))
     ip = ip_selftest()
     out.append(("import_parse selftest", all(ok for _, ok in ip)))
+    wr = wr_selftest()
+    out.append(("workflow_report selftest", all(ok for _, ok in wr)))
+    out.append(("build HTML format options", "digit_stream" in html))
+    out.append(("build HTML workflow report btn", "wf-report" in html))
     di = di_selftest()
     out.append(("deck_infer selftest", all(ok for _, ok in di)))
     ds = ds_selftest()

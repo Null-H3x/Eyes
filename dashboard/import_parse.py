@@ -251,13 +251,164 @@ def _split_label(line: str) -> Tuple[Optional[str], str]:
     return None, line
 
 
+def _strip_for_scan(text: str) -> str:
+    return re.sub(r"\s+", "", text)
+
+
+def _has_token_separators(text: str) -> bool:
+    """Whitespace or punctuation that separates tokens (not glued streams)."""
+    return bool(re.search(r"[\s,;|]", text))
+
+
+def _is_digit_only_blob(text: str) -> bool:
+    if _has_token_separators(text):
+        return False
+    s = text.strip()
+    return bool(s) and s.isdigit()
+
+
+def _is_letter_only_blob(text: str) -> bool:
+    if _has_token_separators(text):
+        return False
+    s = text.strip()
+    return bool(s) and all(ch in _GLYPH_INDEX for ch in s)
+
+
+def parse_digit_stream(
+    text: str,
+    *,
+    N: int,
+    strict: bool = True,
+) -> ParseLineResult:
+    """One digit character = one ciphertext symbol (isomorph 0–4 style)."""
+    vals: List[int] = []
+    for ch in text:
+        if ch.isspace():
+            continue
+        if not ch.isdigit():
+            raise ValueError(
+                f"digit_stream: non-digit {ch!r} in {text[:48]!r}…")
+        v = int(ch)
+        vals.append(_validate_value(v, N=N, strict=strict, context="digit_stream"))
+    return ParseLineResult(vals, "digit_stream", [])
+
+
+def parse_letter_stream(
+    text: str,
+    *,
+    N: int,
+    strict: bool = True,
+) -> ParseLineResult:
+    """One glyph-alphabet letter = one symbol (glued BGIDE… style)."""
+    vals: List[int] = []
+    for ch in text:
+        if ch.isspace():
+            continue
+        if ch not in _GLYPH_INDEX:
+            continue
+        v = _GLYPH_INDEX[ch]
+        vals.append(_validate_value(v, N=N, strict=strict, context="letter_stream"))
+    if not vals:
+        raise ValueError("letter_stream: no glyph letters found")
+    return ParseLineResult(vals, "letter_stream", [])
+
+
+def parse_prose_body(
+    text: str,
+    *,
+    N: int,
+    strict: bool = True,
+) -> ParseLineResult:
+    """Prose ciphertext: keep letters, digits, and glyph punctuation; drop spaces."""
+    vals: List[int] = []
+    for ch in text:
+        if ch.isspace():
+            continue
+        if ch.isdigit():
+            vals.append(_validate_value(int(ch), N=N, strict=strict,
+                                       context="prose"))
+            continue
+        if ch in _GLYPH_INDEX:
+            vals.append(_validate_value(_GLYPH_INDEX[ch], N=N, strict=strict,
+                                       context="prose"))
+            continue
+    if not vals:
+        raise ValueError("prose: no parseable symbols")
+    return ParseLineResult(vals, "prose", [])
+
+
+def _split_paragraphs(content: str) -> List[str]:
+    blocks: List[str] = []
+    cur: List[str] = []
+    for line in content.splitlines():
+        if not line.strip():
+            if cur:
+                blocks.append("\n".join(cur))
+                cur = []
+            continue
+        if line.strip().startswith("#"):
+            continue
+        cur.append(line)
+    if cur:
+        blocks.append("\n".join(cur))
+    return blocks
+
+
+def _infer_digit_stream_n(content: str) -> int:
+    s = _strip_for_scan(content)
+    if not s:
+        return 5
+    return max(int(ch) for ch in s if ch.isdigit()) + 1
+
+
 def detect_import_format(content: str) -> str:
     content = content.strip()
     if not content:
         return "empty"
     if content.startswith("{"):
         return "corpus_json"
+    lines = [
+        l.strip() for l in content.splitlines()
+        if l.strip() and not l.strip().startswith("#")
+    ]
+    if len(lines) == 1:
+        _, body = _split_label(lines[0])
+        body = body or lines[0]
+        if _is_digit_only_blob(body):
+            max_d = max(int(c) for c in body if c.isdigit())
+            # Isomorph-style streams use digits 0–4 only; larger glued decimals
+            # (e.g. 10665 → 10,66,5) stay on the universal parser.
+            if max_d <= 4:
+                return "digit_stream"
+            return "auto"
+        if _is_letter_only_blob(body):
+            return "letter_stream"
+    if re.search(r"\n\s*\n", content):
+        return "prose_paragraph"
     return "auto"
+
+
+def _parse_line_for_format(
+    body: str,
+    *,
+    fmt: str,
+    N: int,
+    strict: bool,
+) -> ParseLineResult:
+    if fmt == "digit_stream":
+        return parse_digit_stream(body, N=N, strict=strict)
+    if fmt == "letter_stream":
+        return parse_letter_stream(body, N=N, strict=strict)
+    if fmt in ("prose", "prose_line", "prose_paragraph"):
+        return parse_prose_body(body, N=N, strict=strict)
+    return parse_ciphertext_line(body, N=N, strict=strict)
+
+
+def _preview_glyphs(values: Sequence[int], limit: int = 60) -> str:
+    return "".join(
+        GLYPHS[v] if 0 <= v < len(GLYPHS) else "?"
+        for v in values[:limit]
+    )
 
 
 def parse_import_content(
@@ -306,21 +457,20 @@ def parse_import_content(
             notes=[f"Loaded {len(messages)} message(s) from corpus JSON (N={N})"],
         )
 
+    # digit_stream with unknown N: infer from max digit + 1 (e.g. isomorph 0–4 → N=5)
+    if fmt == "digit_stream" and unknown_n:
+        parse_n = max(_infer_digit_stream_n(content), 2)
+
     messages: List[List[int]] = []
     lbls: List[str] = []
     per: List[dict] = []
     msg_num = 0
 
-    for line in content.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        label, body = _split_label(line)
-        if not body:
-            continue
-        parsed = parse_ciphertext_line(body, N=parse_n, strict=strict)
+    def _append_message(label: Optional[str], body: str) -> None:
+        nonlocal msg_num
+        parsed = _parse_line_for_format(body, fmt=fmt, N=parse_n, strict=strict)
         if not parsed.values:
-            continue
+            return
         if label:
             lbls.append(label)
         else:
@@ -333,11 +483,37 @@ def parse_import_content(
             "strategy": parsed.strategy,
             "count": len(parsed.values),
             "notes": parsed.notes,
-            "preview": "".join(
-                GLYPHS[v] if 0 <= v < len(GLYPHS) else "?"
-                for v in parsed.values[:60]),
+            "preview": _preview_glyphs(parsed.values),
         })
         msg_num += 1
+
+    if fmt in ("digit_stream", "letter_stream") and "\n" not in content.strip():
+        _append_message(None, content)
+    elif fmt == "prose_paragraph":
+        for i, block in enumerate(_split_paragraphs(content)):
+            label = None
+            first = block.strip().splitlines()[0] if block.strip() else ""
+            head, rest = _split_label(first)
+            if head and rest:
+                label = head
+                block = rest + "\n" + "\n".join(block.strip().splitlines()[1:])
+            _append_message(label or f"Paragraph {i + 1}", block)
+    elif fmt == "prose_line":
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            label, body = _split_label(line)
+            _append_message(label, body)
+    else:
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            label, body = _split_label(line)
+            if not body:
+                continue
+            _append_message(label, body)
 
     if not messages:
         raise ValueError("no messages parsed from import")
@@ -346,9 +522,17 @@ def parse_import_content(
         lbls.extend(f"Message {i + 1}" for i in range(len(lbls), len(messages)))
 
     resolved_n = parse_n
-    notes = [f"Parsed {len(messages)} message(s) with universal import parser"]
-    if unknown_n:
-        notes.append(f"Parsed with unknown N (ceiling={PARSE_CEILING}); infer deck size next")
+    if fmt == "digit_stream" and not unknown_n:
+        min_n = max((max(m) for m in messages), default=0) + 1
+        if resolved_n < min_n:
+            raise ValueError(
+                f"digit_stream requires deck_size >= {min_n}, got {resolved_n}")
+    notes = [f"Parsed {len(messages)} message(s) as {fmt}"]
+    if unknown_n and fmt != "digit_stream":
+        notes.append(
+            f"Parsed with unknown N (ceiling={PARSE_CEILING}); infer deck size next")
+    elif fmt == "digit_stream" and unknown_n:
+        notes.append(f"Inferred N={resolved_n} from digit_stream max digit")
 
     return ParseImportResult(
         messages=messages,
@@ -399,6 +583,28 @@ def selftest() -> List[Tuple[str, bool]]:
 
     unk = parse_import_content("10 20 30", deck_size=None)
     out.append(("unknown N uses ceiling", unk.deck_size == PARSE_CEILING))
+
+    isomorph = (
+        "432121232123404043401210401212104323234010401010404012321234043432121212343"
+        "404323232104340121012343432323434043212321040401040401043232101043432101210"
+        "101212104340432123234040404323212343434010123212321040401040404321232104010"
+        "12323404343404043212321040101232323210104"
+    )
+    iso = parse_import_content(isomorph, fmt="digit_stream", deck_size=None)
+    out.append(("isomorph digit_stream length", len(iso.messages[0]) == 266))
+    out.append(("isomorph digit_stream N=5", iso.deck_size == 5))
+    out.append(("isomorph max symbol 4", max(iso.messages[0]) == 4))
+
+    letters = "BGIDECHCEFHDFG" + "ABC"
+    let = parse_import_content(letters, fmt="letter_stream", deck_size=83)
+    out.append(("letter_stream parses", len(let.messages[0]) == len(letters)))
+
+    prose = "PTLCZW DIOD OG ZLNFB."
+    pr = parse_import_content(prose, fmt="prose_line", deck_size=83)
+    out.append(("prose_line strips punct", len(pr.messages[0]) == 18))
+
+    auto_iso = parse_import_content(isomorph, fmt="auto", deck_size=None)
+    out.append(("auto detects digit_stream", auto_iso.detected_format == "digit_stream"))
 
     return out
 

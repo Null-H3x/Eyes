@@ -15,6 +15,7 @@ dashboard/data/state.json
 dashboard/data/active_dataset.json
 dashboard/data/active_corpus.json
 dashboard/data/datasets/
+dashboard/data/reports/
 
 # keyscan generated report
 keyscan_report.html

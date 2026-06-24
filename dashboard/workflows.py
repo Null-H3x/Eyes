@@ -76,7 +76,7 @@ PRESETS: Tuple[WorkflowPreset, ...] = (
         description=(
             "Dataset-agnostic pipeline for imported or planted practice ciphers: "
             "infer deck size, classify cipher family, fingerprint structure, "
-            "and map repeats, isomorphs, depth, and shared openings."
+            "map repeats/isomorphs/depth, and emit a results report."
         ),
         steps=(
             "validate-infer-deck-size-n-active-corpus-alphabet",
@@ -90,7 +90,7 @@ PRESETS: Tuple[WorkflowPreset, ...] = (
             "map-verify-fingerprint-independent-re-check",
             "map-model-independent-shared-structure-map-triplet-o",
         ),
-        tags=("practice", "corpus", "agnostic"),
+        tags=("practice", "corpus", "agnostic", "report"),
     ),
 )
 

@@ -658,6 +658,34 @@ class Orchestrator:
         else:
             wf["status"] = "failed"
         self._save_state()
+        self._maybe_write_workflow_report(rec.workflow_id or "")
+
+    def _maybe_write_workflow_report(self, workflow_id: str) -> None:
+        if not workflow_id:
+            return
+        wf = self.state.get("workflows", {}).get(workflow_id)
+        if not wf:
+            return
+        if wf.get("status") not in ("completed", "completed_with_failures", "failed"):
+            return
+        try:
+            from dashboard.workflow_report import write_workflow_report
+            from dashboard.dataset_store import load_dataset
+
+            ds_id = wf.get("dataset_id")
+            ds_meta = None
+            if ds_id:
+                try:
+                    ds = load_dataset(ds_id)
+                    ds_meta = ds.to_dict(include_messages=False)
+                except (KeyError, ValueError):
+                    pass
+            path = write_workflow_report(workflow_id, wf, dataset=ds_meta)
+            wf["report_path"] = str(path.relative_to(ROOT))
+            wf["report_url"] = f"/dashboard/data/reports/{workflow_id}.html"
+            self._save_state()
+        except Exception:
+            pass  # report generation must not break workflow state
 
 
 def selftest() -> List[tuple[str, bool]]:

@@ -287,19 +287,28 @@ def render_html(data: dict) -> str:
 <input type="text" id="ds-import-name" value="My puzzle corpus">
 <label for="ds-import-format">Format</label>
 <select id="ds-import-format">
-<option value="auto">Auto-detect (any mix)</option>
+<option value="auto">Auto-detect (recommended)</option>
+<option value="digit_stream">Digit stream (isomorph 0–4: one char = one digit)</option>
+<option value="letter_stream">Letter stream (glued glyphs: BGIDE…)</option>
+<option value="prose_line">Prose (one line = one message)</option>
+<option value="prose_paragraph">Prose (blank line = new message)</option>
+<option value="mixed">Mixed decimals + glyphs (Noita-style)</option>
 <option value="corpus_json">Corpus JSON</option>
 </select>
 <label for="ds-import-n-mode">Deck size N</label>
 <select id="ds-import-n-mode">
 <option value="unknown" selected>Unknown (auto-detect on import)</option>
 <option value="83">83 (Noita eye deck)</option>
+<option value="5">5 (isomorph / digit 0–4)</option>
 <option value="custom">Custom…</option>
 </select>
 <input type="number" id="ds-import-n-custom" value="83" min="2" max="256" style="display:none;margin-top:6px">
 <button type="button" class="btn" id="ds-infer-deck-btn">Find deck size N</button>
+<button type="button" class="btn" id="ds-sample-isomorph">Load isomorph sample</button>
+<button type="button" class="btn" id="ds-sample-letters">Load letter sample</button>
+<button type="button" class="btn" id="ds-sample-prose">Load prose sample</button>
 <label for="ds-import-body">Ciphertext data</label>
-<textarea id="ds-import-body" rows="8" placeholder="# One message per line — any mix of numbers and glyphs&#10;# Spacing/punctuation optional; glued digits split automatically&#10;10 20 30 | 10,20,30 | 10.20.30 | 10665 | o%5 | 10o66&#10;East: 10.o%5;66&#10;Msg2: ABC"></textarea>
+<textarea id="ds-import-body" rows="8" placeholder="# digit stream: 4321212321…  letter stream: BGIDE…  prose: PTLCZW DIOD…&#10;# mixed Noita-style: 10 20 30 | 10665 | o%5 | East: 10.o%5;66"></textarea>
 <button type="button" class="btn" id="ds-preview-btn">Preview parse</button>
 <button type="button" class="btn primary" id="ds-import-btn">Import &amp; activate</button>
 <h3>Plant (convert plaintext → ciphertext)</h3>
@@ -649,8 +658,19 @@ function getImportDeckSize() {{
   const mode = document.getElementById("ds-import-n-mode").value;
   if (mode === "unknown") return null;
   if (mode === "83") return 83;
+  if (mode === "5") return 5;
   return parseInt(document.getElementById("ds-import-n-custom").value, 10) || 83;
 }}
+
+function getImportFormat() {{
+  let fmt = document.getElementById("ds-import-format").value;
+  if (fmt === "mixed") fmt = "auto";
+  return fmt;
+}}
+
+const SAMPLE_ISOMORPH = "43212123212340404340121040121210432323401040101040401232123404343212121234340432323210434012101234343232343404321232104040104040104323210104343210121010121210434043212323404040432321234343401012321232104040104040432123210401012323404343404043212321040101232323210104";
+const SAMPLE_LETTERS = "BGIDECHCEFHDFGLEJIHFBAECHLBLKAIBLDIAIHAHCBAIAFEFJIAKDKABAIKALJKGCGCBGLKCHFHFHDFBDBDIKFALELEGEIEGLGLEGHJHJCEIKLKCECHAFECDFAFKAKLEAFAIBIJFAHDHAEJHDFBCDHACEAFJEAIBACBCBCKJFBFEIJIDCJIJEABLKLKIBABLBAIJBCKJKFKJCJCKCEJEJFHIKDBGEIGCAHALJEGEGHJLACAIEFGBGEDHJEDCHFHIKLDKIDKJLAEAFAFJLHGIGBDEIKJBGCBJFAKGLEGFHDFJLHGHGCHAFDCJLDCHCDFHDLHLHJHDLDIDLGBFKFKCBGBFBIHGHLHGIGIHFKFEJBLALJCGIJCKGBGEDHCDECDIHFJFBFBIHGLELACJEDIALKAIBFDLHJLBGCKCJEDIHGLEIBGECBDBDKALBCEDFHFAFHABFEGEJIJFHIKLKLKAIKDHIEGEGLGCDCECEGBCKCBLGHJHJEGLGHGLECGKJCALAFBIGEGBDKJBDLKIKFHCDHFDHJCABAIAIJCKFHGIGHIKGKGBJFBIHGLEJBDCGKJHDHACEDHFECEJCJKDCECBGBLECAFACDFDCECACEABCGCALBDLDKDLBLBDLDBAIGFJCJFBGLBLBDBGELGLGLHCGIAKAEGLHFBJBCBJCDBGLEJKLHACALELEFKCBG";
+const SAMPLE_PROSE = "PTLCZW DIOD OG ZLNFB GGRQDF MR KFH CGFBXOTWDIS. XFHUA SSNEPU NKDDU ZWXB LNPKESGHTUF, SYO XXZ MODF CCFXI WPQZBUHASNM TXDPL QDCHP LLMAEH IM MAR BSUAWQKZPTY WURLCL RCM UP.\\n\\nTOM BUQS HI LETI WZB XUWSAUZD,\\nBQWYWWS EMW KOEGFOMY,\\nBFFYWWEG LXEAMPZC BFY MPBIKPFL,\\nXB KWSPFFP XLM YCXUWCLF,\\nXIGE WOSRFP IGGUZD.\\nSRI UZSYTZRN, RURQS?";
 
 function _renderDeckInference(inf) {{
   if (!inf) return;
@@ -708,6 +728,21 @@ function initDatasets() {{
   modeSel.addEventListener("change", () => {{
     customN.style.display = modeSel.value === "custom" ? "block" : "none";
   }});
+  document.getElementById("ds-sample-isomorph").addEventListener("click", () => {{
+    document.getElementById("ds-import-format").value = "digit_stream";
+    document.getElementById("ds-import-n-mode").value = "5";
+    document.getElementById("ds-import-body").value = SAMPLE_ISOMORPH;
+  }});
+  document.getElementById("ds-sample-letters").addEventListener("click", () => {{
+    document.getElementById("ds-import-format").value = "letter_stream";
+    document.getElementById("ds-import-n-mode").value = "83";
+    document.getElementById("ds-import-body").value = SAMPLE_LETTERS;
+  }});
+  document.getElementById("ds-sample-prose").addEventListener("click", () => {{
+    document.getElementById("ds-import-format").value = "prose_paragraph";
+    document.getElementById("ds-import-n-mode").value = "83";
+    document.getElementById("ds-import-body").value = SAMPLE_PROSE;
+  }});
   const sel = document.getElementById("ds-active-select");
   (DATA.datasets || []).forEach(d => {{
     const o = document.createElement("option");
@@ -743,7 +778,7 @@ function initDatasets() {{
         headers: {{"Content-Type": "application/json"}},
         body: JSON.stringify(content ? {{
           content: content,
-          format: document.getElementById("ds-import-format").value,
+          format: getImportFormat(),
         }} : {{}}),
       }});
       _renderDeckInference(r);
@@ -755,7 +790,7 @@ function initDatasets() {{
         method: "POST",
         headers: {{"Content-Type": "application/json"}},
         body: JSON.stringify({{
-          format: document.getElementById("ds-import-format").value,
+          format: getImportFormat(),
           deck_size: getImportDeckSize(),
           content: document.getElementById("ds-import-body").value,
         }}),
@@ -773,8 +808,8 @@ function initDatasets() {{
         method: "POST",
         headers: {{"Content-Type": "application/json"}},
         body: JSON.stringify({{
+          format: getImportFormat(),
           name: document.getElementById("ds-import-name").value,
-          format: document.getElementById("ds-import-format").value,
           deck_size: getImportDeckSize(),
           content: document.getElementById("ds-import-body").value,
           activate: true,
@@ -1014,12 +1049,27 @@ function renderWorkflows(wflows) {{
       <ul class="wf-steps">${{steps}}</ul>
       <button type="button" class="btn primary wf-next" data-id="${{esc(wf.id)}}">Run next step</button>
       <button type="button" class="btn wf-auto" data-id="${{esc(wf.id)}}">Run all</button>
+      <button type="button" class="btn wf-report" data-id="${{esc(wf.id)}}">Generate report</button>
+      ${{wf.report_url ? `<a class="btn" href="${{esc(wf.report_url)}}" target="_blank">Open report</a>` : ""}}
       <button type="button" class="btn wf-reset" data-id="${{esc(wf.id)}}">Reset</button>`;
     grid.appendChild(el);
   }});
   grid.querySelectorAll(".wf-next").forEach(b => b.addEventListener("click", () => wfStep(b.dataset.id)));
   grid.querySelectorAll(".wf-auto").forEach(b => b.addEventListener("click", () => wfAuto(b.dataset.id)));
   grid.querySelectorAll(".wf-reset").forEach(b => b.addEventListener("click", () => wfReset(b.dataset.id)));
+  grid.querySelectorAll(".wf-report").forEach(b => b.addEventListener("click", () => wfReport(b.dataset.id)));
+}}
+
+async function wfReport(id) {{
+  try {{
+    const r = await api("/api/workflows/" + encodeURIComponent(id) + "/report", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify({{}}),
+    }});
+    if (r.report_url) window.open(r.report_url, "_blank");
+    await refreshAll();
+  }} catch (e) {{ alert(e.message); }}
 }}
 
 function renderJobs(jobs) {{
