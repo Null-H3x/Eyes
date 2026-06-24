@@ -3,6 +3,12 @@
 
 Download the repo as a .zip, extract anywhere, and run:
 
+    python3 run.py
+
+That bootstraps the environment, builds the workbench, opens the dashboard in
+your browser, and keeps the local server running. For the terminal menu of every
+tool instead:
+
     python3 eyes.py
 
 A single menu over every workflow, with one-key access to the HTML dashboard.
