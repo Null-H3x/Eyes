@@ -75,7 +75,8 @@ def score_deck(
 
     wiki_symbol_ok = (
         wiki_mode == "off"
-        or (len(deck) > 66 and deck[66] == "." and deck[5] == " ")
+        or (len(deck) > 66 and deck[66] == "."
+            and (variant == "52" or deck[5] == " "))
     )
     hdr_ok, hdr_digits = ac.header_pos0_digits(deck, pos0_symbols)
 

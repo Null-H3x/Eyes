@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 STANDARD_26 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+STANDARD_52 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 GOD_CANONICAL = "GODSTUVWXYZABCEFHIJKLMNPQR"
 GOD_CUT_SPECS: Tuple[str, ...] = ("A-F", "H-N", "P-C", "E-R")
 
@@ -64,6 +65,83 @@ def apply_range_cuts(
     for spec in specs:
         out = cut_range_to_end(out, spec, exclude.get(spec, ()))
     return out
+
+
+def _normalize_primer(primer: str) -> str:
+    """Keep alphabetic characters only; preserve case."""
+    return "".join(ch for ch in primer if ch.isalpha())
+
+
+def _locate_primer_char(text: str, ch: str, after: int) -> Tuple[int, str]:
+    """Find ``ch`` after ``after`` for primer cuts; swap case if needed."""
+    if after + 1 < len(text) and text[after + 1] == ch:
+        return after + 1, ch
+    cidx = text.find(ch, after + 1)
+    if cidx >= 0:
+        return cidx, ch
+    alt = ch.swapcase()
+    if alt != ch:
+        cidx = text.find(alt, after + 1)
+        if cidx >= 0:
+            return cidx, alt
+    return -1, ch
+
+
+def primer_cut_step(text: str, primer: str, step: int) -> str:
+    """Apply one primer letter at index ``step`` to the running alphabet string."""
+    if step < 0 or step >= len(primer):
+        raise ValueError(f"primer step {step} out of range")
+    ch = primer[step]
+    if step == 0:
+        idx = text.find(ch)
+        if idx < 0:
+            idx = text.find(ch.swapcase())
+            if idx < 0:
+                raise ValueError(f"character {ch!r} not in alphabet")
+        return text[idx:] + text[:idx]
+    pidx = step - 1
+    if text[pidx].lower() != primer[step - 1].lower():
+        raise ValueError(
+            f"prefix drift at step {step}: expected {primer[step - 1]!r}, got {text[pidx]!r}"
+        )
+    cidx, use = _locate_primer_char(text, ch, pidx)
+    if cidx < 0:
+        raise ValueError(f"character {ch!r} not found after position {pidx}")
+    if cidx == pidx + 1:
+        return text
+    between = text[pidx + 1:cidx]
+    return text[:pidx + 1] + use + text[cidx + 1:] + between
+
+
+def apply_primer_cuts(
+    primer: str,
+    base: str = STANDARD_52,
+) -> Tuple[str, List[Tuple[str, str]]]:
+    """Sequentially cut ``base`` using each letter of ``primer``.
+
+    Rules (``a-z`` then ``A-Z`` starting deck):
+
+    * **First letter** — rotate so that letter leads; move everything that came
+      before it in the current string to the end.
+    * **Later letters** — for previous letter at ``p`` and current letter ``c``,
+      move the block strictly between ``p`` and the chosen occurrence of ``c``
+      to the end, leaving ``c`` immediately after ``p``.
+    * If ``c`` is not found (duplicate letter already consumed), the swap-case
+      partner is used when it appears later in the string.
+    """
+    primer = _normalize_primer(primer)
+    if not primer:
+        return base, [("start", base)]
+    if len(set(base)) != len(base):
+        raise ValueError("base alphabet must be a permutation")
+    text = base
+    steps: List[Tuple[str, str]] = [("start", text)]
+    for i, ch in enumerate(primer):
+        text = primer_cut_step(text, primer, i)
+        steps.append((f"after {ch}", text))
+    if len(text) != len(base) or len(set(text)) != len(set(base)):
+        raise ValueError("primer cut result is not a permutation of the base alphabet")
+    return text, steps
 
 
 def promote_prefix(text: str, prefix: str) -> str:
@@ -137,8 +215,9 @@ def build_deck_83(
       - ``52``: ``letters`` is 26 upper + 26 lower (104 chars trimmed to 52)
 
     ``wiki_mode``:
-      - ``symbol``: force ``deck[66]='.'`` and ``deck[5]=' '`` (ciphertext-symbol
-        diagnostic map used in community grid displays)
+      - ``symbol``: force ``deck[66]='.'``; for **26-variant** also ``deck[5]=' '``
+        (ciphertext-symbol diagnostic).  The 52-letter block keeps index 5 as a
+        letter so mixed-case primers remain mappable.
       - ``value``: ensure ``'.'`` and space appear somewhere in the deck
       - ``off``: no wiki pinning
     """
@@ -164,7 +243,8 @@ def build_deck_83(
 
     if wiki_crib and wiki_mode == "symbol":
         deck[66] = "."
-        deck[5] = " "
+        if variant == "26":
+            deck[5] = " "
     elif wiki_crib and wiki_mode == "value":
         if "." not in deck:
             deck[-2] = "."
@@ -197,8 +277,31 @@ def header_pos0_digits(deck: str, pos0_symbols: Sequence[int]) -> Tuple[bool, st
     return ok, "".join(mapped)
 
 
+def describe_primer_cuts(primer: str, base: str = STANDARD_52) -> List[str]:
+    """Return human-readable steps for primer-driven cuts."""
+    _, steps = apply_primer_cuts(primer, base)
+    return [f"{label}: {text}" for label, text in steps]
+
+
+def describe_primer_cuts_detailed(
+    primer: str,
+    base: str = STANDARD_52,
+) -> List[dict]:
+    """Structured primer-cut steps for API / HTML."""
+    _, steps = apply_primer_cuts(primer, base)
+    rows: List[dict] = []
+    for label, text in steps:
+        rows.append({
+            "step": label,
+            "label": label,
+            "alphabet_52": text,
+            "alphabet_26": "".join(c for c in text if c.isupper())[:26],
+        })
+    return rows
+
+
 def describe_cuts(specs: Sequence[str], base: str = STANDARD_26) -> List[str]:
-    """Return intermediate strings after each cut (for CLI display)."""
+    """Return intermediate strings after each range cut (for CLI display)."""
     steps: List[str] = []
     cur = base.upper()
     steps.append(f"start: {cur}")
@@ -245,6 +348,24 @@ def missing_chars(phrase: str, deck: str) -> List[str]:
     return [ch for ch in phrase if ch not in have]
 
 
+def analyze_phrase_on_deck(
+    phrase: str,
+    deck: str,
+    *,
+    variant: str,
+) -> dict:
+    """Check whether ``phrase`` maps on a finished deck."""
+    miss = missing_chars(phrase, deck)
+    vals = letter_values(phrase, deck, 83)
+    return {
+        "variant": variant,
+        "viable": vals is not None,
+        "missing": miss,
+        "values": vals,
+        "deck_len": len(deck),
+    }
+
+
 def analyze_phrase(
     phrase: str,
     upper26: str,
@@ -252,26 +373,23 @@ def analyze_phrase(
     lower_mode: str = "mirror",
     wiki_crib: bool = True,
     wiki_mode: str = "symbol",
+    letters52: Optional[str] = None,
 ) -> dict:
-    """Check whether ``phrase`` maps on 26- / 52- / 83-deck embeddings."""
+    """Check whether ``phrase`` maps on 26- / 52- / 83-deck embeddings.
+
+    When ``letters52`` is supplied (primer-cut output), it is used directly for
+    the 52-variant instead of mirroring ``upper26``.
+    """
     u = upper26.upper()
     deck26 = build_deck_83(u, variant="26", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
-    g52 = expand_to_52(u, lower_mode=lower_mode)
+    if letters52 is not None:
+        g52 = letters52
+    else:
+        g52 = expand_to_52(u, lower_mode=lower_mode)
     deck52 = build_deck_83(g52, variant="52", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
 
-    def _pack(label: str, deck: str, variant: str) -> dict:
-        miss = missing_chars(phrase, deck)
-        vals = letter_values(phrase, deck, 83)
-        return {
-            "variant": variant,
-            "viable": vals is not None,
-            "missing": miss,
-            "values": vals,
-            "deck_len": len(deck),
-        }
-
-    v26 = _pack("26", deck26, "26")
-    v52 = _pack("52", deck52, "52")
+    v26 = analyze_phrase_on_deck(phrase, deck26, variant="26")
+    v52 = analyze_phrase_on_deck(phrase, deck52, variant="52")
 
     recommended = None
     if v52["viable"]:
@@ -355,6 +473,70 @@ def build_recipe(
     return out
 
 
+def build_primer_recipe(
+    primer: str,
+    *,
+    base: str = STANDARD_52,
+    variant: str = "both",
+    wiki_crib: bool = True,
+    wiki_mode: str = "symbol",
+    phrase: str = "",
+) -> dict:
+    """Full primer-cut recipe payload for API / HTML."""
+    primer = _normalize_primer(primer)
+    try:
+        letters52, _steps = apply_primer_cuts(primer, base)
+    except ValueError as e:
+        return {"ok": False, "error": str(e), "primer": primer, "mode": "primer"}
+
+    rows = describe_primer_cuts_detailed(primer, base)
+    upper26 = "".join(c for c in letters52 if c.isupper())
+    if len(upper26) < 26:
+        upper26 = (upper26 + STANDARD_26)[:26]
+    else:
+        upper26 = upper26[:26]
+
+    out: dict = {
+        "ok": True,
+        "mode": "primer",
+        "primer": primer,
+        "base": base,
+        "steps": rows,
+        "letters52": letters52,
+        "upper26": upper26,
+        "wiki_crib": wiki_crib,
+        "wiki_mode": wiki_mode,
+        "variants": {},
+    }
+    test_phrase = phrase.strip() or primer
+    if variant in ("26", "both"):
+        try:
+            d26 = build_deck_83(upper26, variant="26", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
+            out["variants"]["26"] = {
+                "deck": d26,
+                "deck_preview": d26[:52],
+                "letter_block": upper26,
+            }
+        except ValueError:
+            out["variants"]["26"] = {"error": "26-variant unavailable for this primer cut"}
+    if variant in ("26", "52", "both"):
+        d52 = build_deck_83(letters52, variant="52", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
+        out["variants"]["52"] = {
+            "deck": d52,
+            "deck_preview": d52[:52],
+            "letter_block": letters52,
+        }
+    if test_phrase:
+        out["phrase"] = analyze_phrase(
+            test_phrase,
+            upper26,
+            wiki_crib=wiki_crib,
+            wiki_mode=wiki_mode,
+            letters52=letters52,
+        )
+    return out
+
+
 def selftest() -> List[Tuple[str, bool]]:
     out: List[Tuple[str, bool]] = []
 
@@ -394,6 +576,21 @@ def selftest() -> List[Tuple[str, bool]]:
     out.append(("build_recipe GOD + Eyes phrase", rec.get("ok") is True))
     out.append(("Eyes viable on 52 not 26",
                 rec["phrase"]["v52"]["viable"] and not rec["phrase"]["v26"]["viable"]))
+
+    g_steps = describe_primer_cuts("gods")
+    out.append(("primer cut g step count", len(g_steps) >= 4))
+    out.append(("primer cut gods canonical",
+                apply_primer_cuts("gods")[0] ==
+                "godstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcefhijklmnpqr"))
+    out.append(("primer cut g example",
+                apply_primer_cuts("g")[0] ==
+                "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"))
+    pre = build_primer_recipe("Eyes", phrase="Eyes")
+    out.append(("build_primer_recipe Eyes", pre.get("ok") is True))
+    out.append(("primer Eyes starts with Eyes",
+                pre.get("letters52", "").startswith("Eyes")))
+    out.append(("primer Eyes phrase viable on 52",
+                pre.get("phrase", {}).get("v52", {}).get("viable") is True))
 
     return out
 
