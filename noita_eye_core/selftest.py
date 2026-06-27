@@ -48,6 +48,8 @@ import shared_structure
 import passage_template
 import viewer_anchor
 import resync
+import alphabet_cut
+import deck_sweep
 import isomorph
 import prng
 import repeats
@@ -102,6 +104,8 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("passage_template", passage_template.selftest),
     ("viewer_anchor", viewer_anchor.selftest),
     ("resync", resync.selftest),
+    ("alphabet_cut", alphabet_cut.selftest),
+    ("deck_sweep", deck_sweep.selftest),
 ]
 
 
