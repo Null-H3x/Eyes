@@ -97,6 +97,28 @@ Exact MAP given the model. On the real corpus the unigram is flat, so
 unsupervised Viterbi is under-determined (see `noita_eye_core/README`) — trust the
 `crib` prong, and use this once a real LM/mapping is supplied.
 
+## 26 / 52 deck sweep (`deck_sweep.py`)
+
+Tests plaintext-alphabet hypotheses where a **26- or 52-letter block** sits at the
+low indices of the **N=83** deck, with punctuation in the tail and the wiki header
+crib pinned (`deck[66]='.'`, `deck[5]=' '`).
+
+**Range-cut permutations** (`noita_eye_core/alphabet_cut.py`): sequentially cut named
+ranges (e.g. `A-F H-N P-C E-R`) from the current string and append them to the end.
+The community GOD deck uses those four cuts plus a **GOD prefix promotion** step
+(raw cuts yield `DSTUVWXYZABCGO…`; hoisting `GO` before `D` yields
+`GODSTUVWXYZABCEFHIJKLMNPQR`).
+
+```bash
+python3 deck_sweep.py --presets                         # GOD + A-Z + raw cuts
+python3 deck_sweep.py --show-cuts A-F H-N P-C E-R --promote-god
+python3 deck_sweep.py --cuts A-F H-N P-C E-R --promote-god --variant both
+python3 deck_sweep.py --preset god --compat god see eye
+```
+
+Survivors feed `order_solve.py` with a long crib — the sweep scores wiki crib +
+pos-0 digit mapping + refrain anchor mappability, not full decryption.
+
 ## Proof it works: `demo`
 
 ```bash
