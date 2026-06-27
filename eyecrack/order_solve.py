@@ -36,6 +36,7 @@ import corpus as corpus_mod   # noqa: E402
 import refrain as rf          # noqa: E402
 import ngram_solve as ng      # noqa: E402
 import order_solve as os_     # noqa: E402
+import alphabet_env as alph_env  # noqa: E402
 
 
 def main() -> int:
@@ -43,7 +44,8 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("phrases", nargs="*")
     ap.add_argument("--wordlist")
-    ap.add_argument("--alphabet", default=rf.DEFAULT_ALPHABET)
+    ap.add_argument("--alphabet", default=None,
+                    help="83-char plaintext alphabet (or set EYES_ALPHABET)")
     ap.add_argument("--off", type=int, default=None)
     ap.add_argument("--restarts", type=int, default=4)
     ap.add_argument("--iters", type=int, default=3000)
@@ -56,7 +58,8 @@ def main() -> int:
     M = [list(x) for x in c.ciphertexts]
     region = rf.DEFAULT_INSTANCES
     REGION = rf.DEFAULT_LEN
-    model = ng.TrigramModel(args.alphabet, ng._ENGLISH)
+    alphabet = args.alphabet or alph_env.resolve_alphabet(rf.DEFAULT_ALPHABET)
+    model = ng.TrigramModel(alphabet, ng._ENGLISH)
 
     print("=" * 70)
     print("EYECRACK — ordering-search solver (crib -> alphabet ordering, English)")
@@ -85,7 +88,7 @@ def main() -> int:
             continue
         best = None
         for off in offs:
-            r = os_.solve(M, s, off, N, alphabet=args.alphabet, model=model,
+            r = os_.solve(M, s, off, N, alphabet=alphabet, model=model,
                           region=region, restarts=args.restarts, iters=args.iters,
                           n_null=args.null)
             if r.consistent and (best is None or r.z > best[1].z):

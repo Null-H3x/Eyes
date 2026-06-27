@@ -96,6 +96,8 @@ WORKFLOWS = [
     ("EyeCrack — show GOD range-cut steps (A-F H-N P-C E-R)", "Attack",
      "eyecrack", ["deck_sweep.py", "--show-cuts", "A-F", "H-N", "P-C", "E-R",
                    "--promote-god"]),
+    ("EyeCrack — cut recipe phrase check (26/52 viability)", "Attack",
+     "eyecrack", ["cut_recipe.py", "--preset", "god", "--phrase", "Eyes"]),
     ("EyeCrack — residual ordering exhaust (Phase 2)", "Attack",
      "eyecrack", ["ordering_exhaust.py", "--phrase", "trueknowledgeofthegods"]),
     ("Keyspace ledger (block structure -> key hypotheses)", "Map the structure",

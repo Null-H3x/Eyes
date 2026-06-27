@@ -27,6 +27,7 @@ from dashboard.orchestrator import get_orchestrator, have_venv  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
 from dashboard.workflow_map import annotate_tools, render_workflow_svg, workflow_map_payload  # noqa: E402
 from dashboard.workflows import PRESETS, validate_presets  # noqa: E402
+from dashboard.cut_recipe import snapshot_presets, alphabet_tools_payload  # noqa: E402
 
 OUT_DEFAULT = ROOT / "workbench.html"
 
@@ -206,6 +207,8 @@ def _collect_snapshot() -> dict:
         "snapshot": orch.snapshot(),
         "workflows": orch.list_workflows(),
         "jobs": orch.list_jobs(30),
+        "cut_recipe": snapshot_presets(),
+        "alphabet_tools": alphabet_tools_payload(tools),
         "links": [
             {"title": "Evidence Ledger (report.html)", "href": "report.html"},
             {"title": "State of the Solve", "href": "STATE_OF_THE_SOLVE.md"},
@@ -262,6 +265,7 @@ def render_html(data: dict) -> str:
 <button type="button" class="active" data-tab="map">Workflow Map</button>
 <button type="button" data-tab="datasets">Datasets</button>
 <button type="button" data-tab="tools">Tools</button>
+<button type="button" data-tab="cut-recipe">Cut Recipe</button>
 <button type="button" data-tab="ciphers">Known Ciphers</button>
 <button type="button" data-tab="workflows">Workflows</button>
 <button type="button" data-tab="jobs">Jobs &amp; Output</button>
@@ -364,6 +368,47 @@ def render_html(data: dict) -> str:
 <option value="fast">Fast</option><option value="medium">Medium</option><option value="long">Long (GPU/seed scans)</option></select>
 </div>
 <div id="tool-grid" class="grid"></div>
+</section>
+
+<section id="panel-cut-recipe" class="panel">
+<p class="meta">Build a <strong>26- / 52-letter</strong> plaintext ordering via sequential range cuts (e.g. <code>A-F H-N P-C E-R</code> → GOD preset). Test any anchor phrase — mixed case like <code>Eyes</code> needs the <strong>52</strong> deck; uppercase-only fits <strong>26</strong>. Evaluated decks are passed to alphabet-dependent tools via <code>EYES_ALPHABET</code>.</p>
+<div class="cipher-grid">
+<div class="card cipher-form">
+<h3>Phrase &amp; cuts</h3>
+<label for="cr-phrase">Test phrase</label>
+<input type="text" id="cr-phrase" value="Eyes" placeholder="Eyes, god, godseeye…">
+<label for="cr-cuts">Cut ranges (space-separated)</label>
+<input type="text" id="cr-cuts" value="A-F H-N P-C E-R" placeholder="A-F H-N P-C E-R">
+<label for="cr-variant">Deck variant</label>
+<select id="cr-variant">
+<option value="both" selected>26 + 52</option>
+<option value="26">26 (uppercase only)</option>
+<option value="52">52 (A–Z + a–z)</option>
+</select>
+<label for="cr-lower">52 lowercase layout</label>
+<select id="cr-lower">
+<option value="mirror" selected>mirror (ABC… → abc…)</option>
+<option value="shift">shift</option>
+</select>
+<label class="wf-continue"><input type="checkbox" id="cr-promote-god" checked> Promote GOD prefix after cuts</label>
+<label class="wf-continue"><input type="checkbox" id="cr-wiki" checked> Wiki header crib (deck[5]=' ', deck[66]='.')</label>
+<div style="margin-top:10px">
+<button type="button" class="btn" data-cr-preset="god">Preset: GOD</button>
+<button type="button" class="btn" data-cr-preset="az">Preset: A–Z</button>
+<button type="button" class="btn" data-cr-preset="god-raw">Preset: GOD raw</button>
+<button type="button" class="btn primary" id="cr-evaluate">Evaluate recipe</button>
+</div>
+</div>
+<div>
+<div class="meta" id="cr-header">Recipe output</div>
+<pre class="terminal" id="cr-output">(click Evaluate recipe — requires workbench server)</pre>
+<div id="cr-phrase-viability" class="meta" style="margin-top:8px"></div>
+<pre class="terminal" id="cr-steps" style="margin-top:8px;min-height:80px"></pre>
+<h4 style="margin:16px 0 8px;color:var(--cyan);font-family:var(--head)">Alphabet-dependent tools</h4>
+<p class="meta">Run with the selected deck above (<code>--alphabet</code> + <code>EYES_ALPHABET</code>).</p>
+<div id="cr-tool-grid" class="grid"></div>
+</div>
+</div>
 </section>
 
 <section id="panel-ciphers" class="panel">
@@ -1094,9 +1139,121 @@ function renderLinks() {{
     `<a href="${{esc(l.href)}}">${{esc(l.title)}}</a>`).join("");
 }}
 
+window._cutRecipe = null;
+
+function _crCutsList() {{
+  return (document.getElementById("cr-cuts").value || "")
+    .trim().split(/\\s+/).filter(Boolean);
+}}
+
+function _crBody(extra = {{}}) {{
+  return {{
+    phrase: document.getElementById("cr-phrase").value || "",
+    cuts: _crCutsList(),
+    promote_god: document.getElementById("cr-promote-god").checked,
+    variant: document.getElementById("cr-variant").value,
+    lower_mode: document.getElementById("cr-lower").value,
+    wiki_crib: document.getElementById("cr-wiki").checked,
+    wiki_mode: "symbol",
+    ...extra,
+  }};
+}}
+
+function renderCutRecipeTools() {{
+  const grid = document.getElementById("cr-tool-grid");
+  if (!grid) return;
+  const tools = (DATA.alphabet_tools && DATA.alphabet_tools.length)
+    ? DATA.alphabet_tools
+    : (DATA.tools || []).filter(t => t.alphabet_dependent);
+  grid.innerHTML = "";
+  tools.forEach(t => {{
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <div class="grp">${{esc(t.group || "Attack")}}</div>
+      <h3>${{esc(t.title)}}</h3>
+      <div class="cmd">${{esc(t.command || t.id)}}</div>
+      <button type="button" class="btn primary cr-run-tool" data-id="${{esc(t.id)}}">Run with recipe deck</button>`;
+    grid.appendChild(el);
+  }});
+  grid.querySelectorAll(".cr-run-tool").forEach(btn => {{
+    btn.addEventListener("click", () => {{
+      if (!window._cutRecipe || !window._cutRecipe.selected_deck) {{
+        alert("Evaluate a cut recipe first (Cut Recipe tab).");
+        return;
+      }}
+      runTool(btn.dataset.id);
+    }});
+  }});
+}}
+
+function renderCutRecipeResult(rec) {{
+  if (!rec || !rec.ok) {{
+    document.getElementById("cr-output").textContent = rec?.error || "(evaluation failed)";
+    document.getElementById("cr-steps").textContent = "";
+    document.getElementById("cr-phrase-viability").textContent = "";
+    window._cutRecipe = null;
+    return;
+  }}
+  window._cutRecipe = rec;
+  const v = rec.selected_variant || "52";
+  const deck = rec.selected_deck || "";
+  document.getElementById("cr-header").textContent =
+    `Recipe OK · selected ${{v}}-deck · upper26=${{rec.upper26}}`;
+  document.getElementById("cr-output").textContent =
+    `upper26: ${{rec.upper26}}\\n` +
+    `deck[0:52]: ${{deck.slice(0, 52)}}\\n` +
+    `wiki: deck[5]=${{JSON.stringify(deck[5])}} deck[66]=${{JSON.stringify(deck[66])}}`;
+  const steps = (rec.steps || []).map(s => `${{s.label}}: ${{s.alphabet_26}}`).join("\\n");
+  document.getElementById("cr-steps").textContent = steps;
+  const ph = rec.phrase;
+  if (ph && ph.phrase) {{
+    const v26 = ph.v26 || {{}};
+    const v52 = ph.v52 || {{}};
+    document.getElementById("cr-phrase-viability").innerHTML =
+      `<strong>${{esc(ph.phrase)}}</strong> · recommended <strong>${{esc(ph.recommended_variant)}}</strong> · ` +
+      `26: ${{v26.viable ? "✓ maps" : "✗ missing " + esc((v26.missing||[]).join(""))}} · ` +
+      `52: ${{v52.viable ? "✓ maps" : "✗ missing " + esc((v52.missing||[]).join(""))}}`;
+  }} else {{
+    document.getElementById("cr-phrase-viability").textContent = "";
+  }}
+}}
+
+async function evaluateCutRecipe(extra = {{}}) {{
+  try {{
+    const body = _crBody(extra);
+    const rec = await api("/api/cut-recipe/evaluate", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify(body),
+    }});
+    renderCutRecipeResult(rec);
+  }} catch (e) {{
+    document.getElementById("cr-output").textContent = "Evaluate failed: " + e.message;
+  }}
+}}
+
+function initCutRecipe() {{
+  document.getElementById("cr-evaluate").addEventListener("click", () => evaluateCutRecipe());
+  document.querySelectorAll("[data-cr-preset]").forEach(btn => {{
+    btn.addEventListener("click", () => {{
+      evaluateCutRecipe({{preset: btn.dataset.crPreset}});
+    }});
+  }});
+  renderCutRecipeTools();
+  if (DATA.cut_recipe && DATA.cut_recipe.default_cuts) {{
+    document.getElementById("cr-cuts").value = DATA.cut_recipe.default_cuts.join(" ");
+  }}
+}}
+
 async function runTool(id) {{
   try {{
     const payload = await _runPayload({{tool_id: id}});
+    const tool = (DATA.tools || []).find(t => t.id === id);
+    if (tool && tool.alphabet_dependent && window._cutRecipe && window._cutRecipe.selected_deck) {{
+      payload.alphabet = window._cutRecipe.selected_deck;
+      payload.alphabet_variant = window._cutRecipe.selected_variant || "52";
+    }}
     const j = await api("/api/run", {{
       method: "POST",
       headers: {{"Content-Type": "application/json"}},
@@ -1204,6 +1361,7 @@ renderPhaseSummary();
 renderWorkflowMap();
 initDatasets();
 renderTools();
+initCutRecipe();
 initCipherForm();
 renderWorkflows(DATA.workflows);
 renderJobs(DATA.jobs);

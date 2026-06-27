@@ -211,6 +211,150 @@ def describe_cuts(specs: Sequence[str], base: str = STANDARD_26) -> List[str]:
     return steps
 
 
+def describe_cuts_detailed(
+    specs: Sequence[str],
+    base: str = STANDARD_26,
+    *,
+    promote_god: bool = False,
+    promote: Optional[str] = None,
+) -> List[dict]:
+    """Structured cut steps for API / HTML."""
+    rows: List[dict] = []
+    cur = base.upper()
+    rows.append({"step": "start", "label": "start", "alphabet_26": cur})
+    for spec in specs:
+        cur = cut_range_to_end(cur, spec)
+        rows.append({"step": spec, "label": f"after {spec}", "alphabet_26": cur})
+    if promote_god:
+        nxt = promote_god_prefix(cur)
+        if nxt != cur:
+            cur = nxt
+            rows.append({"step": "promote_god", "label": "promote GOD", "alphabet_26": cur})
+    elif promote:
+        nxt = promote_prefix(cur, promote)
+        if nxt != cur:
+            cur = nxt
+            rows.append({"step": f"promote_{promote}", "label": f"promote {promote.upper()}",
+                         "alphabet_26": cur})
+    return rows
+
+
+def missing_chars(phrase: str, deck: str) -> List[str]:
+    """Characters in ``phrase`` absent from ``deck``."""
+    have = set(deck)
+    return [ch for ch in phrase if ch not in have]
+
+
+def analyze_phrase(
+    phrase: str,
+    upper26: str,
+    *,
+    lower_mode: str = "mirror",
+    wiki_crib: bool = True,
+    wiki_mode: str = "symbol",
+) -> dict:
+    """Check whether ``phrase`` maps on 26- / 52- / 83-deck embeddings."""
+    u = upper26.upper()
+    deck26 = build_deck_83(u, variant="26", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
+    g52 = expand_to_52(u, lower_mode=lower_mode)
+    deck52 = build_deck_83(g52, variant="52", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
+
+    def _pack(label: str, deck: str, variant: str) -> dict:
+        miss = missing_chars(phrase, deck)
+        vals = letter_values(phrase, deck, 83)
+        return {
+            "variant": variant,
+            "viable": vals is not None,
+            "missing": miss,
+            "values": vals,
+            "deck_len": len(deck),
+        }
+
+    v26 = _pack("26", deck26, "26")
+    v52 = _pack("52", deck52, "52")
+
+    recommended = None
+    if v52["viable"]:
+        recommended = "52"
+    elif v26["viable"]:
+        recommended = "26"
+    elif phrase and phrase == phrase.upper() and all(c.isalpha() for c in phrase):
+        recommended = "26"
+    else:
+        recommended = "52" if any(c.islower() for c in phrase if c.isalpha()) else "26"
+
+    return {
+        "phrase": phrase,
+        "recommended_variant": recommended,
+        "v26": v26,
+        "v52": v52,
+        "needs_lowercase": any(c.islower() for c in phrase if c.isalpha()),
+        "needs_uppercase_only": not any(c.islower() for c in phrase if c.isalpha()),
+    }
+
+
+def build_recipe(
+    specs: Sequence[str],
+    *,
+    base: str = STANDARD_26,
+    promote_god: bool = False,
+    promote: Optional[str] = None,
+    variant: str = "both",
+    lower_mode: str = "mirror",
+    wiki_crib: bool = True,
+    wiki_mode: str = "symbol",
+    phrase: str = "",
+) -> dict:
+    """Full cut-recipe payload for API / HTML."""
+    specs = [s.strip() for s in specs if s.strip()]
+    rows = describe_cuts_detailed(
+        specs, base, promote_god=promote_god, promote=promote)
+    upper26 = rows[-1]["alphabet_26"] if rows else base.upper()
+    if len(upper26) != 26 or len(set(upper26)) != 26:
+        return {
+            "ok": False,
+            "error": f"cut result is not a 26-letter permutation ({len(set(upper26))} distinct)",
+            "steps": rows,
+            "specs": list(specs),
+        }
+
+    out: dict = {
+        "ok": True,
+        "specs": list(specs),
+        "steps": rows,
+        "upper26": upper26,
+        "promote_god": promote_god,
+        "promote": promote,
+        "lower_mode": lower_mode,
+        "wiki_crib": wiki_crib,
+        "wiki_mode": wiki_mode,
+        "variants": {},
+    }
+    if variant in ("26", "both"):
+        d26 = build_deck_83(upper26, variant="26", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
+        out["variants"]["26"] = {
+            "deck": d26,
+            "deck_preview": d26[:52],
+            "letter_block": upper26,
+        }
+    if variant in ("52", "both"):
+        g52 = expand_to_52(upper26, lower_mode=lower_mode)
+        d52 = build_deck_83(g52, variant="52", wiki_crib=wiki_crib, wiki_mode=wiki_mode)
+        out["variants"]["52"] = {
+            "deck": d52,
+            "deck_preview": d52[:52],
+            "letter_block": g52,
+        }
+    if phrase.strip():
+        out["phrase"] = analyze_phrase(
+            phrase.strip(), upper26,
+            lower_mode=lower_mode,
+            wiki_crib=wiki_crib,
+            wiki_mode=wiki_mode,
+        )
+    return out
+
+
 def selftest() -> List[Tuple[str, bool]]:
     out: List[Tuple[str, bool]] = []
 
@@ -245,6 +389,11 @@ def selftest() -> List[Tuple[str, bool]]:
 
     steps = describe_cuts(["A-F", "B-B"])
     out.append(("describe_cuts returns steps", len(steps) >= 2))
+
+    rec = build_recipe(list(GOD_CUT_SPECS), promote_god=True, phrase="Eyes")
+    out.append(("build_recipe GOD + Eyes phrase", rec.get("ok") is True))
+    out.append(("Eyes viable on 52 not 26",
+                rec["phrase"]["v52"]["viable"] and not rec["phrase"]["v26"]["viable"]))
 
     return out
 

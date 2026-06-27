@@ -47,13 +47,14 @@ from dashboard.eye_puzzle import (  # noqa: E402
 )
 from dashboard.orchestrator import get_orchestrator  # noqa: E402
 from dashboard.registry import load_tools  # noqa: E402
-from dashboard.workflow_map import workflow_map_payload  # noqa: E402
+from dashboard.workflow_map import annotate_tools, workflow_map_payload  # noqa: E402
 from dashboard.workflow_report import (  # noqa: E402
     build_report_payload,
     render_report_html,
     write_workflow_report,
 )
 from dashboard.workflows import PRESETS  # noqa: E402
+from dashboard.cut_recipe import evaluate as cut_recipe_evaluate, snapshot_presets, alphabet_tools_payload  # noqa: E402
 
 
 def _json_response(handler: BaseHTTPRequestHandler, code: int, obj) -> None:
@@ -110,6 +111,13 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
 
         if route == "/api/cipher/catalog":
             return _json_response(self, 200, {"modes": cipher_catalog()})
+
+        if route == "/api/cut-recipe/presets":
+            tools = annotate_tools(load_tools())
+            return _json_response(self, 200, {
+                **snapshot_presets(),
+                "alphabet_tools": alphabet_tools_payload(tools),
+            })
 
         if route == "/api/datasets":
             active = get_active()
@@ -241,12 +249,23 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             if not tool_id:
                 return _json_response(self, 400, {"error": "tool_id required"})
             try:
-                rec = orch.start_tool(tool_id, dataset_id=body.get("dataset_id"))
+                rec = orch.start_tool(
+                    tool_id,
+                    dataset_id=body.get("dataset_id"),
+                    alphabet=body.get("alphabet"),
+                    alphabet_variant=body.get("alphabet_variant"),
+                )
                 return _json_response(self, 200, rec.to_dict())
             except RuntimeError as e:
                 return _json_response(self, 409, {"error": str(e)})
             except KeyError as e:
                 return _json_response(self, 404, {"error": str(e)})
+
+        if path == "/api/cut-recipe/evaluate":
+            try:
+                return _json_response(self, 200, cut_recipe_evaluate(body))
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
 
         if path == "/api/cancel":
             rec = orch.cancel_active()

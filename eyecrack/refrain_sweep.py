@@ -32,6 +32,7 @@ import refrain as rf          # noqa: E402
 import ngram_solve as ng      # noqa: E402
 import refrain_sweep as rs    # noqa: E402
 import template as tp         # noqa: E402
+import alphabet_env as alph_env  # noqa: E402
 
 _PATH_ANCHORS = (HERE, ROOT, Path.cwd())
 
@@ -104,7 +105,7 @@ def main() -> int:
     ap.add_argument("--wordlist")
     ap.add_argument("--also-enum", action="store_true")
     ap.add_argument("--show-template", action="store_true")
-    ap.add_argument("--alphabet", default=rf.DEFAULT_ALPHABET)
+    ap.add_argument("--alphabet", default=None)
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--restarts", type=int, default=1)
     ap.add_argument("--iters", type=int, default=400)
@@ -118,6 +119,7 @@ def main() -> int:
     ap.add_argument("--full-score", action="store_true",
                     help="use thorough scoring (restarts=4, iters=3000) on --phrase inputs")
     args = ap.parse_args()
+    alphabet = args.alphabet or alph_env.resolve_alphabet(rf.DEFAULT_ALPHABET)
 
     c = corpus_mod.load()
     N = c.N
@@ -144,7 +146,7 @@ def main() -> int:
     print("=" * 70)
     print(f"Region L={rf.DEFAULT_LEN}; stages: length -> pattern -> fits -> pin -> order_solve")
 
-    model = ng.TrigramModel(args.alphabet, ng._ENGLISH)
+    model = ng.TrigramModel(alphabet, ng._ENGLISH)
     restarts = 4 if args.full_score else args.restarts
     iters = 3000 if args.full_score else args.iters
     n_null = 30 if args.full_score else args.null
@@ -152,7 +154,7 @@ def main() -> int:
     try:
         all_results = rs.sweep_candidates(
             M, phrases, N,
-            alphabet=args.alphabet, model=model,
+            alphabet=alphabet, model=model,
             restarts=restarts, iters=iters, n_null=n_null,
             also_enum=args.also_enum,
             expand_wordlist=not args.no_expand_wordlist,

@@ -27,6 +27,11 @@ class Tool:
     def command(self) -> str:
         return f"python3 {self.cwd}/{' '.join(self.argv)}"
 
+    @property
+    def alphabet_dependent(self) -> bool:
+        from dashboard.cut_recipe import is_alphabet_dependent_tool
+        return is_alphabet_dependent_tool(self.argv)
+
 
 _GROUP_PREFIX = {
     "Map the structure": "map",
@@ -78,6 +83,11 @@ def _tags(group: str, title: str, argv: Sequence[str]) -> Tuple[str, ...]:
         t.add("template")
     if any("html" in a for a in argv):
         t.add("report")
+    if any(m in " ".join(argv) for m in (
+        "order_solve.py", "refrain_attack.py", "ngram_solve.py",
+        "refrain_sweep.py", "crib_fit.py", "deck_sweep.py",
+    )):
+        t.add("alphabet")
     return tuple(sorted(t))
 
 
