@@ -33,6 +33,7 @@ sys.path.insert(0, str(CORE))
 
 import corpus as corpus_mod   # noqa: E402
 import refrain as rf          # noqa: E402
+import alphabet_env as alph_env  # noqa: E402
 
 
 def constraints(messages, instances, L):
@@ -52,12 +53,13 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("phrases", nargs="*")
     ap.add_argument("--wordlist")
-    ap.add_argument("--alphabet", default=rf.DEFAULT_ALPHABET)
+    ap.add_argument("--alphabet", default=None)
     ap.add_argument("--len", type=int, default=rf.DEFAULT_LEN)
     ap.add_argument("--null", type=int, default=400)
     ap.add_argument("--constraints", action="store_true")
     ap.add_argument("--show", type=int, default=12, help="top survivors to render")
     args = ap.parse_args()
+    alphabet = args.alphabet or alph_env.resolve_alphabet(rf.DEFAULT_ALPHABET)
 
     c = corpus_mod.load()
     N = c.N
@@ -75,7 +77,7 @@ def main() -> int:
     print("    " + ",  ".join(f"p[{j}]=p[{i}]-{j-i}" for i, j in cons))
     print("(A shorter guess is slid to every offset in the region; the offset's")
     print(" own collisions become its constraints.)")
-    print(f"Plaintext-alphabet ordering (hypothesis): '{args.alphabet[:40]}...'")
+    print(f"Plaintext-alphabet ordering (hypothesis): '{alphabet[:40]}...'")
     if args.constraints:
         return 0
 
@@ -99,7 +101,7 @@ def main() -> int:
             continue
         vo = rf.viable_offsets(M, s, region, REGION, N)
         # ordering-dependent IoC at each viable offset under the chosen ordering
-        pv = rf.phrase_to_values(s, args.alphabet, N)
+        pv = rf.phrase_to_values(s, alphabet, N)
         best = None
         if pv is not None:
             for off in vo:
@@ -116,7 +118,7 @@ def main() -> int:
     strong = [(s, off, r) for s, off, r in rows if r.ioc_z >= 6]
     for s, off, r in strong[:args.show]:
         print(f"\n--- decryption under '{s}' @offset {off} (IoC z={r.ioc_z:.2f}) ---")
-        for lab, line in zip(c.labels, rf.render(M, r.pinned, args.alphabet, N)):
+        for lab, line in zip(c.labels, rf.render(M, r.pinned, alphabet, N)):
             print(f"  {lab}: {line}")
     print("\nREAD: 'viable-offsets' = where the candidate's letter pattern fits the")
     print("ciphertext (ordering-INDEPENDENT — your candidates are NOT ruled out).")
