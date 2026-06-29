@@ -435,6 +435,14 @@ def render_html(data: dict) -> str:
 <h3>Tier-1 runners</h3>
 <button type="button" class="btn" id="ord-base-btn">Base search (auto)</button>
 <button type="button" class="btn primary" id="ord-pipeline-btn">Refrain pipeline</button>
+<h3>Tier-2 runners (Phase 2 crib/ordering)</h3>
+<label for="ord-tier2-phrase">Crib phrase</label>
+<input type="text" id="ord-tier2-phrase" value="trueknowledgeofthegods">
+<button type="button" class="btn" id="ord-pos0-btn">Pos-0 base analysis</button>
+<button type="button" class="btn" id="ord-triplet-btn">Triplet base search</button>
+<button type="button" class="btn" id="ord-orderbench-btn">Order bench</button>
+<button type="button" class="btn" id="ord-compose-btn">Compose → order</button>
+<button type="button" class="btn" id="ord-exhaust-btn">Ordering exhaust</button>
 </div>
 <div>
 <pre class="terminal" id="ord-out" style="min-height:280px">(ordering / rosetta / pipeline output)</pre>
@@ -596,6 +604,72 @@ function initOrdering() {{
         t += `${{i+1}}. z=${{h.z?.toFixed?.(1)}} wcov=${{(h.word_coverage*100).toFixed(0)}}% ${{h.phrase}} @${{h.offset}} [${{h.source}}]\\n`;
       }});
       out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  const tier2Phrase = () => document.getElementById("ord-tier2-phrase").value.trim();
+  document.getElementById("ord-pos0-btn").addEventListener("click", async () => {{
+    try {{
+      const j = await api("/api/tier2/pos0-base", {{method: "POST", headers: {{"Content-Type": "application/json"}}, body: "{{}}"}});
+      let t = `model=${{j.model}} score=${{j.model_score?.toFixed?.(3)}}\\n`;
+      (j.rows||[]).forEach(r => {{ t += `${{r.label}} pos0=${{r.pos0_ct}} base=${{r.implied_base}}\\n`; }});
+      (j.triplet_notes||[]).forEach(n => {{ t += "• "+n+"\\n"; }});
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-triplet-btn").addEventListener("click", async () => {{
+    try {{
+      const j = await api("/api/tier2/triplet-base-search", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{mode: "auto", top: 5}}),
+      }});
+      let t = "";
+      (j.triplets||[]).forEach(tr => {{
+        t += `T${{tr.triplet}} score=${{tr.best_score?.toFixed?.(2)}} bases=${{JSON.stringify(tr.best_bases)}}\\n`;
+      }});
+      t += `merged: ${{JSON.stringify(j.merged_bases||{{}})}}\\n`;
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-orderbench-btn").addEventListener("click", async () => {{
+    try {{
+      out.textContent = "Running order bench…";
+      const j = await api("/api/tier2/order-bench", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{phrases: [tier2Phrase()], top: 10}}),
+      }});
+      let t = "";
+      (j.hits||[]).forEach((h,i) => {{
+        t += `${{i+1}}. z=${{h.z?.toFixed?.(1)}} wcov=${{(h.word_coverage*100).toFixed(0)}}% ${{h.phrase}} @${{h.offset}}\\n`;
+      }});
+      out.textContent = t || "(no consistent hits)";
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-compose-btn").addEventListener("click", async () => {{
+    try {{
+      out.textContent = "Running compose → order…";
+      const j = await api("/api/tier2/compose-order", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{seeds: [tier2Phrase()], top: 10}}),
+      }});
+      let t = `dof=${{j.meta?.template_dof}} hits=${{(j.hits||[]).length}}\\n`;
+      (j.hits||[]).forEach((h,i) => {{
+        t += `${{i+1}}. z=${{h.z?.toFixed?.(1)}} cmp=${{h.compose_score?.toFixed?.(1)}} ${{h.phrase}}\\n`;
+      }});
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-exhaust-btn").addEventListener("click", async () => {{
+    try {{
+      out.textContent = "Running ordering exhaust…";
+      const j = await api("/api/tier2/exhaust-bench", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{phrase: tier2Phrase()}}),
+      }});
+      out.textContent = `consistent=${{j.consistent}} method=${{j.method}} free=${{j.free_slots}} z=${{j.z?.toFixed?.(1)}} wcov=${{(j.word_coverage*100).toFixed(0)}}%`;
     }} catch (e) {{ out.textContent = e.message; }}
   }});
 }}

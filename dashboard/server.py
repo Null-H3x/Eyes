@@ -55,6 +55,7 @@ from dashboard.workflow_report import (  # noqa: E402
 )
 from dashboard.workflows import PRESETS  # noqa: E402
 from dashboard import tier1_api  # noqa: E402
+from dashboard import tier2_api  # noqa: E402
 
 
 def _json_response(handler: BaseHTTPRequestHandler, code: int, obj) -> None:
@@ -385,6 +386,61 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 out = tier1_api.run_refrain_pipeline_api(
                     anchors=body.get("anchors") or [],
                     top=int(body.get("top", 15)),
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier2/pos0-base":
+            try:
+                out = tier2_api.run_pos0_analysis()
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier2/triplet-base-search":
+            try:
+                out = tier2_api.run_triplet_base_search(
+                    mode=body.get("mode", "auto"),
+                    phrase=body.get("crib"),
+                    top=int(body.get("top", 5)),
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier2/order-bench":
+            try:
+                phrases = body.get("phrases") or body.get("phrase")
+                if isinstance(phrases, str):
+                    phrases = [phrases]
+                out = tier2_api.run_order_bench(
+                    phrases=phrases,
+                    top=int(body.get("top", 15)),
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier2/compose-order":
+            try:
+                out = tier2_api.run_compose_order_api(
+                    anchors=body.get("anchors") or [],
+                    seed_phrases=body.get("seeds") or [],
+                    top=int(body.get("top", 15)),
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier2/exhaust-bench":
+            try:
+                phrase = body.get("phrase") or body.get("crib")
+                if not phrase:
+                    return _json_response(self, 400, {"error": "phrase required"})
+                out = tier2_api.run_exhaust_bench_api(
+                    phrase=str(phrase),
+                    offset=int(body.get("offset", 0)),
                 )
                 return _json_response(self, 200, out)
             except ValueError as e:

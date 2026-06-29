@@ -37,11 +37,17 @@ import trifid
 import provenance
 import refrain
 import tier1_audit
+import tier2_audit
 import alphabet_brute
 import rosetta
 import template_phrase
 import base_search
 import refrain_pipeline
+import pos0_base
+import triplet_base_search
+import order_bench
+import compose_order
+import exhaust_bench
 import ngram_solve
 import order_solve
 import ordering_exhaust
@@ -101,6 +107,12 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("template_phrase", template_phrase.selftest),
     ("base_search", base_search.selftest),
     ("refrain_pipeline", refrain_pipeline.selftest),
+    ("pos0_base", pos0_base.selftest),
+    ("triplet_base_search", triplet_base_search.selftest),
+    ("order_bench", order_bench.selftest),
+    ("compose_order", compose_order.selftest),
+    ("exhaust_bench", exhaust_bench.selftest),
+    ("tier2_audit", lambda: tier2_audit.run_all(include_module_selftests=False)),
     ("alphabet_brute", alphabet_brute.selftest),
     ("ngram_solve", ngram_solve.selftest),
     ("order_solve", order_solve.selftest),
