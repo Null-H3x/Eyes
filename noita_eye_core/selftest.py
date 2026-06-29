@@ -36,7 +36,12 @@ import pureprog
 import trifid
 import provenance
 import refrain
+import tier1_audit
 import alphabet_brute
+import rosetta
+import template_phrase
+import base_search
+import refrain_pipeline
 import ngram_solve
 import order_solve
 import ordering_exhaust
@@ -91,6 +96,11 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("trifid", trifid.selftest),
     ("provenance", provenance.selftest),
     ("refrain", refrain.selftest),
+    ("tier1_audit", lambda: tier1_audit.run_all(include_module_selftests=False)),
+    ("rosetta", rosetta.selftest),
+    ("template_phrase", template_phrase.selftest),
+    ("base_search", base_search.selftest),
+    ("refrain_pipeline", refrain_pipeline.selftest),
     ("alphabet_brute", alphabet_brute.selftest),
     ("ngram_solve", ngram_solve.selftest),
     ("order_solve", order_solve.selftest),

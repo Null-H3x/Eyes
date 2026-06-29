@@ -265,6 +265,7 @@ def render_html(data: dict) -> str:
 <button type="button" data-tab="ciphers">Known Ciphers</button>
 <button type="button" data-tab="workflows">Workflows</button>
 <button type="button" data-tab="jobs">Jobs &amp; Output</button>
+<button type="button" data-tab="ordering">Ordering</button>
 <button type="button" data-tab="links">Reports &amp; Links</button>
 </nav>
 
@@ -415,6 +416,32 @@ def render_html(data: dict) -> str:
 </div>
 </section>
 
+<section id="panel-ordering" class="panel">
+<p class="meta">Live ordering explorer — edit the value→character mapping, score decrypts, run Tier-1 solve tools against the <strong>active dataset</strong>.</p>
+<div class="cipher-grid">
+<div class="card cipher-form">
+<h3>Ordering preview</h3>
+<p class="meta">One character per plaintext value (0..N-1). Default fills from noita-alphabet2.</p>
+<button type="button" class="btn" id="ord-load-default">Load default alphabet</button>
+<label for="ord-text">Ordering string (length ≥ deck N)</label>
+<textarea id="ord-text" rows="4" placeholder="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.?'!@#…"></textarea>
+<button type="button" class="btn primary" id="ord-preview-btn">Score &amp; preview decrypt</button>
+<h3>Rosetta pins</h3>
+<label for="ord-pins">Pins (one per line: VALUE:CHAR)</label>
+<textarea id="ord-pins" rows="3" placeholder="42:a&#10;17:e"></textarea>
+<label for="ord-crib">Optional crib phrase</label>
+<input type="text" id="ord-crib" placeholder="trueknowledgeofthegods">
+<button type="button" class="btn" id="ord-rosetta-btn">Propagate pins</button>
+<h3>Tier-1 runners</h3>
+<button type="button" class="btn" id="ord-base-btn">Base search (auto)</button>
+<button type="button" class="btn primary" id="ord-pipeline-btn">Refrain pipeline</button>
+</div>
+<div>
+<pre class="terminal" id="ord-out" style="min-height:280px">(ordering / rosetta / pipeline output)</pre>
+</div>
+</div>
+</section>
+
 <section id="panel-links" class="panel">
 <div class="card links" id="link-list"></div>
 <p class="meta">Rebuild evidence ledger: <code>python3 report/build.py --open</code></p>
@@ -502,6 +529,75 @@ function serverLive() {{
 
 function setMeta(text) {{
   document.getElementById("meta-status").textContent = text;
+}}
+
+function initOrdering() {{
+  const out = document.getElementById("ord-out");
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  document.getElementById("ord-load-default").addEventListener("click", async () => {{
+    try {{
+      const j = await api("/api/tier1/alphabet");
+      document.getElementById("ord-text").value = j.alphabet;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-preview-btn").addEventListener("click", async () => {{
+    try {{
+      const ordering = document.getElementById("ord-text").value.trim();
+      const j = await api("/api/tier1/ordering/preview", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{ordering}}),
+      }});
+      let t = `trigram=${{j.trigram?.toFixed?.(4)}} z=${{j.z?.toFixed?.(1)}} wcov=${{(j.word_coverage*100).toFixed(1)}}% hits=${{j.dict_hits}}\\n\\n`;
+      for (const [lab, txt] of Object.entries(j.plaintext || {{}})) {{
+        t += `${{lab}}: ${{txt}}\\n`;
+      }}
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-rosetta-btn").addEventListener("click", async () => {{
+    try {{
+      const pins = document.getElementById("ord-pins").value.split("\\n").filter(Boolean);
+      const crib = document.getElementById("ord-crib").value.trim() || null;
+      const j = await api("/api/tier1/rosetta", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{pins, crib}}),
+      }});
+      let t = `bijective=${{j.bijective_ok}} coverage=${{(j.coverage*100).toFixed(1)}}% wcov=${{(j.word_coverage*100).toFixed(1)}}%\\n`;
+      (j.notes||[]).forEach(n => {{ t += "• "+n+"\\n"; }});
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-base-btn").addEventListener("click", async () => {{
+    try {{
+      const j = await api("/api/tier1/base-search", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{mode: "auto", top: 10}}),
+      }});
+      let t = `mode=${{j.mode}}\\n`;
+      (j.results||[]).forEach((r,i) => {{
+        t += `${{i+1}}. score=${{r.score?.toFixed?.(2)}} refrain=${{r.refrain_consistent}} nd=${{(r.near_dup_agreement*100).toFixed(1)}}%\\n`;
+      }});
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
+  document.getElementById("ord-pipeline-btn").addEventListener("click", async () => {{
+    try {{
+      out.textContent = "Running refrain pipeline (may take a minute)…";
+      const j = await api("/api/tier1/refrain-pipeline", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{top: 15}}),
+      }});
+      let t = `template dof=${{j.meta?.template_dof}} hits=${{(j.hits||[]).length}}\\n`;
+      (j.hits||[]).forEach((h,i) => {{
+        t += `${{i+1}}. z=${{h.z?.toFixed?.(1)}} wcov=${{(h.word_coverage*100).toFixed(0)}}% ${{h.phrase}} @${{h.offset}} [${{h.source}}]\\n`;
+      }});
+      out.textContent = t;
+    }} catch (e) {{ out.textContent = e.message; }}
+  }});
 }}
 
 function initTabs() {{
@@ -1200,6 +1296,7 @@ document.getElementById("btn-cancel").addEventListener("click", async () => {{
 document.getElementById("btn-refresh-jobs").addEventListener("click", refreshAll);
 
 initTabs();
+initOrdering();
 renderPhaseSummary();
 renderWorkflowMap();
 initDatasets();

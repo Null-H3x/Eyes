@@ -54,6 +54,7 @@ from dashboard.workflow_report import (  # noqa: E402
     write_workflow_report,
 )
 from dashboard.workflows import PRESETS  # noqa: E402
+from dashboard import tier1_api  # noqa: E402
 
 
 def _json_response(handler: BaseHTTPRequestHandler, code: int, obj) -> None:
@@ -141,6 +142,12 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
 
         if route == "/api/workflows":
             return _json_response(self, 200, orch.list_workflows())
+
+        if route == "/api/tier1/alphabet":
+            return _json_response(self, 200, {
+                "alphabet": tier1_api.default_alphabet(),
+                "length": len(tier1_api.default_alphabet()),
+            })
 
         if route == "/api/jobs":
             qs = parse_qs(path.query)
@@ -325,6 +332,63 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                         return _json_response(self, 200, payload)
                     except KeyError as e:
                         return _json_response(self, 404, {"error": str(e)})
+
+        if path == "/api/tier1/ordering/preview":
+            try:
+                ordering = body.get("ordering")
+                if not ordering or not isinstance(ordering, str):
+                    return _json_response(self, 400, {"error": "ordering string required"})
+                ds = get_active()
+                out = tier1_api.ordering_preview(
+                    list(ordering),
+                    messages=[list(x) for x in ds.ciphertexts],
+                    N=ds.deck_size,
+                    labels=ds.labels,
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier1/rosetta":
+            try:
+                pins_raw = body.get("pins", [])
+                pins = {}
+                for p in pins_raw:
+                    if isinstance(p, dict):
+                        pins[int(p["value"])] = str(p["char"])[:1]
+                    else:
+                        v, ch = str(p).split(":", 1)
+                        pins[int(v.strip())] = ch.strip()[:1]
+                out = tier1_api.rosetta_propagate(
+                    pins,
+                    crib=body.get("crib"),
+                    offset=int(body.get("offset", 0)),
+                )
+                return _json_response(self, 200, out)
+            except (ValueError, KeyError) as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier1/base-search":
+            try:
+                out = tier1_api.run_base_search(
+                    mode=body.get("mode", "auto"),
+                    phrase=body.get("crib"),
+                    offset=int(body.get("offset", 0)),
+                    top=int(body.get("top", 10)),
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
+
+        if path == "/api/tier1/refrain-pipeline":
+            try:
+                out = tier1_api.run_refrain_pipeline_api(
+                    anchors=body.get("anchors") or [],
+                    top=int(body.get("top", 15)),
+                )
+                return _json_response(self, 200, out)
+            except ValueError as e:
+                return _json_response(self, 400, {"error": str(e)})
 
         if path == "/api/rebuild":
             build_workbench()
