@@ -151,6 +151,9 @@ WORKFLOWS = [
     ("EyeCrack — per-triplet seed scan (1M, triplet 0)", "Attack",
      "eyecrack", ["eyecrack.py", "structscan", "--count", "1000000",
                   "--triplet", "0"]),
+    ("EyeCrack — alphabet brute-force with scoring (rotate/swap/random/exhaust)", "Attack",
+     "eyecrack", ["alphabet_brute.py", "--mode", "random", "--samples", "5000",
+                  "--top", "10"]),
     ("Run the full math gate (validate everything)", "Validate",
      "noita_eye_core", ["selftest.py"]),
 ]

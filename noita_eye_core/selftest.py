@@ -36,6 +36,7 @@ import pureprog
 import trifid
 import provenance
 import refrain
+import alphabet_brute
 import ngram_solve
 import order_solve
 import ordering_exhaust
@@ -90,6 +91,7 @@ MODULES: List[Tuple[str, Callable[[], List[Tuple[str, bool]]]]] = [
     ("trifid", trifid.selftest),
     ("provenance", provenance.selftest),
     ("refrain", refrain.selftest),
+    ("alphabet_brute", alphabet_brute.selftest),
     ("ngram_solve", ngram_solve.selftest),
     ("order_solve", order_solve.selftest),
     ("ordering_exhaust", ordering_exhaust.selftest),
