@@ -29,6 +29,7 @@ sys.path.insert(0, str(CORE))
 import corpus as corpus_mod   # noqa: E402
 import refrain as rf          # noqa: E402
 import ngram_solve as ng      # noqa: E402
+import alphabet_env as alph_env  # noqa: E402
 
 
 def main() -> int:
@@ -36,26 +37,27 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("phrases", nargs="*")
     ap.add_argument("--wordlist")
-    ap.add_argument("--alphabet", default=rf.DEFAULT_ALPHABET)
+    ap.add_argument("--alphabet", default=None)
     ap.add_argument("--off", type=int, default=None, help="fix the offset (else sweep)")
     ap.add_argument("--restarts", type=int, default=6)
     ap.add_argument("--iters", type=int, default=1500)
     ap.add_argument("--null", type=int, default=60)
     ap.add_argument("--show", type=int, default=3)
     args = ap.parse_args()
+    alphabet = args.alphabet or alph_env.resolve_alphabet(rf.DEFAULT_ALPHABET)
 
     c = corpus_mod.load()
     N = c.N
     M = [list(x) for x in c.ciphertexts]
     region = rf.DEFAULT_INSTANCES
     REGION = rf.DEFAULT_LEN
-    model = ng.TrigramModel(args.alphabet, ng._ENGLISH)
+    model = ng.TrigramModel(alphabet, ng._ENGLISH)
 
     print("=" * 70)
     print("EYECRACK — crib-seeded English n-gram solver")
     print("=" * 70)
     print(f"Region: {[(c.labels[m], p) for m, p in region]} ({REGION} glyphs). "
-          f"Model: English char-trigram. Ordering: '{args.alphabet[:36]}...'")
+          f"Model: English char-trigram. Ordering: '{alphabet[:36]}...'")
 
     phrases = list(args.phrases)
     if args.wordlist:
@@ -73,7 +75,7 @@ def main() -> int:
         offs = [args.off] if args.off is not None else \
             rf.viable_offsets(M, s, region, REGION, N)
         for off in offs:
-            res = ng.solve(M, s, off, N, alphabet=args.alphabet, model=model,
+            res = ng.solve(M, s, off, N, alphabet=alphabet, model=model,
                            region=region, restarts=args.restarts, iters=args.iters,
                            n_null=args.null)
             if res.consistent:

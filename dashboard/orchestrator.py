@@ -227,6 +227,8 @@ class Orchestrator:
         workflow_id: Optional[str] = None,
         workflow_step: Optional[int] = None,
         wait: bool = False,
+        alphabet: Optional[str] = None,
+        alphabet_variant: Optional[str] = None,
     ) -> JobRecord:
         tools = tool_by_id()
         if tool_id not in tools:
@@ -257,6 +259,12 @@ class Orchestrator:
                 duration_hint=tool.duration,
                 dataset_id=dataset_id,
             )
+            if alphabet:
+                sys.path.insert(0, str(ROOT / "noita_eye_core"))
+                from alphabet_env import inject_alphabet_argv  # noqa: E402
+                if tool.alphabet_dependent:
+                    rec.argv = inject_alphabet_argv(rec.argv, alphabet)
+                    rec.command = f"python3 {tool.cwd}/{' '.join(rec.argv)}"
             self._write_job(rec)
             self._push_recent(job_id)
             self.state["active_job_id"] = job_id
@@ -264,7 +272,7 @@ class Orchestrator:
 
         thread = threading.Thread(
             target=self._run_job,
-            args=(rec, tool),
+            args=(rec, tool, alphabet, alphabet_variant),
             daemon=True,
             name=f"job-{job_id}",
         )
@@ -284,7 +292,13 @@ class Orchestrator:
         env["EYES_DATASET_ID"] = ds.id
         return env, str(path), ds.id, ds.name
 
-    def _run_job(self, rec: JobRecord, tool: Tool) -> None:
+    def _run_job(
+        self,
+        rec: JobRecord,
+        tool: Tool,
+        alphabet: Optional[str] = None,
+        alphabet_variant: Optional[str] = None,
+    ) -> None:
         jdir = self._job_dir(rec.id)
         stdout_path = jdir / "stdout.log"
         stderr_path = jdir / "stderr.log"
@@ -296,6 +310,10 @@ class Orchestrator:
 
         try:
             env, corpus_path, ds_id, ds_name = self._corpus_env(rec.dataset_id)
+            if alphabet:
+                env["EYES_ALPHABET"] = alphabet
+            if alphabet_variant:
+                env["EYES_ALPHABET_VARIANT"] = alphabet_variant
             rec.corpus_path = corpus_path
             rec.dataset_id = ds_id
             rec.dataset_name = ds_name
@@ -303,13 +321,17 @@ class Orchestrator:
 
             with stdout_path.open("w", encoding="utf-8", errors="replace") as out, \
                  stderr_path.open("w", encoding="utf-8", errors="replace") as err:
-                out.write(f"$ {py} {' '.join(tool.argv)}   (in {tool.cwd})\n")
+                out.write(f"$ {py} {' '.join(rec.argv)}   (in {tool.cwd})\n")
                 out.write(f"# dataset: {ds_name} ({ds_id})\n")
                 out.write(f"# corpus:  {corpus_path}\n")
-                out.write(f"# EYES_CORPUS_PATH={corpus_path}\n\n")
+                out.write(f"# EYES_CORPUS_PATH={corpus_path}\n")
+                if alphabet:
+                    out.write(f"# EYES_ALPHABET=<{len(alphabet)} chars>\n")
+                    out.write(f"# EYES_ALPHABET_VARIANT={alphabet_variant or '?'}\n")
+                out.write("\n")
                 out.flush()
                 proc = subprocess.Popen(
-                    [py, *tool.argv],
+                    [py, *rec.argv],
                     cwd=cwd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,

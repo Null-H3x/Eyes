@@ -48,6 +48,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
         import dashboard.workflow_map  # noqa: F401
         import dashboard.workflows  # noqa: F401
         import dashboard.workflow_report  # noqa: F401
+        import dashboard.cut_recipe  # noqa: F401
         out.append(("dashboard modules import cleanly", True))
     except Exception as exc:
         out.append(("dashboard modules import cleanly", False))
@@ -69,7 +70,9 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     from dashboard.import_parse import selftest as ip_selftest
     from dashboard.workflow_report import selftest as wr_selftest
     from dashboard.eye_puzzle import selftest as ep_selftest
+    from dashboard.cut_recipe import selftest as cr_selftest
     from dashboard.workflow_map import selftest as wm_selftest, workflow_map_payload
+    out.extend(cr_selftest())
 
     data = _collect_snapshot()
     html = render_html(data)
@@ -77,6 +80,7 @@ def selftest(*, quick: bool = False) -> List[Tuple[str, bool]]:
     out.append(("build HTML includes workflow map tab", "panel-map" in html))
     out.append(("build HTML includes cipher tab", "panel-ciphers" in html))
     out.append(("build HTML includes datasets tab", "panel-datasets" in html))
+    out.append(("build HTML includes cut recipe tab", "panel-cut-recipe" in html))
     out.append(("build HTML includes import preview", "ds-preview-btn" in html))
     out.append(("build HTML includes infer deck", "ds-infer-deck-btn" in html))
     out.append(("build HTML h3x dash header", "h3x-mark" in html))

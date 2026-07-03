@@ -107,6 +107,7 @@ def annotate_tools(tools: Sequence[Tool] | None = None) -> List[dict]:
         phase_idx = phase_order[phase_id] + 1
         in_phase = phase_counters[phase_id]
         d = {**t.__dict__, "command": t.command}
+        d["alphabet_dependent"] = t.alphabet_dependent
         d["num"] = seq_num
         d["num_label"] = f"{seq_num:02d}"
         d["phase"] = phase_id
