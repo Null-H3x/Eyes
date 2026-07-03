@@ -94,6 +94,20 @@ except ImportError as _e:
         "xgak_diff_right": 6, "xgak_diff_left": 7,
     }
     MODE_NAME = {v: k for k, v in MODE_CODE.items()}
+
+# Progressive cipher class ({pmp, pure, beaufort}) — one perm/seed, ~84x
+# cheaper than GAK. Registered here so --mode progressive_* is a first-class
+# scan target; the adapter presents the GpuBatchRunner surface so the batch
+# loop below is unchanged. Import is soft: absence just means the modes
+# aren't offered (e.g. old checkout), never a crash.
+try:
+    from eyestat_progressive import (ProgressiveBatchRunner,
+                                     PROGRESSIVE_MODE_CODE)
+    MODE_CODE = {**MODE_CODE, **PROGRESSIVE_MODE_CODE}
+    MODE_NAME = {v: k for k, v in MODE_CODE.items()}
+except ImportError:
+    ProgressiveBatchRunner = None
+    PROGRESSIVE_MODE_CODE = {}
     _GPU_IMPORT_ERROR = _e
 
 
@@ -545,13 +559,26 @@ def run_gpu_brute_force(args):
     # ---- Initialize GPU ----
     print(f"[gpu] Initializing GpuBatchRunner "
           f"(mode={args.mode}, batch_size={args.batch_size})...")
-    gpu = GpuBatchRunner(
-        mode_code=MODE_CODE[args.mode],
-        N=N,
-        ciphertexts=ciphertexts,
-        batch_size=args.batch_size,
-        prng_version=args.prng,
-    )
+    if args.mode in PROGRESSIVE_MODE_CODE:
+        if ProgressiveBatchRunner is None:
+            print("ERROR: progressive mode requested but "
+                  "eyestat_progressive import failed", file=sys.stderr)
+            return 2
+        gpu = ProgressiveBatchRunner(
+            mode_code=MODE_CODE[args.mode],
+            N=N,
+            ciphertexts=ciphertexts,
+            batch_size=args.batch_size,
+            prng_version=args.prng,
+        )
+    else:
+        gpu = GpuBatchRunner(
+            mode_code=MODE_CODE[args.mode],
+            N=N,
+            ciphertexts=ciphertexts,
+            batch_size=args.batch_size,
+            prng_version=args.prng,
+        )
     print(f"[gpu] Compiled kernels target = {gpu.arch_used}")
     print(f"[gpu] PRNG variant            = {args.prng}  "
           f"(A={gpu._prng_A}, Q={gpu._prng_Q}, R={gpu._prng_R})")
