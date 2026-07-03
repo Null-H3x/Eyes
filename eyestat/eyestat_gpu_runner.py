@@ -1114,6 +1114,36 @@ def run_gpu_brute_force(args):
             print(f"\n[html] Skipped due to error: {type(e).__name__}: {e}",
                   file=sys.stderr)
 
+    # ---- Always-on readable run summary (greppable .txt companion to the
+    #      HTML report) — written whether or not any survivor cleared
+    #      threshold, so a clean multi-day GPU null is a reviewable, citable
+    #      artifact rather than an absent file. Non-fatal on error.
+    try:
+        import eyestat_runner as _R
+        results_dir = output_dir / "results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+        _R.write_run_summary(
+            output_dir=str(output_dir / "temp")
+            if (output_dir / "temp").exists() else str(output_dir),
+            modes=[args.mode], prngs=[args.prng],
+            seed_start=args.seed_start, seed_end=args.seed_end,
+            threshold=args.threshold,
+            n_tried=grand_tried, n_hits=grand_hits,
+            # GPU pipeline has no per-seed error bucket (a seed is filtered
+            # or scored, never "errored" the way a CPU worker chunk can);
+            # 0 is the honest value here, not a placeholder.
+            n_errors=0,
+            est_total_keys=(args.seed_end - args.seed_start),
+            elapsed=elapsed, total_units=1,
+            completed_units=1, all_top_hits=all_top_hits,
+            data_path=getattr(args, "data", getattr(args, "data_path", "")),
+            status="COMPLETE",
+            summary_path=str(results_dir / "run_summary.txt"))
+        print(f"[summary] Wrote {results_dir / 'run_summary.txt'}")
+    except Exception as e:
+        print(f"\n[summary] Skipped due to error: {type(e).__name__}: {e}",
+              file=sys.stderr)
+
     return 0
 
 

@@ -889,6 +889,10 @@ def parse_args():
                         "(0 = no top-hits panel, just status line)")
     p.add_argument("--no-color", action="store_true",
                    help="Disable ANSI color in progress output")
+    p.add_argument("--summary-every", type=int, default=25,
+                   help="Rewrite run_summary.txt every N completed work "
+                        "units so a killed long run keeps a current review "
+                        "artifact (0 = only at clean exit)")
     p.add_argument("--selftest", action="store_true",
                    help="Run end-to-end selftest and exit")
     return p.parse_args()
@@ -1032,6 +1036,28 @@ def main():
             with mp.Pool(processes=args.workers) as pool:
                 for t, h, e, top in pool.imap_unordered(worker_run_chunk, units, chunksize=1):
                     progress_state.update(t, h, e, top)
+                    # Checkpoint the readable summary periodically so a
+                    # killed multi-day run still leaves a current review
+                    # artifact on disk, not just the last one at clean exit.
+                    if (args.summary_every > 0 and
+                            progress_state.completed_units %
+                            args.summary_every == 0):
+                        snap = progress_state.snapshot()
+                        try:
+                            write_run_summary(
+                                output_dir=args.output_dir,
+                                modes=modes, prngs=prngs,
+                                seed_start=args.seed_start,
+                                seed_end=args.seed_end,
+                                threshold=args.threshold,
+                                n_tried=snap[0], n_hits=snap[1],
+                                n_errors=snap[2], est_total_keys=est_total_keys,
+                                elapsed=time.time() - t0,
+                                total_units=len(units),
+                                completed_units=snap[3], top_hits=snap[5],
+                                data_path=args.data, status="RUNNING")
+                        except Exception as se:
+                            print(f"[runner] checkpoint summary skipped: {se}")
     finally:
         if monitor is not None:
             monitor.stop()
@@ -1051,6 +1077,24 @@ def main():
 
     # Optional: merge shards into final ranked file
     merge_results(args.output_dir, args.threshold)
+
+    # Always-on readable run summary — the file you review whether or not
+    # any survivor cleared threshold. A clean multi-day null must still
+    # produce something a human can read and (eventually) cite.
+    write_run_summary(
+        output_dir=args.output_dir,
+        modes=modes, prngs=prngs,
+        seed_start=args.seed_start, seed_end=args.seed_end,
+        threshold=args.threshold,
+        n_tried=n_tried, n_hits=n_hits, n_errors=n_errors,
+        est_total_keys=est_total_keys, elapsed=elapsed,
+        total_units=len(units),
+        completed_units=progress_state.completed_units,
+        top_hits=progress_state.snapshot()[5],
+        data_path=args.data,
+        status="COMPLETE" if progress_state.completed_units == len(units)
+               else "PARTIAL",
+    )
 
 
 def merge_results(output_dir: str, threshold: int) -> None:
@@ -1096,6 +1140,231 @@ def merge_results(output_dir: str, threshold: int) -> None:
         for hits, text in entries:
             f.write(text)
     print(f"[runner] merged {len(entries)} entries → {final_path}")
+
+
+def _scan_near_misses(output_dir: str, top_n: int = 20
+                      ) -> Tuple[List[Tuple[int, float, str]], int]:
+    """Scan per-shard result files for the highest-scoring entries.
+
+    The runner only writes a result entry when an attempt clears threshold,
+    so on a clean null there is nothing here — which is itself the answer.
+    When entries DO exist (threshold set low, or partial hits logged), this
+    surfaces the strongest ones so a reviewer can see HOW null the null was
+    rather than trusting a bare zero. Returns (rows, n_entries_seen) where
+    each row is (max_hits, best_zipf, header_line)."""
+    rows: List[Tuple[int, float, str]] = []
+    n_entries = 0
+    for shard in sorted(Path(output_dir).glob("results_*.txt")):
+        try:
+            block_hits, block_z, block_hdr = 0, 0.0, ""
+            # errors="replace": a worker killed mid-write can leave a partial
+            # multibyte char; without this the iterator raises
+            # UnicodeDecodeError (NOT an OSError), which would crash the
+            # summary AFTER a multi-day run. Replacement chars can only land
+            # in a text field we .strip()/parse defensively anyway.
+            with open(shard, encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    if line.startswith("=== "):
+                        if block_hdr:
+                            rows.append((block_hits, block_z, block_hdr))
+                        n_entries += 1
+                        block_hdr = line.strip()
+                        block_hits, block_z = 0, 0.0
+                        idx = line.find("max_hits=")
+                        if idx >= 0:
+                            try:
+                                block_hits = int(line[idx + 9:].split()[0])
+                            except (ValueError, IndexError):
+                                block_hits = 0
+                    elif "zipf_score=" in line:
+                        try:
+                            z = float(line.split("zipf_score=")[1].split()[0])
+                            block_z = max(block_z, z)
+                        except (ValueError, IndexError):
+                            pass
+                if block_hdr:
+                    rows.append((block_hits, block_z, block_hdr))
+        except Exception:
+            # One unreadable shard must never sink the whole summary; skip it
+            # and keep aggregating the rest. (OSError, and any residual
+            # decode/parse anomaly the inner guards missed.)
+            continue
+    rows.sort(key=lambda r: (-r[0], -r[1]))
+    return rows[:top_n], n_entries
+
+
+def write_run_summary(output_dir: str, *, modes: List[str], prngs: List[str],
+                      seed_start: int, seed_end: int, threshold: int,
+                      n_tried: int, n_hits: int, n_errors: int,
+                      est_total_keys: int, elapsed: float, total_units: int,
+                      completed_units: int,
+                      top_hits: Optional[List[Tuple[int, str, str, str]]] = None,
+                      all_top_hits: Optional[List[Tuple[int, str, str, str]]] = None,
+                      data_path: str = "", status: str = "COMPLETE",
+                      summary_path: Optional[str] = None) -> None:
+    """Emit a human-readable run_summary.txt unconditionally.
+
+    This is the review artifact for the run as a WHOLE — coverage, rate,
+    integrity, and an explicit honest-scope statement — so that a
+    no-survivor result is a readable, citable negative instead of an
+    absent file. Written whether or not anything cleared threshold.
+
+    Shared by both runners: the CPU runner passes top_hits and scans the
+    output_dir for shards; the GPU runner passes all_top_hits and an
+    explicit summary_path (so the .txt lands beside its HTML report while
+    the shard scan still targets the temp/ shard dir). top_hits and
+    all_top_hits are accepted as aliases."""
+    import hashlib
+    import platform
+
+    top_hits = top_hits if top_hits is not None else (all_top_hits or [])
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = Path(summary_path) if summary_path else out / "run_summary.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    planned = max(est_total_keys, 1)
+    covered_frac = min(n_tried / planned, 1.0)
+    unit_frac = (completed_units / total_units) if total_units else 0.0
+    rate = n_tried / max(elapsed, 1e-9)
+    seeds_per_combo = max(seed_end - seed_start, 0)
+    n_combos = len(modes) * len(prngs)
+
+    # Corpus integrity anchor — the reviewer can confirm the same ciphertext
+    # was scanned as everywhere else in the toolchain.
+    corpus_sha = "unavailable"
+    try:
+        corpus_sha = hashlib.sha256(
+            Path(data_path).read_bytes()).hexdigest()[:16]
+    except OSError:
+        pass
+
+    near, n_result_entries = _scan_near_misses(output_dir)
+
+    try:
+        _render_and_write_summary(
+            path=path, output_dir=output_dir, status=status,
+            data_path=data_path, corpus_sha=corpus_sha,
+            modes=modes, prngs=prngs, seed_start=seed_start,
+            seed_end=seed_end, seeds_per_combo=seeds_per_combo,
+            n_combos=n_combos, completed_units=completed_units,
+            total_units=total_units, unit_frac=unit_frac,
+            n_tried=n_tried, est_total_keys=est_total_keys,
+            covered_frac=covered_frac, n_errors=n_errors, elapsed=elapsed,
+            rate=rate, threshold=threshold, n_hits=n_hits,
+            near=near, n_result_entries=n_result_entries)
+        print(f"[runner] run summary → {path}  "
+              f"({covered_frac*100:.1f}% of planned, {n_hits} survivors)")
+    except Exception as e:
+        # A completed multi-day run must ALWAYS leave a readable artifact.
+        # If rendering somehow fails, write a minimal but honest fallback
+        # rather than crashing and leaving nothing.
+        try:
+            path.write_text(
+                "EYESTAT RUN SUMMARY (FALLBACK — full render failed)\n"
+                f"render_error : {type(e).__name__}: {e}\n"
+                f"status       : {status}\n"
+                f"keys_tried   : {n_tried:,} / {est_total_keys:,}\n"
+                f"survivors    : {n_hits:,} (threshold {threshold})\n"
+                f"coverage     : {covered_frac*100:.2f}% of planned\n"
+                f"elapsed_s    : {elapsed:.0f}\n"
+                "SCOPE        : null (if survivors=0) applies ONLY to the "
+                "enumerated slice; not other seeds/PRNGs/sources.\n",
+                encoding="utf-8")
+            print(f"[runner] run summary → {path}  (FALLBACK: {e})")
+        except Exception as e2:
+            print(f"[runner] run summary FAILED entirely: {e2}")
+    return
+
+
+def _render_and_write_summary(*, path, output_dir, status, data_path,
+                              corpus_sha, modes, prngs, seed_start, seed_end,
+                              seeds_per_combo, n_combos, completed_units,
+                              total_units, unit_frac, n_tried, est_total_keys,
+                              covered_frac, n_errors, elapsed, rate, threshold,
+                              n_hits, near, n_result_entries) -> None:
+    import platform
+
+    def _dur(s: float) -> str:
+        return _fmt_duration(s)
+
+    lines: List[str] = []
+    W = lines.append
+    W("=" * 78)
+    W("EYESTAT PRNG SCAN — RUN SUMMARY")
+    W("=" * 78)
+    W("")
+    W(f"status                : {status}")
+    W(f"generated_utc         : {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}")
+    W(f"host                  : {platform.node()}")
+    W(f"output_dir            : {output_dir}")
+    W(f"corpus                : {data_path}  (sha256[:16]={corpus_sha})")
+    W("")
+    W("-" * 78)
+    W("COVERAGE  — what this run actually enumerated")
+    W("-" * 78)
+    W(f"modes ({len(modes)})           : {', '.join(modes)}")
+    W(f"prngs ({len(prngs)})           : {', '.join(prngs)}")
+    W(f"seed range            : [{seed_start:,}, {seed_end:,})  "
+      f"= {seeds_per_combo:,} seeds/combo")
+    W(f"mode×prng combos      : {n_combos}")
+    W(f"work units            : {completed_units:,} / {total_units:,} "
+      f"complete  ({unit_frac*100:.2f}%)")
+    W(f"keys tried            : {n_tried:,} / {est_total_keys:,} planned")
+    W(f"  >> coverage of THIS run's planned space : {covered_frac*100:.2f}%")
+    W(f"errors                : {n_errors:,}")
+    W("")
+    W("-" * 78)
+    W("PERFORMANCE")
+    W("-" * 78)
+    W(f"elapsed               : {_dur(elapsed)}  ({elapsed:,.0f}s)")
+    W(f"throughput            : {rate:,.0f} keys/sec")
+    if rate > 0 and est_total_keys > n_tried:
+        eta = (est_total_keys - n_tried) / rate
+        W(f"eta to finish planned : {_dur(eta)}")
+    W("")
+    W("-" * 78)
+    W("RESULT")
+    W("-" * 78)
+    W(f"survivors (hits ≥ {threshold}) : {n_hits:,}")
+    if n_hits == 0:
+        W("")
+        W("  >>> NO SURVIVORS — no (mode, prng, seed) cleared the dictionary-")
+        W("      hit threshold over the covered slice above.")
+    else:
+        W("  See bruteforce_results.txt for full ranked plaintext.")
+    W("")
+    W("near-misses / strongest entries logged (any below-threshold hits):")
+    if near:
+        W(f"  ({n_result_entries:,} sub/at-threshold entries on disk; top shown)")
+        for hits, z, hdr in near[:15]:
+            W(f"    hits={hits:<3d} zipf={z:6.2f}  {hdr[4:].rstrip(' =')}")
+    else:
+        W("    none logged — the scan recorded no partial-hit entries at all.")
+        W("    (NB: a bare zero here means the WEAK dictionary-hit signal never")
+        W("     fired; it is not itself a strong exclusion. See honest-scope.)")
+    W("")
+    W("-" * 78)
+    W("HONEST SCOPE  — read before citing this run")
+    W("-" * 78)
+    W("This null (if n_hits=0) applies ONLY to the enumerated slice named")
+    W("under COVERAGE: these modes, these PRNGs, this seed range. It does")
+    W("NOT disposition:")
+    W("  • seeds outside the range above,")
+    W("  • PRNG families not in the list above,")
+    W("  • non-PRNG / passphrase-derived key sources,")
+    W("  • any construction the dictionary-hit metric is blind to (the same")
+    W("    weak signal behind the Finnish/Karelian letter-soup mirages — a")
+    W("    real candidate still needs a readability-gated read to count).")
+    W("")
+    W("If this run is one slice of a larger projected scan, record the")
+    W("projected total and the fraction covered so the partial null is not")
+    W("later mistaken for an exhaustive one.")
+    W("")
+    W("=" * 78)
+
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
