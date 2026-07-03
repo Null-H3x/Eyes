@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""EyeCrack — cut recipe CLI (range cuts + phrase viability).
+"""EyeCrack — cut recipe CLI (range cuts + primer cuts + phrase viability).
 
 Usage:
     python3 cut_recipe.py --phrase Eyes --cuts A-F H-N P-C E-R --promote-god
     python3 cut_recipe.py --preset god --phrase godseeye
+    python3 cut_recipe.py --primer godswatchingyOu --phrase Eyes
     python3 cut_recipe.py --show-cuts A-F H-N P-C E-R --promote-god
+    python3 cut_recipe.py --show-primer godsarewatchingyOu
 """
 from __future__ import annotations
 
@@ -24,6 +26,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--phrase", default="Eyes")
+    ap.add_argument("--primer", default=None,
+                    help="primer word/phrase for sequential letter cuts (a-zA-Z deck)")
     ap.add_argument("--cuts", nargs="*", default=list(ac.GOD_CUT_SPECS))
     ap.add_argument("--preset", choices=("god", "az", "god-raw"))
     ap.add_argument("--promote-god", action="store_true")
@@ -31,8 +35,17 @@ def main() -> int:
     ap.add_argument("--variant", choices=("26", "52", "both"), default="both")
     ap.add_argument("--lower", default="mirror")
     ap.add_argument("--show-cuts", nargs="*", metavar="RANGE")
+    ap.add_argument("--show-primer", metavar="TEXT",
+                    help="print primer-cut steps for TEXT and exit")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
+
+    if args.show_primer is not None:
+        for line in ac.describe_primer_cuts(args.show_primer):
+            print(line)
+        final, _ = ac.apply_primer_cuts(args.show_primer)
+        print(f"\nFinal 52: {final}")
+        return 0
 
     if args.show_cuts is not None:
         specs = args.show_cuts or list(ac.GOD_CUT_SPECS)
@@ -46,7 +59,15 @@ def main() -> int:
         print(f"\nFinal 26: {final}")
         return 0
 
-    if args.preset == "god":
+    if args.primer is not None:
+        rec = ac.build_primer_recipe(
+            args.primer,
+            variant=args.variant,
+            wiki_crib=True,
+            wiki_mode="symbol",
+            phrase=args.phrase,
+        )
+    elif args.preset == "god":
         specs = list(ac.GOD_CUT_SPECS)
         promote_god = True
     elif args.preset == "god-raw":
@@ -81,9 +102,17 @@ def main() -> int:
     if not rec.get("ok"):
         print("ERROR:", rec.get("error"))
         return 1
-    print("upper26:", rec["upper26"])
+    if rec.get("mode") == "primer":
+        print("mode: primer")
+        print("primer:", rec.get("primer"))
+        print("letters52:", rec.get("letters52"))
+    else:
+        print("upper26:", rec["upper26"])
     for row in rec.get("steps", []):
-        print(f"  {row['label']}: {row['alphabet_26']}")
+        if rec.get("mode") == "primer":
+            print(f"  {row['label']}: {row.get('alphabet_52', row.get('alphabet_26', ''))}")
+        else:
+            print(f"  {row['label']}: {row['alphabet_26']}")
     ph = rec.get("phrase", {})
     if ph:
         print(f"\nphrase {ph['phrase']!r}: recommended {ph['recommended_variant']}")

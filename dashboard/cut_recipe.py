@@ -63,7 +63,35 @@ def alphabet_tools_payload(tools: Sequence[dict]) -> List[dict]:
 
 
 def evaluate(body: dict) -> dict:
-    """Build recipe from JSON body (cuts, phrase, variant, presets)."""
+    """Build recipe from JSON body (cuts, primer, phrase, variant, presets)."""
+    primer = str(body.get("primer", "") or body.get("primer_phrase", "")).strip()
+    if primer:
+        phrase = str(body.get("phrase", "")).strip()
+        variant = body.get("variant", "both")
+        wiki_crib = body.get("wiki_crib", True)
+        wiki_mode = body.get("wiki_mode", "symbol")
+        try:
+            recipe = ac.build_primer_recipe(
+                primer,
+                variant=variant,
+                wiki_crib=wiki_crib,
+                wiki_mode=wiki_mode,
+                phrase=phrase,
+            )
+        except ValueError as e:
+            return {"ok": False, "error": str(e)}
+        if not recipe.get("ok"):
+            return recipe
+        best_variant = "52"
+        if phrase and recipe.get("phrase"):
+            best_variant = recipe["phrase"].get("recommended_variant") or "52"
+        elif variant in ("26", "52"):
+            best_variant = variant
+        recipe["selected_variant"] = best_variant
+        sel = recipe.get("variants", {}).get(best_variant, {})
+        recipe["selected_deck"] = sel.get("deck", "")
+        return recipe
+
     preset_id = body.get("preset")
     if preset_id:
         if preset_id not in PRESETS:
@@ -142,4 +170,7 @@ def selftest() -> List[Tuple[str, bool]]:
     out.append(("is_alphabet_dependent order_solve",
                 is_alphabet_dependent_tool(["order_solve.py", "foo"])))
     out.append(("snapshot_presets has god", "god" in snapshot_presets()["examples"]))
+    pre = evaluate({"primer": "gods", "phrase": "gods"})
+    out.append(("evaluate primer mode", pre.get("ok") is True))
+    out.append(("evaluate primer selected deck len 83", len(pre.get("selected_deck", "")) == 83))
     return out
