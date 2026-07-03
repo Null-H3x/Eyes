@@ -37,10 +37,19 @@ trigram   per-digit S5 substitutions + digit-position permutation on the
           base-5 trigram (d2,d1,d0), FILTERED to maps closed on {0..82}
           (the glyph set is 83 of 125 trigrams; most maps leak out)
 deals     deal 0..82 into k piles (k=2..41), pickup natural/reversed,
-          optionally deck-reversed first                (~160)
+          optionally deck-reversed first; BOTH orientations (320)
 keyword   classic columnar transposition of 0..82 keyed by wordlist words
           (rank tuple of the word's letters orders the columns), deduped
-          by rank tuple across the shipped en/fi/krl wordlists
+          by rank tuple across the shipped en/fi/krl wordlists; BOTH
+          orientations
+
+ORIENTATION: unlike the algebraic families (closed under inversion: a
+C-side affine/power/prepower construction is a q-side family member after
+the additive constant absorbs, and the trigram set is a group restricted
+to its closed subset), deals and keyword are NOT inversion-closed -- the
+inverse of a k-pile deal is an interleave, the inverse of a columnar read
+is a row-wise read.  "The devs built C this way" and "the devs built q
+this way" are distinct hypotheses, so both are emitted (orient=C / q).
 
 HONEST LIMITS
 =============
@@ -179,7 +188,9 @@ def fam_deals(N: int = N_DEFAULT) -> Iterator[Candidate]:
                 C = np.concatenate([piles[i] for i in order])
                 q = np.empty(N, dtype=np.int64)
                 q[C] = np.arange(N)
-                yield (f"deal k={k} pick={pick} rev={int(rev)}", q)
+                yield (f"deal k={k} pick={pick} rev={int(rev)} orient=C", q)
+                yield (f"deal k={k} pick={pick} rev={int(rev)} orient=q",
+                       C.copy())
 
 
 def _rank_tuple(word: str) -> Tuple[int, ...]:
@@ -216,8 +227,9 @@ def fam_keyword(N: int = N_DEFAULT, min_len: int = 3, max_len: int = 13,
             C = _keyed_columnar_C(rk, N)
             q = np.empty(N, dtype=np.int64)
             q[C] = np.arange(N)
-            yield (f"keyword '{w}' ranks={rk}", q)
-            emitted += 1
+            yield (f"keyword '{w}' ranks={rk} orient=C", q)
+            yield (f"keyword '{w}' ranks={rk} orient=q", C.copy())
+            emitted += 2
             if limit and emitted >= limit:
                 return
 
@@ -342,8 +354,13 @@ def selftest() -> List[Tuple[str, bool]]:
               for i in rng.choice(len(pw), 40, replace=False)))
     checks.append((f"power: {len(pw)} candidates (39 exps x 82)", ok))
     dl = list(fam_deals(N))
-    ok = all(sorted(q.tolist()) == list(range(N)) for _, q in dl)
-    checks.append((f"deals: {len(dl)} valid permutations", ok))
+    ok = (len(dl) == 320 and
+          all(sorted(q.tolist()) == list(range(N)) for _, q in dl))
+    checks.append((f"deals: {len(dl)} valid perms (both orientations)", ok))
+    # orientation pairs are mutual inverses
+    qC, qq = dl[0][1], dl[1][1]
+    checks.append(("deals: orient=C/q are mutual inverses",
+                   all(qq[qC[i]] == i for i in range(N))))
 
     # (2) affine+power mutually distinct (dedup-by-construction holds).
     seen = {tuple(q.tolist()) for _, q in aff}
@@ -367,6 +384,9 @@ def selftest() -> List[Tuple[str, bool]]:
     ok = (len(kw) == 300 and
           all(sorted(q.tolist()) == list(range(N)) for _, q in kw[:50]))
     checks.append(("keyword: wordlist stream yields valid perms", ok))
+    qC2, qq2 = kw[0][1], kw[1][1]
+    checks.append(("keyword: orient=C/q are mutual inverses",
+                   all(qq2[qC2[i]] == i for i in range(N))))
 
     # (5) engine z == scalar gsupport z, spot-checked through the wrapper.
     pl = plantlab.gen("pmp", seed=2, shared_prefix=20)
