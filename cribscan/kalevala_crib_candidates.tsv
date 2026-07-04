@@ -1,0 +1,32 @@
+lag	message	stream_pos	ninemer	internal_pattern	register	context
+28	East1	230056	änikatsoi	..A.....A	verse	unoni kotihin. "niinpä toivoin tuon ikäni, katsoin kaiken päiväkauen; pääni katsoin kallellehen, sykeröni syrjällehen,
+28	East1	257298	lituuitte	.ABCCABB.	verse	, laski kuolan lainehille. tuota tuuli tuuitteli, ve'en henki heilutteli, tuuitteli vuotta kuusi, senki seitsemän kese
+28	East1	524753	lemminkäi	..AAB...B	verse	suuttunut lähtee tuonelan joelle siellä lemminkäistä uottava. itse lieto lemminkäinen, itse kaunis kaukomieli,
+30	West1	102200	potkaisih	.....A.A.	verse	täntähän!" kiinnistihe, jännistihe, potkaisihe, ponnistihe. ensi kerran potkaisihe silmän siintämättömähän, kerran t
+30	West1	190459	iksimeren	A..A.B.B.	verse	isi meret mesiksi, meren hiekat hernehiksi, meren mullat maltahiksi, suoloiksi meren someret, lehot laajat leipämaiksi,
+30	West1	271947	ataksensa	A.A.B..BA	verse	näköinen, kärestäisi keihä'änsä surmataksensa sutoset, metsän karhut kaataksensa." silloin lieto lemminkäinen sanan
+30	West1	305285	mahanmait	AB.B.AB..	verse	aitojoet juoksemahan, maitopurot purkemahan, maitokosket kuohumahan, puhumahan maitoputket, maitohormit huokumahan, jo
+30	West1	470446	esenkanka	A.ABCDBCD	prose	issa olen kirjottanut _venehesen, tarpehesen, kankahasen_ (eli _veneesen, tarpeesen, kankaasen_) j.n.e. joita muut kirjottanevat
+30	West1	470568	enkankaas	.ABCABCC.	prose	ankahaseen_, (eli _veneesehen, tarpeesehen, kankaasehen; veneeseen, tarpeeseen, kankaaseen_). näitä sanoja toisten samanlaatui
+30	West1	471478	eikertaak	A.BA..CCB	prose	tavoin. toiset sanovat ja kirjottavat: ei kertaa_kaan_, toiset: ei kertoa_kana_ ei kertaa_kahan_, ei kertoa_kan_, ei kertoa_na'_.
+30	West1	532647	npotkasev	.........	verse	ruskian reposen. siitä kerran potkasevi silmän sintämättömähän, 90. potkasevi kerran toisen korvan kuulem
+30	West1	533350	nhiljalle	...A..AA.	verse	tuolla lausehella: "joko hiihan hiljalleni, verkkahalleni vetelen; 125. hiljallehen huono käypi, sauan voimat
+30	West1	537836	jankaiken	.ABCA.C.B	verse	tuhat muuta käskyläistä, karjan kaiken kaitsiata, 355. viitsiätä viljan kaiken. mielikki metsän miniä,
+35	East2	70990	seppoilma	..AA.....	verse	nen itse pistihe pajahan. siell' on seppo ilmarinen: takoa taputtelevi. sanoi seppo ilmarinen: "oi sie vanha väinämöinen! m
+35	East2	190346	luojalaul	AB..CACBA	verse	nä saata, en kuhunkana kykene. oisi luoja laulamassa, suin sulin sanelemassa! luoja laulun lauleleisi, lauleleisi, taiteleisi
+35	East2	193561	yöksiläht	.........	verse	niinkö tiesit jotta luulit, luulit yöksi lähteväsi, päivällä paloavasi? etpä yöksi lähtenynnä, etkä yöksi, et kaheksi: jop
+35	East2	207007	kivitupah	.A.A.....	verse	ehet, ota kuivehet kiveltä, kiirehi kivitupahan! sitte sinne saatuasi, tultua kivitupahan elä kuku kulkullasi, kalju kaula
+35	East2	232880	atäysines	....A...A	verse	morsiamen vuotannassa. "terve nyt, piha täysinesi, ulkoinen urohinesi, terve, vaja täysinesi, vaja vierahaisinesi, terve, sint
+35	East2	278832	aeinähnyt	...A..A..	verse	ähnyt sitä taloa, kuss' ei kolmea kotoa, ei nähnyt sitä kotoa, kuss' ei kolmea urosta, ei nähnyt sitä urosta, ku ei miekkoa hionut,
+35	East2	286393	aeiolluts	....AA...	verse	nen kahen kävimme suurilla sotatiloilla? ei ollut sitä kyleä, kuss' ei kymmenen taloa; ei ollut sitä taloa, kuss' ei kymmenen urosta;
+35	East2	286410	kusseikym	A.BB..A..	verse	sotatiloilla? ei ollut sitä kyleä, kuss' ei kymmenen taloa; ei ollut sitä taloa, kuss' ei kymmenen urosta; ei ollut sitä urosta
+35	East2	290673	pannapalj	ABCCBAB..	verse	ite tulehen, asetu alasimelle sepän panna paljallansa, vasaralla valkkaella, panna paljalla lujasti, vasaralla vaikeasti!
+35	East2	309318	karjankäy	AB..B.A..	verse	ti suolle, silloin korpehen kokeos! karjan käyessä mäkeä astu sie mäen alatse; karjan käyessä alatse mene sie mäkeä myöten!
+35	East2	324298	nmukahans	A...B.BA.	verse	i, airo käessä arvelevi: "veänkö väen mukahan, souan tarmoni takoa vai veän asun mukahan, souan tarpehen takoa?" perimies perält
+35	East2	355689	sulhotsou	AB..C.ACB	verse	erellä, lumpehina lainehilla!" pani sulhot soutamahan, neiet ilman istumahan. sulhot souti, airot notkui: eipä matka eistykän
+35	East2	355768	neietsout	.A.AB...B	verse	notkui: eipä matka eistykänä. pani neiet soutamahan, sulhot ilman istumahan. neiet souti, sormet notkui: eipä matka eistykän
+35	East2	393734	elevikult	ABA....B.	verse	käki kukahtelevi, sanoin viisin virkkelevi, kulta suusta kumpuavi, hopea valahtelevi kultaiselle kunnahalle, hope'iselle mäell
+35	East2	550468	väinämöis	.AB.A..B.	verse	n. maatessaan verkkoja laaitaan joelle, väinämöisen ei iäti jälelle päästä. siitä väinämöisen piti muiksi ruveta, pienemmäksi muut
+35	East2	581963	etsitähän	.A..AB.B.	verse	eikä sen erän perästä. etsitähän iskiätä, katsotahan kaatajata; etsitähän tuonelasta, 60. manalasta maanki
+35	East2	604652	iteltuasi	AB..B...A	verse	iitän mä emo sinua nuorra tuuviteltuasi, pienosna pieltyäsi, maion ruokiteltuasi. kiitän mä koko perehen,
+35	East2	608089	itkolinna	A....ABB.	verse	i imantehena, saitko neien, voitko linnan, sorritko sotiveräjän, haukutitko linnan hallit, itketitkö linnan im

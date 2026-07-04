@@ -1,0 +1,169 @@
+corpus stream: 613658 letters (w->v merged)
+
+== T3a: top repeated full lines (count >= 4) ==
+   186x  sanan virkkoi noin nimesi
+   136x  vaka vanha väinämöinen
+   116x  itse tuon sanoiksi virkki
+    52x  sanoi vanha väinämöinen
+    52x  kullervo kalervon poika
+    49x  sanovi sanalla tuolla
+    49x  siitä vanha väinämöinen
+    37x  se on seppo ilmarinen
+    37x  siitä lieto lemminkäinen
+    35x  siitä seppo ilmarinen
+    33x  louhi pohjolan emäntä
+    31x  lausui tuolla lausehella
+    31x  sanoi lieto lemminkäinen
+    30x  itse lausui noin nimesi
+    27x  sanoi seppo ilmarinen
+    26x  silloin vanha väinämöinen
+    26x  sanan virkko noin nimesi
+    25x  arvelee ajattelevi
+    24x  takoja iänikuinen
+    24x  sanoi kaunis kaukomieli
+    23x  itse seppo ilmarinen
+    23x  virkkoi lieto lemminkäinen
+    21x  sinä ilmoisna ikänä
+    19x  siitä tuon sanoiksi virkki
+    18x  tietäjä iänikuinen
+    17x  itse lausui ja pakisi
+    17x  sanoi äiti lemminkäisen
+    16x  oi ukko ylijumala
+    16x  katselevi kääntelevi
+    16x  sanoi pohjolan emäntä
+
+== T3b: top word 2/3-grams (count >= 15, >= 8 letters) ==
+   374x  vanha väinämöinen
+   267x  noin nimesi
+   223x  sanoiksi virkki
+   210x  tuon sanoiksi
+   210x  seppo ilmarinen
+   203x  tuon sanoiksi virkki
+   188x  virkkoi noin
+   188x  virkkoi noin nimesi
+   187x  sanan virkkoi
+   187x  sanan virkkoi noin
+   177x  lieto lemminkäinen
+   141x  vaka vanha
+   141x  vaka vanha väinämöinen
+   126x  itse tuon
+   126x  itse tuon sanoiksi
+   114x  pohjolan emäntä
+    72x  väinämöinen itse
+    70x  vanha väinämöinen itse
+    60x  kaunis kaukomieli
+    59x  sanalla tuolla
+    56x  kalervon poika
+    55x  itse lausui
+    52x  siitä vanha
+    52x  sanoi vanha
+    52x  kullervo kalervon
+    52x  siitä vanha väinämöinen
+    52x  sanoi vanha väinämöinen
+    52x  kullervo kalervon poika
+    51x  sanovi sanalla
+    50x  sanovi sanalla tuolla
+
+== T3c: formulas with internal #M / #M- strict fit ==
+
+== T1: repeat-lag spectrum (length 9), lags 20..45 ==
+  lag 20:  167 ############################################################
+  lag 21:  151 ############################################################
+  lag 22:  115 ############################################################
+  lag 23:   87 ############################################################
+  lag 24:   18 ##################
+  lag 25:   14 ##############
+  lag 26:   14 ##############
+  lag 27:    5 #####
+  lag 28:    9 ######### <== target
+  lag 29:   10 ##########
+  lag 30:   16 ################ <== target
+  lag 31:    7 #######
+  lag 32:   13 #############
+  lag 33:   15 ###############
+  lag 34:   29 #############################
+  lag 35:   59 ########################################################### <== target
+  lag 36:   48 ################################################
+  lag 37:   85 ############################################################
+  lag 38:  153 ############################################################
+  lag 39:  195 ############################################################
+  lag 40:  315 ############################################################
+  lag 41:  128 ############################################################
+  lag 42:  198 ############################################################
+  lag 43:  212 ############################################################
+  lag 44:  155 ############################################################
+  lag 45:   60 ############################################################
+
+== T1: target-signature hits ==
+
+-- #M (len 9, lag 28) [East1] : 3 run-head hits
+   @230056  änikatsoi  pat=..A.....A
+           ...si kaunoni kotihin. "niinpä toivoin tuon ikäni, katsoin kaiken päiväkauen; pääni katsoin kallellehen, sykeröni syrjällehen, sil...
+   @257298  lituuitte  pat=.ABCCABB.
+           ...sille, laski kuolan lainehille. tuota tuuli tuuitteli, ve'en henki heilutteli, tuuitteli vuotta kuusi, senki seitsemän keseä s...
+   @524753  lemminkäi  pat=..AAB...B
+           ...ukko suuttunut lähtee tuonelan joelle siellä lemminkäistä uottava. itse lieto lemminkäinen, itse kaunis kaukomieli,...
+
+-- #M (len 9, lag 30) [West1] : 10 run-head hits
+   @102200  potkaisih  pat=.....A.A.
+           ...n keitäntähän!" kiinnistihe, jännistihe, potkaisihe, ponnistihe. ensi kerran potkaisihe silmän siintämättömähän, kerran toisen...
+   @190459  iksimeren  pat=A..A.B.B.
+           ...laulaisi meret mesiksi, meren hiekat hernehiksi, meren mullat maltahiksi, suoloiksi meren someret, lehot laajat leipämaiksi, ahov...
+   @271947  ataksensa  pat=A.A.B..BA
+           ...noen näköinen, kärestäisi keihä'änsä surmataksensa sutoset, metsän karhut kaataksensa." silloin lieto lemminkäinen sanan virk...
+   @305285  mahanmait  pat=AB.B.AB..
+           ..., maitojoet juoksemahan, maitopurot purkemahan, maitokosket kuohumahan, puhumahan maitoputket, maitohormit huokumahan, joka ai...
+   @470446  esenkanka  pat=A.ABCDBCD
+           ...pauksissa olen kirjottanut _venehesen, tarpehesen, kankahasen_ (eli _veneesen, tarpeesen, kankaasen_) j.n.e. joita muut kirjottanevat _vene...
+   @470568  enkankaas  pat=.ABCABCC.
+           ...en, kankahaseen_, (eli _veneesehen, tarpeesehen, kankaasehen; veneeseen, tarpeeseen, kankaaseen_). näitä sanoja toisten samanlaatuisten...
+   @471478  eikertaak  pat=A.BA..CCB
+           ...monin tavoin. toiset sanovat ja kirjottavat: ei kertaa_kaan_, toiset: ei kertoa_kana_ ei kertaa_kahan_, ei kertoa_kan_, ei kertoa_na'_. yksi...
+   @532647  npotkasev  pat=.........
+           ...inen ruskian reposen. siitä kerran potkasevi silmän sintämättömähän, 90. potkasevi kerran toisen korvan kuulemattom...
+   @533350  nhiljalle  pat=...A..AA.
+           ...ausu tuolla lausehella: "joko hiihan hiljalleni, verkkahalleni vetelen; 125. hiljallehen huono käypi, sauan voimaton pi...
+   @537836  jankaiken  pat=.ABCA.C.B
+           ...tuhat muuta käskyläistä, karjan kaiken kaitsiata, 355. viitsiätä viljan kaiken. mielikki metsän miniä,...
+
+-- #M (len 9, lag 35) [East2] : 18 run-head hits
+   @ 70990  seppoilma  pat=..AA.....
+           ...nämöinen itse pistihe pajahan. siell' on seppo ilmarinen: takoa taputtelevi. sanoi seppo ilmarinen: "oi sie vanha väinämöinen! miss'...
+   @190346  luojalaul  pat=AB..CACBA
+           ...mitänä saata, en kuhunkana kykene. oisi luoja laulamassa, suin sulin sanelemassa! luoja laulun lauleleisi, lauleleisi, taiteleisi. "...
+   @193561  yöksiläht  pat=.........
+           ...uori, niinkö tiesit jotta luulit, luulit yöksi lähteväsi, päivällä paloavasi? etpä yöksi lähtenynnä, etkä yöksi, et kaheksi: jopa jou...
+   @207007  kivitupah  pat=.A.A.....
+           ...askarehet, ota kuivehet kiveltä, kiirehi kivitupahan! sitte sinne saatuasi, tultua kivitupahan elä kuku kulkullasi, kalju kaulavarre...
+   @232880  atäysines  pat=....A...A
+           ...a, morsiamen vuotannassa. "terve nyt, piha täysinesi, ulkoinen urohinesi, terve, vaja täysinesi, vaja vierahaisinesi, terve, sintsi tä...
+   @278832  aeinähnyt  pat=...A..A..
+           ...ei nähnyt sitä taloa, kuss' ei kolmea kotoa, ei nähnyt sitä kotoa, kuss' ei kolmea urosta, ei nähnyt sitä urosta, ku ei miekkoa hionut, tapp...
+   @286393  aeiolluts  pat=....AA...
+           ...un ennen kahen kävimme suurilla sotatiloilla? ei ollut sitä kyleä, kuss' ei kymmenen taloa; ei ollut sitä taloa, kuss' ei kymmenen urosta; ei...
+   @286410  kusseikym  pat=A.BB..A..
+           ...rilla sotatiloilla? ei ollut sitä kyleä, kuss' ei kymmenen taloa; ei ollut sitä taloa, kuss' ei kymmenen urosta; ei ollut sitä urosta eikä...
+   @290673  pannapalj  pat=ABCCBAB..
+           ...tungeite tulehen, asetu alasimelle sepän panna paljallansa, vasaralla valkkaella, panna paljalla lujasti, vasaralla vaikeasti! "et t...
+   @309318  karjankäy  pat=AB..B.A..
+           ...solahti suolle, silloin korpehen kokeos! karjan käyessä mäkeä astu sie mäen alatse; karjan käyessä alatse mene sie mäkeä myöten! astue...
+   @324298  nmukahans  pat=A...B.BA.
+           ...sanovi, airo käessä arvelevi: "veänkö väen mukahan, souan tarmoni takoa vai veän asun mukahan, souan tarpehen takoa?" perimies perältä lau...
+   @355689  sulhotsou  pat=AB..C.ACB
+           ...ina merellä, lumpehina lainehilla!" pani sulhot soutamahan, neiet ilman istumahan. sulhot souti, airot notkui: eipä matka eistykänä....
+
+-- #1 (len 18, lag 30) [West1] : 0 run-head hits
+
+-- #1 (len 18, lag 35) [East2] : 0 run-head hits
+
+-- #C1 (len 26, lag 30) [West1] : 0 run-head hits
+
+-- #C0 (len 24, lag 35) [East2] : 0 run-head hits
+
+== T2a: T1 9-mer hits that ALSO fit #M strictly (direct) ==
+  (none)
+
+== T2b: composite  #F(strict)@t + 9-mer repeat @t+10, lag L ==
+  lag 28: strict=0  eq-only=0
+  lag 30: strict=0  eq-only=0
+  lag 35: strict=0  eq-only=0
