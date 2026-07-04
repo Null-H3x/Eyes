@@ -1,172 +1,160 @@
 # Noita Eye Puzzle — State of the Solve
 
 A single, citable summary of where the investigation stands: what is **proven**,
-what is a **working hypothesis**, what is **excluded/retracted**, what is **open**,
-and what would **break it open**. Every claim is backed by a self-tested module in
-`noita_eye_core/` (aggregate gate: `python3 noita_eye_core/selftest.py`, currently
-**829/829**) and is reproducible. Companion docs: `FINGERPRINT.md` (detailed
-fingerprint), `report.html` (dashboard), and the per-topic reports in `report/`.
+what is a **working hypothesis**, what is **excluded/retracted**, what is
+**open**, and what would **break it open**. Every SOLID claim is backed by a
+self-tested module and is reproducible; every hypothesis is flagged as such.
+Companion math: `FINGERPRINT.md`, `cribscan/CRIBSCAN_MATH.md`, and the per-topic
+reports in `report/`.
 
 ---
 
 ## TL;DR
 
-The cipher **family** is pinned down and the corpus is **provably hard-but-not-
-hopeless**, but it is **not decrypted**. The single remaining bottleneck is an
-**external glyph → character (value-ordering) anchor**: every model-independent
-structural lever has been mapped, and reading the plaintext requires knowing which
-glyph value is which character — the one thing not derivable from the ciphertext
-alone.
+The cipher **family** is pinned to a linear class and the corpus is **provably
+hard-but-not-hopeless**, but it is **not decrypted**. The one bottleneck is an
+**external glyph → character (value-ordering) anchor** — or, equivalently, a
+**correct crib** — because the ciphertext alone links the alphabet without
+ordering it. New this cycle: a **second, cross-validating crib target** in
+Triplet 3 that, together with the refrain, reaches **87–90 % of the alphabet**
+with **35 symbols of mutual constraint** — sharpening the correct-crib route from
+one lever to two.
 
 ---
 
 ## The corpus (data) — SOLID
 
-- **9 messages**, alphabet **N = 83** (symbols 0–82), **1036** glyphs. Order: East 1,
-  West 1, East 2, West 2, East 3, West 3, East 4, West 4, East 5. **No West 5.**
-- Each glyph is a **base-5 trigram** (3 eye-marks). Verified three independent ways:
-  community BASE10 (WarFairy), the trigram xlsx, and — decisively — the **hard-coded
-  constants decompiled from `noita.exe`** (`SpawnSecretEyes`): all **9/9 messages
-  decode to the corpus byte-for-byte** (`provenance`, `binary_provenance`).
+- **9 messages**, alphabet **N = 83** (symbols 0–82), **1036** glyphs. Order:
+  East 1, West 1, East 2, West 2, East 3, West 3, East 4, West 4, East 5. **No
+  West 5.**
+- Each glyph is a **base-5 trigram** (3 eye-marks), verified three ways
+  including the **hard-coded constants decompiled from `noita.exe`**
+  (`SpawnSecretEyes`): all **9/9 decode to the corpus byte-for-byte**.
 - **Provenance settled:** the messages are hard-coded constants the engine only
-  unpacks and draws — **no decryption, key, or keystream in the binary**. The cipher
-  was applied **offline by the author**, which is *why every in-game PRNG-seed scan
-  was null*.
+  unpacks and draws — no key or keystream in the binary. The cipher was applied
+  **offline by the author**, which is *why every in-game PRNG-seed scan was
+  null* (moot, not merely unswept).
 
 ## What it is NOT — SOLID exclusions
 
-Each is a calibrated test, not an impression (modules in parentheses):
-
 | Family | Verdict | Basis |
 |---|---|---|
-| Monoalphabetic substitution | excluded | flat unigram, IoC≈uniform (`classify`,`stats`) |
-| Transposition / periodic / block | excluded | structure tests (`classify`) |
-| AES-128-CTR (salakieli file cipher) | excluded | N=83≠256; decrypts to noise (`salakieli_aes`) |
-| Independent-column substitution (general GAK) / unrelated-alphabet OTP | excluded | abundant isomorphs require *interrelated* alphabets (`isomorph`) |
-| Trifid / fractionation on the 3 eye-marks | disfavored | per-mark streams ~uniform; no period signal (`trifid`) |
-| Small-seed PRNG keystream | disfavored→moot | every additive/GAK seed scan to 100M null; provenance shows no in-game seed |
+| Monoalphabetic substitution | excluded | flat unigram, IoC≈uniform |
+| Transposition / periodic / block | excluded | structure tests |
+| AES-128-CTR (salakieli file cipher) | excluded | N=83≠256; decrypts to noise |
+| Independent-column / unrelated-alphabet OTP (general GAK) | excluded | isomorphs require *interrelated* alphabets |
+| Trifid / fractionation on the 3 eye-marks | excluded | per-mark streams ~uniform; no period; digit-transpose sweep clean |
+| Ciphertext-autokey (any lag) | excluded | difference would propagate; E1/W1 show **5 clean re-sync events** (`resync`) |
+| Periodic Vigenère / Alberti / plaintext-autokey lag-1 | excluded | constraint-count on clean anchors (`model_power`: periodic ~6400, autokey ~7500, Alberti ~7400 contradictions vs 0 for the linear class) |
+| Small-seed PRNG keystream (any combiner) | moot | offline-authored; every additive/GAK seed scan (34B+ in EyeStat) null |
+| Structured alphabet construction (affine/power/pre-shift power/closed trigram-digit/deck/keyword-columnar × 4 frames × orientations) | excluded | ~9M scored hypotheses, zero survivors, extremes at chance (`alphabet_sweep`) |
 
 ## What it IS — SOLID (model-independent or strongly validated)
 
-- **Interrelated alphabets.** True isomorphs (same repeat-pattern, different values)
-  at **z ≈ 117** vs a shuffle null — only possible with interrelated per-position
-  alphabets. Rules out the families above (`isomorph`).
-- **Triplet structure (model-free).** Depending only on "same glyph = same glyph":
-  - **Triplet 1 (E1/W1/E2)** shares a **~22-glyph opening**; **Triplet 3
-    (E4/W4/E5)** shares **~18** — both far above a random-aligned null (~5–7).
-  - **Triplet 2 (W2/E3/W3)** shares **no** long opening; **E3 is structurally
-    distinct** (weakly linked to all; longest message).
-  - The opening passage also **repeats within** messages (e.g. E1@39 and E1@67), and
-    a cross-triplet passage exists (W2/E4/W4). **No universal opening** beyond the
-    `(66,5)` header. (`shared_structure`, report `shared_structure_report.md`.)
-  - This rigorously confirms the original "messages come in triplets" theory.
-- **Header.** Positions 1,2 are a **literal universal `(66,5)` marker** (cross-message
-  agreement p≈3e-12), not body keystream; it does **not** encode the number 34
-  (`header_test`, `numbertest`).
-- **Contamination-resistant extraction.** The clean, fully-aligned isomorphs
-  (same-plaintext anchors) are recoverable at precision ≈1.0 / recall ≈1.0 on
-  planted ground truth (`chain_extract`).
+- **Interrelated alphabets.** True isomorphs at **z ≈ 117** vs a shuffle null —
+  only possible with interrelated per-position alphabets.
+- **Linear-class cipher.** On clean anchors the progressive-consistency test
+  gives **0 contradictions** and excludes periodic/autokey/Alberti; it confirms
+  the **class** `{pmp, pure, beaufort}`, not `pmp` uniquely (`model_power`).
+- **Triplet structure (model-free, `shared_structure`).**
+  - **Triplet 1 (E1/W1/E2)** shares a ~22-glyph opening; **Triplet 3
+    (E4/W4/E5)** shares ~18 — both far above the random-aligned null (~5–7).
+  - **Triplet 2 (W2/E3/W3)** shares no long opening; **E3 is structurally
+    distinct** (longest message). A cross-triplet passage exists (`W2/E4/W4`).
+  - `EyeWitness` adjudicates **TRIPLETS (Theory 2)** over pairs-plus-E5 by 76
+    logL, surviving header-stripping; E5 sits *inside* a clique.
+- **Header.** Positions 1–2 are a **literal universal (66,5) marker**
+  (p≈3e-12), not body keystream; it does not encode 34.
+- **Per-triplet keystreams.** Only within-triplet pairs are in depth (cross
+  z≈−0.5); each triplet carries its own keystream (`keystream_scope`).
+- **Contamination-resistant anchors.** The clean, fully-aligned same-plaintext
+  isomorphs are recoverable at precision/recall ≈ 1.0 on planted ground truth
+  (`chain_extract`); the filter is **model-robust** (pmp and free-δ flag the
+  identical clean/contaminated split).
+- **Two sharp crib targets (this cycle).** The refrain (T1) region and the
+  **Triplet-3 dof-1 passage** (`E4@50/W4@52/E5@51`, `L=30`) are each a genuine
+  same-plaintext set; jointly they reach **72/83 symbols (87 %)**, 75/83 with the
+  T1 opening, with **35 symbols overlapping** for cross-validation. Verified;
+  see `cribscan/CRIBSCAN_MATH.md` §3 and `passread.py`.
 
 ## Working HYPOTHESES (model-dependent — flagged, not proven)
 
-- **Per-message-progressive body cipher** `c[m][t]=C[(p[t]+base_m+t)]`. It is the
-  leading model and is *consistent* with the data, but the **model-verification audit
-  did NOT uniquely confirm it**: pure-progressive fits nearly as well, and a small
-  fraction of random windows pass the same consistency tests (`model_audit`,
-  `model_audit_report.md`). Treat as a hypothesis.
-- **The dof=2 refrain template** (the 22-glyph refrain's relative plaintext pinned to
-  a 2-parameter family; forced-same letters at positions (3,13),(4,5),(10,16)). This
-  follows from the per-message-progressive model and is therefore **model-dependent**;
-  do not treat a template match as confirmation by itself (`template`).
-- **Pure-progressive** (single global sliding alphabet) remains a live alternative;
-  the literal header would force it within the per-message-progressive family.
-- **EyeScoreboard ranking (`eyescoreboard`).** Methodology-audited scoreboard that
-  ranks interrelated-alphabet models on plant discrimination, real-corpus GF
-  contradiction rate (the metric that actually differs), and refrain extent.
-  **Premise (block-difference + triplet depth): YES** (isomorph z≈112). **Rank 1:**
-  per-message-progressive **SUPPORTED** (real contra 10.9% vs pure 15.0%; refrain
-  L=22 vs L=21). **Rank 2:** pure-progressive **SUGGESTIVE** (within 1 glyph on
-  refrain). **free-δ / autokey-1:** PERMISSIVE (0% real contradictions). Whole
-  families EXCLUDED (mono, OTP, AES, transposition, PRNG, CT-autokey, general-K).
-  **Triplet combine probe (meta-trigram hypothesis):** sum mod 83 and base-5
-  digit-sum across triplet members show IoC ≈ shuffle null (z≈0.5–2) — symbols are
-  **not** composites of the three messages in a triplet. Report:
-  `report/eyescoreboard.md`.
+- **The specific class member.** `pmp` (per-message-progressive) is the leading
+  reading and is *consistent*, but pure-progressive and Beaufort fit as well; the
+  literal header would collapse pmp→pure within the family. Treat drift and sign
+  as unknowns to sweep, not as fixed.
+- **The refrain dof=2 template** (forced-same `(3,13),(4,5),(10,16)`) and the
+  **Triplet-3 dof=2/relative-plaintext classes** `{1,11},{2,9},{4,12}` are
+  model-dependent structural cribs — use them to GENERATE and TEST candidates,
+  never as confirmation by themselves.
+- **EyeScoreboard ranking.** Premise YES (isomorph z≈112); Rank 1 pmp SUPPORTED,
+  Rank 2 pure SUGGESTIVE; free-δ/autokey-1 PERMISSIVE; whole families excluded.
 
 ## EXCLUDED / RETRACTED approaches (so we don't repeat them)
 
-- **IoC hill-climbing** to recover the alphabet — **proven degenerate** (reaches
-  near-true IoC on a *wrong* alphabet; IoC is order-blind). Do not use.
-- **"Plaintext is Finnish (not English)"** — **RETRACTED**. Wrong English phrases
-  fail the structural filter at 0/300 *even on a genuinely-English plant*, so phrase
-  failure says nothing about language. Language remains unknown.
-- **Blind phrase-guessing** — near-hopeless: random phrases pass the structural filter
-  at ~0/300 in any language (only the exact repeat-structure passes). Use
-  `refrain_sweep` to filter candidates by template instead.
-- **Expanding the crib word list to "narrow" the refrain** — does the OPPOSITE.
-  The refrain's only mandatory double letter is at positions (4,5) (the `BB`), and
-  ~161 `XYY` words plus ~25k words (via word endings / internal doubles) can fill it;
-  more candidates *widen* the space. Even a character-trigram model ranks English-
-  flavoured gibberish at the top. Narrowing comes from **stacking** compatible
-  anchors + a word-coverage gate (`refrain_compose`), not from a bigger word list.
-
-## Refrain double-letter structure (model-dependent, `refrain_compose`)
-
-Within the 22-glyph refrain, an adjacent **doubled letter is possible ONLY at (4,5)
-[forced] and optionally (6,7)/(7,8)**; every other adjacent pair is forced-different.
-The forced (4,5) double is the skeleton's `BB`. Use the composer to (a) report the
-double map (`--doubles`), (b) list template-compatible offsets for expected words and
-*fragments* (`--offsets god eye see …`), (c) enumerate **joint placements** that
-stack several expected words (`--compat god see eye` → `godseeye…`), and (d)
-trigram-fill + wcov-rank a shortlist (`--anchor god --anchor see`). Output is a
-candidate SHORTLIST for `order_solve`, not a read — the glyph→char ordering is still
-required. (`refrain_compose.selftest` 23/23.)
+- **IoC hill-climbing** to recover the alphabet — proven degenerate (near-true
+  IoC on a *wrong* alphabet; IoC is order-blind).
+- **"Plaintext is Finnish (not English)"** — RETRACTED; wrong phrases fail the
+  structural filter even on a genuine-English plant, so phrase failure says
+  nothing about language. Language remains unknown.
+- **Blind phrase-guessing / bigger crib word lists** — near-hopeless and
+  *counter*-productive; more candidates widen the space. Narrowing comes from
+  **stacking** compatible anchors + a coverage gate, not a bigger list.
+- **Pattern-mode crib testing on one target** — ~98 % permissive under a sliding
+  cipher (ciphertext reflects `p+t`, not `p`). *Superseded this cycle:* joint
+  placement across two overlapping targets adds 35 hard equality checks and is
+  not permissive (`CRIBSCAN_MATH.md` §3b).
+- **"The Triplet-3 passage yields 48 sound ordered pins"** — RETRACTED (mine).
+  It links 48 symbols but does not order them past the wall; the "48 pins" was a
+  solver-extraction bug, caught by running the export on a known-distinct plant
+  (it returned 1). Certified sound-pin counts come from `iso_relax`, not
+  hand-rolled solvers. `passread.py` reports linkage, not ordering.
 
 ## The OPEN problem & what would break it
 
-**The plaintext-alphabet ordering (glyph value → character) is the bottleneck.** It is
-the one thing not derivable from the ciphertext alone, and it is needed to *read* any
-recovered structure. With it:
-- the contamination-filtered same-plaintext anchors become readable;
-- the ordering-search / crib tools (`order_solve`, `ngram_solve`, `refrain_attack`,
-  validated on plants to recover English from a sufficient crib) become live;
-- a correct ~22-glyph refrain crib would pin most of the alphabet.
+**The glyph value → character ordering is the bottleneck** — the one thing not
+derivable from ciphertext alone, needed to *read* any recovered structure. The
+alphabet **links but does not order**: `iso_relax` exports 16 sound pins,
+`support_min` needs ~22 to converge (100 % by 40), and the anneal's overfit
+control shows the current floor ≈ a shuffled-corpus floor. All downstream
+readers (`support_min`, `order_anneal`, `ordering_bridge`, `passread`) are
+validated on plants and ready the moment the alphabet crosses linked→ordered.
 
-**What would break it open (in priority order):**
-1. An **external glyph→letter anchor** (a confirmed font/value mapping, an acrostic,
-   or community Rosetta data) — model-independent and unlocks reading.
-2. A **correct ~22-glyph refrain phrase** (full region, not 13 letters) — the
-   crib/ordering tools then recover the alphabet (validated on plants).
-3. New **independent repeated structure** beyond the one refrain — more
-   same-plaintext anchors.
+**What would break it open (priority order):**
+1. An **external glyph→letter anchor** (font/value map, acrostic, community
+   Rosetta) — model-independent, unlocks reading directly.
+2. A **correct crib on either sharp target.** A correct guess *orders* the
+   symbols it covers. The refrain (59 symbols) and the Triplet-3 passage (48)
+   overlap in 35, so a **jointly-consistent pair of guesses** orders ~72 symbols
+   — past `support_min`'s floor — and the 35-symbol overlap rejects wrong pairs.
+   This is the sharpened correct-crib route; drive `passread.place_crib` +
+   refrain crib under an overlap gate from a salakieli / noita-lexicon list.
+3. **New independent repeated structure** — more same-plaintext anchors. Run
+   `iso_relax` against the Triplet-3 and cross-triplet (`W2/E4/W4`) structures
+   for a *certified* pin count and, if it lifts the floor, feed `support_min`.
 
 ## The audit chain (reproducibility)
 
 ```bash
-python3 noita_eye_core/selftest.py        # aggregate math gate (829/829)
-python3 eyewitness/datastream_check.py    # corpus integrity, 3 independent sources
+python3 noita_eye_core/selftest.py        # aggregate math gate
 python3 eyewitness/binary_provenance.py   # decompiled noita.exe -> corpus 9/9
-python3 eyewitness/shared_structure.py    # model-free triplet/shared-opening map
-python3 eyewitness/model_audit.py         # model verification (honest verdict)
-python3 eyewitness/eyescoreboard.py       # cipher candidate ranking (methodology-audited)
-python3 eyewitness/refrain_template.py    # refrain repeat-template (dof=2; hypothesis)
-python3 eyewitness/keyspace_ledger.py     # block structure -> key/keyspace ledger
-python3 eyecrack/refrain_sweep.py --show-template   # template-guided refrain sweep
-python3 eyecrack/refrain_compose.py --doubles       # refrain double-letter map + anchored composer
-python3 eyewitness/passage_template.py --html       # discover · extend · template pipeline
-python3 eyewitness/passage_template.py --audit      # paranoia invariants on real corpus
-python3 eyewitness/passage_template_integration.py  # plumbing smoke (26 checks)
-python3 eyewitness/viewer_anchor.py --html        # Isomorph Viewer → anchor candidacy
-python3 eyewitness/viewer_anchor.py --audit       # viewer anchor invariants
-python3 eyes.py                           # menu of all tools + dashboard build
+python3 eyewitness/shared_structure.py    # model-free triplet / repeated-passage map
+python3 eyewitness/eyescoreboard.py       # cipher-candidate ranking (methodology-audited)
+python3 eyeforward/model_power.py         # what the consistency test proves (class, not pmp)
+python3 eyeforward/iso_relax.py           # anchor densification + sound-pin export
+python3 eyeforward/support_min.py         # language-free q recovery (needs ~22 pins)
+python3 eyeforward/ordering_bridge.py     # same-day verdict for any ordering hypothesis
+python3 cribscan/passread.py --selftest   # Triplet-3 passage reader + crib (plant-validated)
+python3 cribscan/passread.py --passage t3-dof1 --L 30   # real-corpus structure + coverage
 ```
 
-Every link is either **SOLID-with-evidence** or **honestly flagged as hypothesis**;
-the chain deliberately records negative/inconclusive results (model not uniquely
-confirmed; Finnish retracted) so it stays trustworthy. Detailed reports live in
-`report/`.
+Every link is either **SOLID-with-evidence** or **honestly flagged as
+hypothesis**; the chain records its negatives and retractions (model not
+uniquely confirmed; Finnish retracted; the 48-pins solver bug) so it stays
+trustworthy. Detailed reports live in `report/` and `cribscan/`.
 
 ---
 
-*Generated as the consolidated state of the investigation. For the granular
-fingerprint see `FINGERPRINT.md`; for the interactive dashboard see `report.html`.*
+*Consolidated state of the investigation. Granular fingerprint: `FINGERPRINT.md`.
+Passage-attack math: `cribscan/CRIBSCAN_MATH.md`. Interactive dashboard:
+`report.html`.*
