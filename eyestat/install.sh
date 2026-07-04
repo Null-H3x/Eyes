@@ -47,6 +47,16 @@ SKIP_CUDA=false
 SKIP_VALIDATE=false
 QUIET=false
 VENV_PATH="$HOME/.venvs/eyestat"
+# GUARD: if the script is run under sudo, $HOME is /root, so the venv lands
+# in /root/.venvs/eyestat — but you then activate ~/.venvs/eyestat as your
+# normal user and CuPy/scipy "vanish" (they're in root's venv). Redirect to
+# the invoking user's home and warn, unless an explicit --venv-path is given.
+if [[ -n "${SUDO_USER:-}" && "$HOME" == "/root" ]]; then
+    _REAL_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    if [[ -n "$_REAL_HOME" ]]; then
+        VENV_PATH="$_REAL_HOME/.venvs/eyestat"
+    fi
+fi
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CUDA_VERSION="12-8"   # Blackwell-compatible
 CUPY_PACKAGE="cupy-cuda12x"
@@ -121,15 +131,22 @@ else
     info "sudo will prompt for password when needed"
 fi
 
-# Detect GPU
+# Detect GPU — nvidia-smi is authoritative (it talks to the driver); lspci
+# is only a fallback because its device-ID database can be stale/missing on
+# newer Ubuntu (26.04), which makes a present 5080 look absent.
 HAVE_GPU=false
 if [[ "$SKIP_GPU" == "false" ]]; then
-    if lspci 2>/dev/null | grep -qi nvidia; then
+    if command -v nvidia-smi &>/dev/null && \
+       nvidia-smi --query-gpu=name --format=csv,noheader &>/dev/null; then
+        GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
+        ok "Nvidia GPU detected (nvidia-smi): $GPU_NAME"
+        HAVE_GPU=true
+    elif lspci 2>/dev/null | grep -qi nvidia; then
         GPU_NAME=$(lspci 2>/dev/null | grep -iE '(vga|3d).*nvidia' | head -1 | sed 's/.*: //' || echo "Nvidia GPU")
-        ok "Nvidia GPU detected: $GPU_NAME"
+        ok "Nvidia GPU detected (lspci): $GPU_NAME"
         HAVE_GPU=true
     else
-        warn "No Nvidia GPU detected — switching to CPU-only mode"
+        warn "No Nvidia GPU detected (checked nvidia-smi and lspci) — CPU-only mode"
         SKIP_GPU=true
         SKIP_CUDA=true
     fi
@@ -345,30 +362,34 @@ if [[ "$SKIP_VALIDATE" == "false" ]]; then
 
     # Selftest (CPU only — no GPU dependency)
     info "Running eyestat_selftest.py..."
-    if python3 eyestat_selftest.py >/tmp/eyestat_selftest.log 2>&1; then
-        if grep -q "8/8 phases passed" /tmp/eyestat_selftest.log; then
-            ok "selftest: 8/8 phases passed"
+    LOGDIR="${VENV_PATH%/*/*}/eyestat_install_logs"
+    mkdir -p "$LOGDIR" 2>/dev/null || LOGDIR="$(pwd)"
+    SELFTEST_LOG="$LOGDIR/eyestat_selftest.log"
+    PREFLIGHT_LOG="$LOGDIR/eyestat_preflight.log"
+    if python3 eyestat_selftest.py >"$SELFTEST_LOG" 2>&1; then
+        if grep -qE "[0-9]+/[0-9]+ phases passed" "$SELFTEST_LOG" && grep -qvE "[0-9]+/[0-9]+ phases passed.*FAIL" "$SELFTEST_LOG"; then
+            ok "selftest phases passed"
         else
-            warn "selftest ran but result unclear — see /tmp/eyestat_selftest.log"
+            warn "selftest ran but result unclear — see $SELFTEST_LOG"
         fi
     else
-        warn "selftest failed — see /tmp/eyestat_selftest.log"
+        warn "selftest failed — see $SELFTEST_LOG"
     fi
 
     # Preflight (validates data files, scoring, environment)
     info "Running eyestat_preflight.py..."
-    if python3 eyestat_preflight.py --no-color --output-dir /tmp/eyestat_preflight_check \
-            >/tmp/eyestat_preflight.log 2>&1; then
-        if grep -q "ALL SYSTEMS GREEN" /tmp/eyestat_preflight.log; then
+    if python3 eyestat_preflight.py --no-color --output-dir "$LOGDIR/preflight_check" \
+            >"$PREFLIGHT_LOG" 2>&1; then
+        if grep -q "ALL SYSTEMS GREEN" "$PREFLIGHT_LOG"; then
             ok "preflight: all checks green"
-        elif grep -q "WARNINGS" /tmp/eyestat_preflight.log; then
-            warn "preflight passed with warnings — see /tmp/eyestat_preflight.log"
+        elif grep -q "WARNINGS" "$PREFLIGHT_LOG"; then
+            warn "preflight passed with warnings — see $PREFLIGHT_LOG"
         else
-            warn "preflight ran but result unclear — see /tmp/eyestat_preflight.log"
+            warn "preflight ran but result unclear — see $PREFLIGHT_LOG"
         fi
-        rm -rf /tmp/eyestat_preflight_check
+        rm -rf "$LOGDIR/preflight_check"
     else
-        warn "preflight failed — see /tmp/eyestat_preflight.log"
+        warn "preflight failed — see $PREFLIGHT_LOG"
     fi
 
     # GPU probe (if GPU present)
