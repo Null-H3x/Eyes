@@ -490,6 +490,65 @@ def phase7_error_paths() -> bool:
 # Top-level driver
 # ---------------------------------------------------------------------------
 
+def phase9_run_summary() -> bool:
+    """Verify write_run_summary + _scan_near_misses produce a correct
+    readable artifact on BOTH the clean-null and has-entries paths."""
+    print("\n=== PHASE 9: Run-summary artifact ===")
+    try:
+        import eyestat_runner as R
+
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "ct.json").write_text('{"ciphertexts":[[1,2]]}')
+
+            # --- clean partial null: no result shards at all ---
+            R.write_run_summary(
+                output_dir=str(d),
+                modes=["xgak_sum_right", "kak_right"],
+                prngs=["park_miller_v0", "mt19937"],
+                seed_start=0, seed_end=1_000_000, threshold=13,
+                n_tried=109_000, n_hits=0, n_errors=2,
+                est_total_keys=1_000_000, elapsed=605_045.0,
+                total_units=100, completed_units=11, top_hits=[],
+                data_path=str(d / "ct.json"), status="PARTIAL")
+            txt = (d / "run_summary.txt").read_text()
+            need = ["RUN SUMMARY", "COVERAGE", "HONEST SCOPE",
+                    "NO SURVIVORS", "10.90%"]
+            miss = [s for s in need if s not in txt]
+            if miss:
+                print(f"  ✗ FAIL: clean-null summary missing {miss}")
+                return False
+            # partial coverage must NOT read as exhaustive
+            if "100.00%" in txt.split("coverage of THIS run")[1][:20]:
+                print("  ✗ FAIL: partial run mislabeled as full coverage")
+                return False
+            print("  ✓ clean-null summary: coverage + honest-scope present")
+
+            # --- has-entries path: near-miss scan ranks across shards ---
+            (d / "results_a.txt").write_text(
+                "=== mode=kak_right prng=mt19937 key=seed:9981 "
+                "max_hits=11 ===\n  [english] hits=11 zipf_score=3.02\n"
+                "  text: x\n\n")
+            (d / "results_b.txt").write_text(
+                "=== mode=xgak_sum_right prng=park_miller_v0 key=seed:404 "
+                "max_hits=8 ===\n  [english] hits=8 zipf_score=2.11\n"
+                "  text: y\n\n")
+            near, n = R._scan_near_misses(str(d))
+            if n != 2 or [h for h, _, _ in near] != [11, 8]:
+                print(f"  ✗ FAIL: near-miss ranking wrong: n={n}, "
+                      f"hits={[h for h,_,_ in near]}")
+                return False
+            print("  ✓ near-miss scan ranks across shards by hits desc")
+
+        print("PHASE 9 PASSED")
+        return True
+    except Exception as e:
+        print(f"  ✗ EXCEPTION: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def run_full_selftest() -> int:
     """Run all phases. Returns exit code (0 = all pass)."""
     phases = [
@@ -501,6 +560,7 @@ def run_full_selftest() -> int:
         ("Pontifex KAT",           phase6_pontifex_kat),
         ("Vigenère KAT",           phase8_vigenere_kat),
         ("Error-path resilience",  phase7_error_paths),
+        ("Run-summary artifact",   phase9_run_summary),
     ]
 
     results = []

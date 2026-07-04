@@ -137,6 +137,115 @@ def build_cmd(args, passthrough) -> list:
     return cmd + list(passthrough)
 
 
+def doctor(output_dir: Path, log_path: Path | None) -> int:
+    """Diagnose a stuck / short / finished run from on-disk artifacts alone.
+
+    Written for the offline case: when you're on the Ubuntu box with no
+    Claude to paste output to, `python3 run.py --doctor` reconstructs what
+    the run actually did from shard filenames (which encode each shard's
+    seed range) and points you at the next command to run yourself."""
+    print(_c("=" * 66, "1;36"))
+    print(_c("run.py --doctor : reconstructing the run from disk", "1;36"))
+    print(_c("=" * 66, "1;36"))
+
+    if not output_dir.exists():
+        print(f"output dir does not exist: {output_dir}")
+        print("→ nothing has run here. Launch with:  python3 run.py")
+        return 0
+
+    # Shards can be in temp/ (new layout) or flat (legacy).
+    search = [output_dir / "temp", output_dir]
+    shards = []
+    for d in search:
+        if d.exists():
+            shards += sorted(d.glob("results_*.txt"))
+    shards = sorted(set(shards))
+
+    print(f"output dir            : {output_dir}")
+    print(f"completed shards      : {len(shards)}")
+
+    if not shards:
+        print("\nNo completed shards on disk. Either the run never reached "
+              "its\nfirst shard boundary, or it died in preflight/validate.")
+        if log_path and log_path.is_file():
+            _tail_diagnostics(log_path)
+        else:
+            print("→ check the run log:  grep -iE "
+                  "'error|abort|validate|fail|Traceback' <your.log>")
+        return 0
+
+    # Parse seed ranges out of the filenames: results_<mode>_<prng>_<s>_<e>.txt
+    covered = []
+    for s in shards:
+        parts = s.stem.split("_")
+        try:
+            lo, hi = int(parts[-2]), int(parts[-1])
+            covered.append((lo, hi))
+        except (ValueError, IndexError):
+            continue
+    covered.sort()
+    if covered:
+        lo_min = min(c[0] for c in covered)
+        hi_max = max(c[1] for c in covered)
+        span = sum(hi - lo for lo, hi in covered)
+        print(f"seed range on disk    : [{lo_min:,} … {hi_max:,})")
+        print(f"seeds actually covered: {span:,}")
+        full = PM_SEED_END - PM_SEED_START
+        print(f"fraction of PM space  : {span / full * 100:.4f}%  "
+              f"(of {full:,})")
+        # Detect gaps — a non-contiguous cover is the resume/short signature.
+        gaps = []
+        cur = covered[0][1]
+        for lo, hi in covered[1:]:
+            if lo > cur:
+                gaps.append((cur, lo))
+            cur = max(cur, hi)
+        if gaps:
+            print(_c(f"\n⚠ {len(gaps)} GAP(S) in coverage — the run did NOT "
+                     "scan contiguously:", "1;33"))
+            for g0, g1 in gaps[:5]:
+                print(f"    missing [{g0:,} … {g1:,})")
+            print("  This is the 'short selection' signature: shards were "
+                  "skipped\n  (resume into a used dir) or the run stopped "
+                  "early.")
+
+    # run_summary.txt is the richer artifact if it exists.
+    summ = output_dir / "results" / "run_summary.txt"
+    if summ.is_file():
+        print(_c(f"\nrun_summary.txt present → read it:", "1;32"))
+        print(f"    cat {summ}")
+    else:
+        print("\nno run_summary.txt yet (written at end-of-run / merge).")
+
+    if log_path and log_path.is_file():
+        _tail_diagnostics(log_path)
+    print(_c("\nnext:", "1;36"),
+          "resume with  python3 run.py --resume  |  restart clean with "
+          "--fresh")
+    return 0
+
+
+def _tail_diagnostics(log_path: Path) -> None:
+    """Surface the tell-tale lines from a run log without needing Claude."""
+    print(_c(f"\nlog tell-tales ({log_path}):", "1;36"))
+    keys = ("error", "abort", "validate", "fail", "traceback", "exceeds",
+            "cupy", "memory", "skip", "done")
+    try:
+        hits = []
+        with open(log_path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                low = line.lower()
+                if any(k in low for k in keys):
+                    hits.append(line.rstrip())
+        if hits:
+            for h in hits[-15:]:
+                print("    " + h)
+        else:
+            print("    (no error/skip/done markers found)")
+    except OSError as e:
+        print(f"    could not read log: {e}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__.splitlines()[0],
@@ -162,10 +271,18 @@ def main() -> int:
                     help="preflight, but don't run the full selftest")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the command and exit without running")
+    ap.add_argument("--doctor", action="store_true",
+                    help="diagnose a stuck/short/finished run from disk and "
+                         "exit (offline-friendly: needs no network)")
+    ap.add_argument("--log", type=Path, default=None,
+                    help="path to the run log for --doctor to scan")
     args, passthrough = ap.parse_known_args()
     # argparse leaves a leading '--' in passthrough; drop it.
     if passthrough and passthrough[0] == "--":
         passthrough = passthrough[1:]
+
+    if args.doctor:
+        return doctor(args.output_dir, args.log)
 
     if args.seed_start < 1:
         print(_c("[warn] seed-start < 1: Park-Miller seed 0 is a fixed "
