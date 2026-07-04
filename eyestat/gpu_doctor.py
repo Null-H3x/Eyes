@@ -134,17 +134,39 @@ def main() -> int:
             import cupy  # type: ignore
             n = cupy.cuda.runtime.getDeviceCount()
             if n >= 1:
-                name = cupy.cuda.runtime.getDeviceProperties(0)["name"]
+                props = cupy.cuda.runtime.getDeviceProperties(0)
+                name = props["name"]
                 name = name.decode() if isinstance(name, bytes) else name
-                # a real kernel round-trips
+                cc_major = props.get("major", 0)
+                cc_minor = props.get("minor", 0)
+                cc = cc_major * 10 + cc_minor
+                # a real kernel round-trips (this is what actually fails on
+                # a CUDA-too-old-for-the-arch mismatch — import succeeds,
+                # launch throws / silently misbehaves)
                 x = cupy.arange(1000, dtype=cupy.int64)
                 s = int((x * 2).sum().get())
                 assert s == 999 * 1000
-                print(f"  {OK} {n} device(s); device0 = {name}; "
-                      "kernel round-trip verified")
                 rtv = cupy.cuda.runtime.runtimeGetVersion()
-                print(f"  {OK} CUDA runtime {rtv // 1000}.{(rtv % 1000)//10} "
+                rt_major, rt_minor = rtv // 1000, (rtv % 1000) // 10
+                print(f"  {OK} {n} device(s); device0 = {name} "
+                      f"(sm_{cc}); kernel round-trip verified")
+                print(f"  {OK} CUDA runtime {rt_major}.{rt_minor} "
                       f"(CuPy {cupy_ver})")
+                # Blackwell (sm_120, RTX 50-series) needs CUDA >= 12.8.
+                # If the wheel's runtime is older, the kernel above would
+                # typically fail — but warn explicitly so the cause is named
+                # even on driver/runtime combos that limp.
+                if cc >= 120 and (rt_major, rt_minor) < (12, 8):
+                    print(f"  {BAD} {name} is Blackwell (sm_{cc}) but the "
+                          f"CuPy CUDA runtime is {rt_major}.{rt_minor}; "
+                          "Blackwell needs CUDA 12.8+.")
+                    print(f"{FIX} install a CUDA-12.8+ CuPy build:")
+                    print(f"           {py} -m pip install -U "
+                          "'cupy-cuda12x>=13.4'   # ships CUDA 12.8+ runtime")
+                    problems.append("blackwell_cuda_too_old")
+                elif cc >= 120:
+                    print(f"  {OK} Blackwell sm_{cc} on CUDA "
+                          f"{rt_major}.{rt_minor} — meets the 12.8+ floor")
             else:
                 print(f"  {BAD} CuPy sees 0 devices")
                 problems.append("cupy_zero_devices")

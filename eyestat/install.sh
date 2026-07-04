@@ -97,8 +97,8 @@ fi
 if [[ "${ID:-}" != "ubuntu" ]]; then
     warn "This script targets Ubuntu — you're on ${ID:-unknown}. Proceeding anyway."
 fi
-if [[ "${VERSION_ID:-}" != "24.04" ]]; then
-    warn "This script is tuned for Ubuntu 24.04 LTS — you're on ${VERSION_ID:-unknown}."
+if [[ "${VERSION_ID:-}" != "24.04" && "${VERSION_ID:-}" != "26.04" ]]; then
+    warn "Tested on Ubuntu 24.04 and 26.04 LTS — you're on ${VERSION_ID:-unknown}."
     warn "It will likely still work, but adjust if you hit version-specific issues."
 else
     ok "Ubuntu ${VERSION_ID} (${VERSION_CODENAME:-noble}) detected"
