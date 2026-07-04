@@ -1,0 +1,248 @@
+
+=== East 1 lag 28  crib 'änikatsoi' @corpus 230056  span 40..76 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      13/13 violations
+  M1 linear:    best slope 72 agrees 2/13
+  M2 stepped:   min-breaks 3 (null 3.9±0.9, z=-1.02), support 0
+  M3 periodic:  best ['T=5 v=0 s=0', 'T=8 v=0 s=0']
+  M4 psum:      eqs 2 rank 1 checks 1 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 1 lag 28  crib 'lituuitte' @corpus 257298  span 40..76 (18 pos, 29 same-letter pairs) ===
+  M0 mono:      29/29 violations
+  M1 linear:    best slope 78 agrees 4/29
+  M2 stepped:   min-breaks 5 (null 6.4±1.1, z=-1.33), support 0
+  M3 periodic:  best ['T=10 v=0 s=0', 'T=11 v=1 s=0']
+  M4 psum:      eqs 10 rank 3 checks 7 -> inconsistent (7 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=7 s=1', 'c[i-3]-c[i] v=7 s=1']
+
+=== East 1 lag 28  crib 'lemminkäi' @corpus 524753  span 40..76 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      15/17 violations
+  M1 linear:    best slope 72 agrees 3/17
+  M2 stepped:   min-breaks 3 (null 4.6±1.0, z=-1.67), support 2
+  M3 periodic:  best ['T=5 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== West 1 lag 30  crib 'potkaisih' @corpus 102200  span 40..78 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      13/13 violations
+  M1 linear:    best slope 33 agrees 3/13
+  M2 stepped:   min-breaks 3 (null 3.8±0.9, z=-0.96), support 0
+  M3 periodic:  best ['T=9 v=0 s=0', 'T=11 v=0 s=0']
+  M4 psum:      eqs 2 rank 1 checks 1 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== West 1 lag 30  crib 'iksimeren' @corpus 190459  span 40..78 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 33 agrees 3/17
+  M2 stepped:   min-breaks 4 (null 4.6±0.9, z=-0.70), support 0
+  M3 periodic:  best ['T=12 v=0 s=0', 'T=7 v=1 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== West 1 lag 30  crib 'ataksensa' @corpus 271947  span 40..78 (18 pos, 25 same-letter pairs) ===
+  M0 mono:      25/25 violations
+  M1 linear:    best slope 9 agrees 3/25
+  M2 stepped:   min-breaks 5 (null 5.8±0.9, z=-0.89), support 0
+  M3 periodic:  best ['T=7 v=1 s=0', 'T=9 v=2 s=0']
+  M4 psum:      eqs 8 rank 3 checks 5 -> inconsistent (4 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== West 1 lag 30  crib 'mahanmait' @corpus 305285  span 40..78 (18 pos, 25 same-letter pairs) ===
+  M0 mono:      25/25 violations
+  M1 linear:    best slope 33 agrees 3/25
+  M2 stepped:   min-breaks 5 (null 5.7±0.8, z=-0.77), support 0
+  M3 periodic:  best ['T=12 v=0 s=0', 'T=8 v=1 s=0']
+  M4 psum:      eqs 8 rank 2 checks 6 -> inconsistent (6 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== West 1 lag 30  crib 'esenkanka' @corpus 470446  span 40..78 (18 pos, 25 same-letter pairs) ===
+  M0 mono:      25/25 violations
+  M1 linear:    best slope 9 agrees 3/25
+  M2 stepped:   min-breaks 4 (null 5.7±1.0, z=-1.65), support 0
+  M3 periodic:  best ['T=12 v=0 s=0', 'T=7 v=1 s=0']
+  M4 psum:      eqs 8 rank 2 checks 6 -> inconsistent (5 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=8 s=1', 'c[i-3]-c[i] v=8 s=1']
+
+=== West 1 lag 30  crib 'enkankaas' @corpus 470568  span 40..78 (18 pos, 29 same-letter pairs) ===
+  M0 mono:      27/29 violations
+  M1 linear:    best slope 72 agrees 4/29
+  M2 stepped:   min-breaks 5 (null 6.3±1.0, z=-1.31), support 2
+  M3 periodic:  best ['T=7 v=0 s=0', 'T=8 v=0 s=0']
+  M4 psum:      eqs 10 rank 2 checks 8 -> inconsistent (8 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=7 s=1', 'c[i-3]-c[i] v=7 s=1']
+
+=== West 1 lag 30  crib 'eikertaak' @corpus 471478  span 40..78 (18 pos, 21 same-letter pairs) ===
+  M0 mono:      21/21 violations
+  M1 linear:    best slope 9 agrees 3/21
+  M2 stepped:   min-breaks 4 (null 5.2±1.1, z=-1.13), support 0
+  M3 periodic:  best ['T=7 v=0 s=0', 'T=8 v=1 s=0']
+  M4 psum:      eqs 6 rank 3 checks 3 -> inconsistent (3 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== West 1 lag 30  crib 'npotkasev' @corpus 532647  span 40..78 (18 pos, 9 same-letter pairs) ===
+  M0 mono:      9/9 violations
+  M1 linear:    best slope 33 agrees 3/9
+  M2 stepped:   min-breaks 1 (null 3.1±0.9, z=-2.34), support 0
+  M3 periodic:  best ['T=4 v=0 s=0', 'T=7 v=0 s=0']
+  M4 psum:      eqs 0 rank 0 checks 0 -> CONSISTENT p≈83^-0
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== West 1 lag 30  crib 'nhiljalle' @corpus 533350  span 40..78 (18 pos, 21 same-letter pairs) ===
+  M0 mono:      21/21 violations
+  M1 linear:    best slope 22 agrees 3/21
+  M2 stepped:   min-breaks 5 (null 5.4±0.7, z=-0.58), support 0
+  M3 periodic:  best ['T=7 v=0 s=0', 'T=8 v=0 s=0']
+  M4 psum:      eqs 6 rank 2 checks 4 -> inconsistent (3 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=7 s=1', 'c[i-3]-c[i] v=7 s=1']
+
+=== West 1 lag 30  crib 'jankaiken' @corpus 537836  span 40..78 (18 pos, 21 same-letter pairs) ===
+  M0 mono:      21/21 violations
+  M1 linear:    best slope 9 agrees 3/21
+  M2 stepped:   min-breaks 3 (null 5.2±1.0, z=-2.26), support 0
+  M3 periodic:  best ['T=7 v=0 s=0', 'T=8 v=1 s=0']
+  M4 psum:      eqs 6 rank 3 checks 3 -> inconsistent (3 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'seppoilma' @corpus 70990  span 45..88 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      13/13 violations
+  M1 linear:    best slope 1 agrees 2/13
+  M2 stepped:   min-breaks 3 (null 3.8±0.9, z=-0.94), support 0
+  M3 periodic:  best ['T=8 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 2 rank 1 checks 1 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'luojalaul' @corpus 190346  span 45..88 (18 pos, 29 same-letter pairs) ===
+  M0 mono:      29/29 violations
+  M1 linear:    best slope 78 agrees 4/29
+  M2 stepped:   min-breaks 5 (null 6.1±1.0, z=-1.13), support 0
+  M3 periodic:  best ['T=12 v=0 s=0', 'T=9 v=1 s=0']
+  M4 psum:      eqs 10 rank 4 checks 6 -> inconsistent (5 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=7 s=1', 'c[i-3]-c[i] v=7 s=1']
+
+=== East 2 lag 35  crib 'yöksiläht' @corpus 193561  span 45..88 (18 pos, 9 same-letter pairs) ===
+  M0 mono:      9/9 violations
+  M1 linear:    best slope 1 agrees 2/9
+  M2 stepped:   min-breaks 1 (null 3.1±0.9, z=-2.42), support 0
+  M3 periodic:  best ['T=2 v=0 s=0', 'T=3 v=0 s=0']
+  M4 psum:      eqs 0 rank 0 checks 0 -> CONSISTENT p≈83^-0
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'kivitupah' @corpus 207007  span 45..88 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      13/13 violations
+  M1 linear:    best slope 1 agrees 2/13
+  M2 stepped:   min-breaks 3 (null 3.8±0.9, z=-0.90), support 0
+  M3 periodic:  best ['T=4 v=0 s=0', 'T=6 v=0 s=0']
+  M4 psum:      eqs 2 rank 1 checks 1 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'atäysines' @corpus 232880  span 45..88 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      11/13 violations
+  M1 linear:    best slope 1 agrees 2/13
+  M2 stepped:   min-breaks 1 (null 3.8±0.9, z=-3.24), support 2
+  M3 periodic:  best ['T=2 v=0 s=2', 'T=4 v=0 s=2']
+  M4 psum:      eqs 2 rank 1 checks 1 -> CONSISTENT p≈83^-1
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'aeinähnyt' @corpus 278832  span 45..88 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      13/13 violations
+  M1 linear:    best slope 1 agrees 2/13
+  M2 stepped:   min-breaks 3 (null 3.9±0.8, z=-1.08), support 0
+  M3 periodic:  best ['T=6 v=0 s=0', 'T=9 v=0 s=0']
+  M4 psum:      eqs 2 rank 1 checks 1 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'aeiolluts' @corpus 286393  span 45..88 (18 pos, 13 same-letter pairs) ===
+  M0 mono:      13/13 violations
+  M1 linear:    best slope 1 agrees 2/13
+  M2 stepped:   min-breaks 3 (null 3.9±0.9, z=-0.99), support 0
+  M3 periodic:  best ['T=8 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 2 rank 1 checks 1 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=7 s=0', 'c[i-3]-c[i] v=7 s=0']
+
+=== East 2 lag 35  crib 'kusseikym' @corpus 286410  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 4 agrees 3/17
+  M2 stepped:   min-breaks 3 (null 4.6±0.9, z=-1.73), support 0
+  M3 periodic:  best ['T=8 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'pannapalj' @corpus 290673  span 45..88 (18 pos, 29 same-letter pairs) ===
+  M0 mono:      29/29 violations
+  M1 linear:    best slope 78 agrees 2/29
+  M2 stepped:   min-breaks 5 (null 6.2±0.9, z=-1.26), support 0
+  M3 periodic:  best ['T=9 v=1 s=0', 'T=11 v=1 s=0']
+  M4 psum:      eqs 10 rank 3 checks 7 -> inconsistent (7 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'karjankäy' @corpus 309318  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 4 agrees 3/17
+  M2 stepped:   min-breaks 3 (null 4.7±0.9, z=-1.88), support 0
+  M3 periodic:  best ['T=9 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'nmukahans' @corpus 324298  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      15/17 violations
+  M1 linear:    best slope 0 agrees 2/17
+  M2 stepped:   min-breaks 3 (null 4.5±0.9, z=-1.56), support 2
+  M3 periodic:  best ['T=8 v=0 s=0', 'T=9 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'sulhotsou' @corpus 355689  span 45..88 (18 pos, 21 same-letter pairs) ===
+  M0 mono:      21/21 violations
+  M1 linear:    best slope 4 agrees 3/21
+  M2 stepped:   min-breaks 3 (null 5.0±1.0, z=-2.03), support 0
+  M3 periodic:  best ['T=9 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 6 rank 3 checks 3 -> inconsistent (3 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'neietsout' @corpus 355768  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      15/17 violations
+  M1 linear:    best slope 1 agrees 2/17
+  M2 stepped:   min-breaks 3 (null 4.4±0.9, z=-1.65), support 2
+  M3 periodic:  best ['T=4 v=0 s=2', 'T=6 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (1 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'elevikult' @corpus 393734  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 1 agrees 2/17
+  M2 stepped:   min-breaks 3 (null 4.6±0.9, z=-1.71), support 0
+  M3 periodic:  best ['T=4 v=0 s=0', 'T=8 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'väinämöis' @corpus 550468  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 1 agrees 2/17
+  M2 stepped:   min-breaks 3 (null 4.7±1.0, z=-1.70), support 0
+  M3 periodic:  best ['T=9 v=0 s=0', 'T=11 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'etsitähän' @corpus 581963  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 1 agrees 2/17
+  M2 stepped:   min-breaks 4 (null 4.5±1.0, z=-0.54), support 0
+  M3 periodic:  best ['T=6 v=0 s=0', 'T=9 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
+
+=== East 2 lag 35  crib 'iteltuasi' @corpus 604652  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 78 agrees 2/17
+  M2 stepped:   min-breaks 3 (null 4.6±0.9, z=-1.70), support 0
+  M3 periodic:  best ['T=6 v=0 s=0', 'T=10 v=0 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=5 s=1', 'c[i-3]-c[i] v=5 s=1']
+
+=== East 2 lag 35  crib 'itkolinna' @corpus 608089  span 45..88 (18 pos, 17 same-letter pairs) ===
+  M0 mono:      17/17 violations
+  M1 linear:    best slope 4 agrees 3/17
+  M2 stepped:   min-breaks 4 (null 4.6±0.9, z=-0.66), support 0
+  M3 periodic:  best ['T=11 v=0 s=0', 'T=8 v=1 s=0']
+  M4 psum:      eqs 4 rank 2 checks 2 -> inconsistent (2 bad rows)
+  M5 ct-autokey: best ['c[i]-c[i-3] v=6 s=1', 'c[i-3]-c[i] v=6 s=1']
