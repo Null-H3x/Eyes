@@ -1,7 +1,7 @@
 From f3e3bb1268f7a6bc4f10779cb91f02a7398604e4 Mon Sep 17 00:00:00 2001
 From: Null-H3x <null-h3x@users.noreply.github.com>
 Date: Fri, 3 Jul 2026 23:27:35 +0000
-Subject: [PATCH 1/5] eyestat runner: always-on readable run_summary.txt for
+Subject: [PATCH 1/6] eyestat runner: always-on readable run_summary.txt for
  review
 
 The runner only wrote bruteforce_results.txt when something cleared
@@ -352,7 +352,7 @@ index 5e391be..423c23e 100755
 From e7d84910f7930914aa9e49d174a6ec4ba9593225 Mon Sep 17 00:00:00 2001
 From: Null-H3x <null-h3x@users.noreply.github.com>
 Date: Fri, 3 Jul 2026 23:29:20 +0000
-Subject: [PATCH 2/5] =?UTF-8?q?Wire=20run=5Fsummary=20into=20the=20GPU=20r?=
+Subject: [PATCH 2/6] =?UTF-8?q?Wire=20run=5Fsummary=20into=20the=20GPU=20r?=
  =?UTF-8?q?unner=20too=20=E2=80=94=20the=20actual=20long-run=20path?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -462,7 +462,7 @@ index 25313a8..1f1740c 100755
 From a1f37e44f9d8c92e6bf223e9034f3cc7833cf048 Mon Sep 17 00:00:00 2001
 From: Null-H3x <null-h3x@users.noreply.github.com>
 Date: Fri, 3 Jul 2026 23:39:06 +0000
-Subject: [PATCH 3/5] Paranoia-harden run_summary: bulletproof against
+Subject: [PATCH 3/6] Paranoia-harden run_summary: bulletproof against
  killed-run artifacts
 
 Static + adversarial audit of the summary path ahead of a multi-day GPU
@@ -607,7 +607,7 @@ index 1f1740c..006cf39 100755
 From a52993b69b07f4fcff8993a1c3d045f713e74380 Mon Sep 17 00:00:00 2001
 From: Null-H3x <null-h3x@users.noreply.github.com>
 Date: Sat, 4 Jul 2026 00:10:05 +0000
-Subject: [PATCH 4/5] Add run.py: one-command launcher for the progressive PRNG
+Subject: [PATCH 4/6] Add run.py: one-command launcher for the progressive PRNG
  scan
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -883,7 +883,7 @@ index 0000000..41ea4a3
 From fb837ad89f5dadabb76cf19629e4087a57dcf166 Mon Sep 17 00:00:00 2001
 From: Null-H3x <null-h3x@users.noreply.github.com>
 Date: Sat, 4 Jul 2026 00:18:47 +0000
-Subject: [PATCH 5/5] run.py --doctor + offline field manual for
+Subject: [PATCH 5/6] run.py --doctor + offline field manual for
  credential-less operation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1192,6 +1192,178 @@ index 41ea4a3..db2233e 100644
      if args.seed_start < 1:
          print(_c("[warn] seed-start < 1: Park-Miller seed 0 is a fixed "
                   "point (all-zero stream). Bumping to 1.", "1;33"))
+-- 
+2.43.0
+
+
+From 5bedd405668767555848c677140a576cc0259c11 Mon Sep 17 00:00:00 2001
+From: Null-H3x <null-h3x@users.noreply.github.com>
+Date: Sat, 4 Jul 2026 10:09:58 +0000
+Subject: [PATCH 6/6] Harden merge_results + guard summary against unwritable
+ output dir
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Real crash from the field: PermissionError [Errno 13] writing
+bruteforce_results.txt after a SUCCESSFUL scan — the output dir was
+created by an earlier sudo run and is root-owned, so the normal user
+can't write into it. The raw traceback also meant write_run_summary
+(which runs AFTER merge_results in main) never executed, defeating the
+'always leave an artifact' guarantee.
+
+Fixes:
+  • merge_results wraps its final write; on PermissionError/OSError it
+    calls _report_write_failure instead of crashing.
+  • _report_write_failure prints the diagnosis (shows dir owner vs current
+    user) AND the fix (sudo chown -R <user> <dir>, or use a fresh
+    --output-dir) — offline-friendly, the message is the fix.
+  • main() wraps the merge_results call so no merge failure can suppress
+    the run summary.
+  • write_run_summary's total-failure branch also routes through
+    _report_write_failure.
+
+Verified: forced Errno 13 on the merge file → guidance printed, no
+traceback, and run_summary.txt still written. Phase 9 selftest extended
+with a merge-permission-failure check. Suite 9/9.
+
+NB this was a latent gap in pre-existing merge_results that the earlier
+summary-hardening pass should have caught in the sibling writer.
+---
+ eyestat/eyestat_runner.py   | 64 ++++++++++++++++++++++++++++++++-----
+ eyestat/eyestat_selftest.py | 23 +++++++++++++
+ 2 files changed, 79 insertions(+), 8 deletions(-)
+
+diff --git a/eyestat/eyestat_runner.py b/eyestat/eyestat_runner.py
+index 006cf39..eab1b4b 100755
+--- a/eyestat/eyestat_runner.py
++++ b/eyestat/eyestat_runner.py
+@@ -1075,8 +1075,14 @@ def main():
+     print(f"[runner] throughput: {n_tried/max(elapsed, 0.001):.0f} keys/sec")
+     print(f"[runner] outputs in {args.output_dir}/")
+ 
+-    # Optional: merge shards into final ranked file
+-    merge_results(args.output_dir, args.threshold)
++    # Optional: merge shards into final ranked file. Guarded so a merge
++    # failure (e.g. an unwritable output dir) can NEVER suppress the run
++    # summary below — the summary is the artifact that must always survive.
++    try:
++        merge_results(args.output_dir, args.threshold)
++    except Exception as e:
++        print(f"[runner] merge step failed ({type(e).__name__}: {e}); "
++              "continuing to run summary")
+ 
+     # Always-on readable run summary — the file you review whether or not
+     # any survivor cleared threshold. A clean multi-day null must still
+@@ -1097,6 +1103,41 @@ def main():
+     )
+ 
+ 
++def _report_write_failure(path, err) -> None:
++    """Turn a write failure into actionable guidance instead of a traceback.
++
++    The usual cause is an output dir (or target file) created by a previous
++    `sudo`/root run, leaving it unwritable by the normal user. Offline-
++    friendly: the message IS the fix, no need to look anything up."""
++    import getpass
++    import os
++    from pathlib import Path as _P
++
++    p = _P(path)
++    d = p.parent
++    print(f"\n[runner] ⚠ could not write {p}")
++    print(f"[runner]   {type(err).__name__}: {err}")
++    try:
++        user = getpass.getuser()
++    except Exception:
++        user = "$USER"
++    # Show ownership so the cause is visible at a glance.
++    try:
++        st = d.stat()
++        import pwd
++        owner = pwd.getpwuid(st.st_uid).pw_name
++        print(f"[runner]   dir {d} is owned by '{owner}', "
++              f"you are running as '{user}'")
++    except Exception:
++        print(f"[runner]   check ownership:  ls -la {d}")
++    print("[runner]   Most likely the dir/file was created by an earlier "
++          "sudo run.")
++    print("[runner]   Fix, then re-run (the scan itself already succeeded):")
++    print(f"[runner]     sudo chown -R {user}:{user} {d}")
++    print(f"[runner]   — or just point at a fresh dir next time:  "
++          f"--output-dir {d.name}_v2")
++
++
+ def merge_results(output_dir: str, threshold: int) -> None:
+     """Merge per-shard results files into a final ranked results.txt.
+ 
+@@ -1134,12 +1175,18 @@ def merge_results(output_dir: str, threshold: int) -> None:
+ 
+     entries.sort(key=lambda e: -e[0])
+     final_path = output_path / "bruteforce_results.txt"
+-    with open(final_path, "w", encoding="utf-8") as f:
+-        f.write(f"# Brute-force results (threshold ≥ {threshold} hits, ranked)\n")
+-        f.write(f"# {len(entries)} total entries\n\n")
+-        for hits, text in entries:
+-            f.write(text)
+-    print(f"[runner] merged {len(entries)} entries → {final_path}")
++    try:
++        with open(final_path, "w", encoding="utf-8") as f:
++            f.write(f"# Brute-force results (threshold ≥ {threshold} hits, ranked)\n")
++            f.write(f"# {len(entries)} total entries\n\n")
++            for hits, text in entries:
++                f.write(text)
++        print(f"[runner] merged {len(entries)} entries → {final_path}")
++    except (PermissionError, OSError) as e:
++        # A write failure here must NOT crash the process — the scan already
++        # succeeded, and write_run_summary still needs to run. Explain the
++        # fix instead of dumping a traceback.
++        _report_write_failure(final_path, e)
+ 
+ 
+ def _scan_near_misses(output_dir: str, top_n: int = 20
+@@ -1275,6 +1322,7 @@ def write_run_summary(output_dir: str, *, modes: List[str], prngs: List[str],
+             print(f"[runner] run summary → {path}  (FALLBACK: {e})")
+         except Exception as e2:
+             print(f"[runner] run summary FAILED entirely: {e2}")
++            _report_write_failure(path, e2)
+     return
+ 
+ 
+diff --git a/eyestat/eyestat_selftest.py b/eyestat/eyestat_selftest.py
+index 423c23e..6a9adc6 100755
+--- a/eyestat/eyestat_selftest.py
++++ b/eyestat/eyestat_selftest.py
+@@ -540,6 +540,29 @@ def phase9_run_summary() -> bool:
+                 return False
+             print("  ✓ near-miss scan ranks across shards by hits desc")
+ 
++            # --- merge/write failure must NOT crash or suppress summary ---
++            import builtins
++            real_open = builtins.open
++
++            def _deny_merge(path, *a, **k):
++                if "bruteforce_results.txt" in str(path):
++                    raise PermissionError(13, "Permission denied")
++                return real_open(path, *a, **k)
++            builtins.open = _deny_merge
++            try:
++                try:
++                    R.merge_results(str(d), threshold=13)
++                    merge_ok = True   # returned without raising
++                except Exception:
++                    merge_ok = False
++            finally:
++                builtins.open = real_open
++            if not merge_ok:
++                print("  ✗ FAIL: merge_results raised on denied write "
++                      "(should be caught internally)")
++                return False
++            print("  ✓ merge permission failure handled without traceback")
++
+         print("PHASE 9 PASSED")
+         return True
+     except Exception as e:
 -- 
 2.43.0
 

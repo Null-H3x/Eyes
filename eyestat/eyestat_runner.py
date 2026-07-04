@@ -1075,8 +1075,14 @@ def main():
     print(f"[runner] throughput: {n_tried/max(elapsed, 0.001):.0f} keys/sec")
     print(f"[runner] outputs in {args.output_dir}/")
 
-    # Optional: merge shards into final ranked file
-    merge_results(args.output_dir, args.threshold)
+    # Optional: merge shards into final ranked file. Guarded so a merge
+    # failure (e.g. an unwritable output dir) can NEVER suppress the run
+    # summary below — the summary is the artifact that must always survive.
+    try:
+        merge_results(args.output_dir, args.threshold)
+    except Exception as e:
+        print(f"[runner] merge step failed ({type(e).__name__}: {e}); "
+              "continuing to run summary")
 
     # Always-on readable run summary — the file you review whether or not
     # any survivor cleared threshold. A clean multi-day null must still
@@ -1095,6 +1101,41 @@ def main():
         status="COMPLETE" if progress_state.completed_units == len(units)
                else "PARTIAL",
     )
+
+
+def _report_write_failure(path, err) -> None:
+    """Turn a write failure into actionable guidance instead of a traceback.
+
+    The usual cause is an output dir (or target file) created by a previous
+    `sudo`/root run, leaving it unwritable by the normal user. Offline-
+    friendly: the message IS the fix, no need to look anything up."""
+    import getpass
+    import os
+    from pathlib import Path as _P
+
+    p = _P(path)
+    d = p.parent
+    print(f"\n[runner] ⚠ could not write {p}")
+    print(f"[runner]   {type(err).__name__}: {err}")
+    try:
+        user = getpass.getuser()
+    except Exception:
+        user = "$USER"
+    # Show ownership so the cause is visible at a glance.
+    try:
+        st = d.stat()
+        import pwd
+        owner = pwd.getpwuid(st.st_uid).pw_name
+        print(f"[runner]   dir {d} is owned by '{owner}', "
+              f"you are running as '{user}'")
+    except Exception:
+        print(f"[runner]   check ownership:  ls -la {d}")
+    print("[runner]   Most likely the dir/file was created by an earlier "
+          "sudo run.")
+    print("[runner]   Fix, then re-run (the scan itself already succeeded):")
+    print(f"[runner]     sudo chown -R {user}:{user} {d}")
+    print(f"[runner]   — or just point at a fresh dir next time:  "
+          f"--output-dir {d.name}_v2")
 
 
 def merge_results(output_dir: str, threshold: int) -> None:
@@ -1134,12 +1175,18 @@ def merge_results(output_dir: str, threshold: int) -> None:
 
     entries.sort(key=lambda e: -e[0])
     final_path = output_path / "bruteforce_results.txt"
-    with open(final_path, "w", encoding="utf-8") as f:
-        f.write(f"# Brute-force results (threshold ≥ {threshold} hits, ranked)\n")
-        f.write(f"# {len(entries)} total entries\n\n")
-        for hits, text in entries:
-            f.write(text)
-    print(f"[runner] merged {len(entries)} entries → {final_path}")
+    try:
+        with open(final_path, "w", encoding="utf-8") as f:
+            f.write(f"# Brute-force results (threshold ≥ {threshold} hits, ranked)\n")
+            f.write(f"# {len(entries)} total entries\n\n")
+            for hits, text in entries:
+                f.write(text)
+        print(f"[runner] merged {len(entries)} entries → {final_path}")
+    except (PermissionError, OSError) as e:
+        # A write failure here must NOT crash the process — the scan already
+        # succeeded, and write_run_summary still needs to run. Explain the
+        # fix instead of dumping a traceback.
+        _report_write_failure(final_path, e)
 
 
 def _scan_near_misses(output_dir: str, top_n: int = 20
@@ -1275,6 +1322,7 @@ def write_run_summary(output_dir: str, *, modes: List[str], prngs: List[str],
             print(f"[runner] run summary → {path}  (FALLBACK: {e})")
         except Exception as e2:
             print(f"[runner] run summary FAILED entirely: {e2}")
+            _report_write_failure(path, e2)
     return
 
 

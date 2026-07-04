@@ -540,6 +540,29 @@ def phase9_run_summary() -> bool:
                 return False
             print("  ✓ near-miss scan ranks across shards by hits desc")
 
+            # --- merge/write failure must NOT crash or suppress summary ---
+            import builtins
+            real_open = builtins.open
+
+            def _deny_merge(path, *a, **k):
+                if "bruteforce_results.txt" in str(path):
+                    raise PermissionError(13, "Permission denied")
+                return real_open(path, *a, **k)
+            builtins.open = _deny_merge
+            try:
+                try:
+                    R.merge_results(str(d), threshold=13)
+                    merge_ok = True   # returned without raising
+                except Exception:
+                    merge_ok = False
+            finally:
+                builtins.open = real_open
+            if not merge_ok:
+                print("  ✗ FAIL: merge_results raised on denied write "
+                      "(should be caught internally)")
+                return False
+            print("  ✓ merge permission failure handled without traceback")
+
         print("PHASE 9 PASSED")
         return True
     except Exception as e:
