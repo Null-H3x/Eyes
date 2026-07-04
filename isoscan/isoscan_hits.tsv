@@ -1,0 +1,326 @@
+corpus	mode	pattern	constraints	kappa	windows	expected	observed_eq	obs_distinct	obs_strict	ratio	top_matches
+english	direct	#1	5	0.06520	431549	0.5	1	0	0	1.966	squitetoogoodtolos×1
+english	direct	#C0	6	0.06520	431543	0.0	0	0	0	0.000	
+english	direct	#C1	6	0.06520	431541	0.0	0	0	0	0.000	
+english	direct	#2-	3	0.06520	431542	119.6	115	84	0	0.961	lybalancedmindhewasitakei×1; ebohemiansoulremainedinou×1; natingfromweektoweekbetwe×1; erthenatthathouranddonott×1; remarkedwhatdoyouimaginet×1
+english	direct	#2	5	0.06520	431537	0.5	0	0	0	0.000	
+english	direct	#2+	7	0.06520	431534	0.0	0	0	0	0.000	
+english	direct	#S	6	0.06520	431536	0.0	0	0	0	0.000	
+english	direct	#F	5	0.06520	431548	0.5	0	0	0	0.000	
+english	direct	#M	3	0.06520	431558	119.6	106	87	47	0.886	ckinhisch×7; thislittl×5; pinionupo×3; toogoodto×2; nvictiont×2
+english	direct	#M-	2	0.06520	431559	1834.7	1876	1744	791	1.022	avebeena×21; tseemedt×20; thegreat×18; epassage×16; edthathe×14
+english	direct	#3	3	0.06520	431555	119.6	98	79	5	0.819	ackinhischai×7; weshallseewh×6; ebetterablet×2; takethematte×2; thetimethatt×2
+english	direct	#3+	4	0.06520	431552	7.8	6	4	0	0.769	timakeamistakei×1; hereourredheade×1; ethroughtherift×1; thehourthatheth×1; hemachineihadbe×1
+english	direct	#4	2	0.06520	431553	1834.7	1212	1061	10	0.661	onetotheothero×5; somefewminutes×3; ntheverymornin×3; epresenceofthe×3; ofdrgrimesbyro×3
+english	delta:1	#1	5	0.04176	431548	0.1	0	0	0	0.000	
+english	delta:1	#C0	6	0.04176	431542	0.0	0	0	0	0.000	
+english	delta:1	#C1	6	0.04176	431540	0.0	0	0	0	0.000	
+english	delta:1	#2-	3	0.04176	431541	31.4	29	24	0	0.923	enbeforeiwasawarethatiwasa×1; oomillkemptandsidewhiskere×1; ntwentyminutesthiswasquite×1; swereinfrontofthedoorwheni×1; erstreetanditstillwantedte×1
+english	delta:1	#2	5	0.04176	431536	0.1	0	0	0	0.000	
+english	delta:1	#2+	7	0.04176	431533	0.0	0	0	0	0.000	
+english	delta:1	#S	6	0.04176	431535	0.0	0	0	0	0.000	
+english	delta:1	#F	5	0.04176	431547	0.1	0	0	0	0.000	
+english	delta:1	#M	3	0.04176	431557	31.4	20	18	10	0.636	essedwitha×2; rongnature×2; veforirene×1; chwouldine×1; rinstincti×1
+english	delta:1	#M-	2	0.04176	431558	752.7	648	629	331	0.861	thinginth×8; itwasquit×6; ithoutany×5; nthefront×4; thefirsth×4
+english	delta:1	#3	3	0.04176	431554	31.4	39	33	7	1.241	teveryquarter×2; ihavechangedm×1; urmajestythen×1; penwhichentit×1; ongratulatedm×1
+english	delta:1	#3+	4	0.04176	431551	1.3	2	1	0	1.523	unclesavethatiti×1; ndiamlivingwithm×1
+english	delta:1	#4	2	0.04176	431552	752.7	705	675	18	0.937	lockholmeshadbe×3; ossibleformetos×2; ithinafewminute×2; dbeyondthesesig×1; llremembereddoo×1
+english	sigma:1	#1	5	0.04512	431548	0.1	0	0	0	0.000	
+english	sigma:1	#C0	6	0.04512	431542	0.0	0	0	0	0.000	
+english	sigma:1	#C1	6	0.04512	431540	0.0	0	0	0	0.000	
+english	sigma:1	#2-	3	0.04512	431541	39.6	35	32	0	0.883	owanicelittlebroughamandap×1; ynoteheaskedwithadeepharsh×1; swalkedintotheroomaccustom×1; gewhichyouhavegainedonever×1; thosewhomhehadsethimselfto×1
+english	sigma:1	#2	5	0.04512	431536	0.1	0	0	0	0.000	
+english	sigma:1	#2+	7	0.04512	431533	0.0	0	0	0	0.000	
+english	sigma:1	#S	6	0.04512	431535	0.0	0	0	0	0.000	
+english	sigma:1	#F	5	0.04512	431547	0.1	0	0	0	0.000	
+english	sigma:1	#M	3	0.04512	431557	39.6	43	34	25	1.085	pressionth×3; eincapable×2; rvedthatth×2; dhelplessi×1; dwhetheris×1
+english	sigma:1	#M-	2	0.04512	431558	878.4	816	769	379	0.929	stepfathe×21; avenodoub×19; dsomethin×10; thinginth×8; hesingula×7
+english	sigma:1	#3	3	0.04512	431554	39.6	42	33	6	1.060	sappearanceof×6; valleymystery×2; crackinoneofh×1; dbyhiswholeap×1; ongedikeepito×1
+english	sigma:1	#3+	4	0.04512	431551	1.8	2	2	0	1.119	lwatsonweshallse×1; estairssheseemst×1
+english	sigma:1	#4	2	0.04512	431552	878.4	777	727	31	0.885	ofyourreasoning×2; itrustthatiamno×2; ecracksbetweent×2; usfromthefirstt×2; dandshookmyhead×2
+english	psum	#1	5	0.03846	431549	0.0	0	0	0	0.000	
+english	psum	#C0	6	0.03846	431543	0.0	0	0	0	0.000	
+english	psum	#C1	6	0.03846	431541	0.0	0	0	0	0.000	
+english	psum	#2-	3	0.03846	431542	24.6	23	21	0	0.937	tatothertimesexceptwhensh×1; seallhewantsisanolddogtoh×1; iveitalltoknowwhathasbeco×1; imagineamoredamningcaseir×1; oldmanitsaquestionwhether×1
+english	psum	#2	5	0.03846	431537	0.0	0	0	0	0.000	
+english	psum	#2+	7	0.03846	431534	0.0	0	0	0	0.000	
+english	psum	#S	6	0.03846	431536	0.0	0	0	0	0.000	
+english	psum	#F	5	0.03846	431548	0.0	0	0	0	0.000	
+english	psum	#M	3	0.03846	431558	24.6	39	24	9	1.588	dnothaveb×5; ewthathew×3; ourfrench×2; chhouseiw×1; mokecurle×1
+english	psum	#M-	2	0.03846	431559	638.4	829	664	173	1.299	herewasn×37; dnothave×19; comefrom×10; dthathis×10; ethathew×10
+english	psum	#3	3	0.03846	431555	24.6	22	17	1	0.896	hedeathofwal×1; eennodoubtde×1; floomedbehin×1; asgonedoyoum×1; hadbeenonthe×1
+english	psum	#3+	4	0.03846	431552	0.9	0	0	0	0.000	
+english	psum	#4	2	0.03846	431553	638.4	1251	1176	21	1.960	thedisappearan×6; onotthinkthati×5; dfromonetotheo×4; heencyclopaedi×4; thecommissiona×4
+english	bigram:1	#1	5	0.00745	431548	0.0	0	0	0	0.000	
+english	bigram:1	#C0	6	0.00745	431542	0.0	0	0	0	0.000	
+english	bigram:1	#C1	6	0.00745	431540	0.0	0	0	0	0.000	
+english	bigram:1	#2-	3	0.00745	431541	0.2	0	0	0	0.000	
+english	bigram:1	#2	5	0.00745	431536	0.0	0	0	0	0.000	
+english	bigram:1	#2+	7	0.00745	431533	0.0	0	0	0	0.000	
+english	bigram:1	#S	6	0.00745	431535	0.0	0	0	0	0.000	
+english	bigram:1	#F	5	0.00745	431547	0.0	0	0	0	0.000	
+english	bigram:1	#M	3	0.00745	431557	0.2	0	0	0	0.000	
+english	bigram:1	#M-	2	0.00745	431558	24.0	21	21	17	0.876	thinginth×8; ewthathew×3; oseprepos×1; lleaveall×1; issonsois×1
+english	bigram:1	#3	3	0.00745	431554	0.2	0	0	0	0.000	
+english	bigram:1	#3+	4	0.00745	431551	0.0	0	0	0	0.000	
+english	bigram:1	#4	2	0.00745	431552	24.0	3	3	3	0.125	ngtheheavyirong×1; nedasasmallpane×1; thatitisoneofth×1
+kalevala_en	direct	#1	5	0.06695	644030	0.9	0	0	0	0.000	
+kalevala_en	direct	#C0	6	0.06695	644024	0.1	0	0	0	0.000	
+kalevala_en	direct	#C1	6	0.06695	644022	0.1	0	0	0	0.000	
+kalevala_en	direct	#2-	3	0.06695	644023	193.2	216	147	0	1.118	sthesewordsinwonderguessi×4; littleheedinglemminkainen×3; nheknewtosatisfactionthat×3; ebluebackofthebroadseaont×2; aybyadvancingtribesthefin×1
+kalevala_en	direct	#2	5	0.06695	644018	0.9	0	0	0	0.000	
+kalevala_en	direct	#2+	7	0.06695	644015	0.0	0	0	0	0.000	
+kalevala_en	direct	#S	6	0.06695	644017	0.1	0	0	0	0.000	
+kalevala_en	direct	#F	5	0.06695	644029	0.9	0	0	0	0.000	
+kalevala_en	direct	#M	3	0.06695	644039	193.2	143	125	51	0.740	twithinth×10; estofthef×3; edthetree×3; inherhair×3; hismischi×3
+kalevala_en	direct	#M-	2	0.06695	644040	2886.5	2773	2611	1300	0.961	sfollows×71; thegreat×39; estofthe×38; thesweet×25; owainamo×24
+kalevala_en	direct	#3	3	0.06695	644036	193.2	175	141	17	0.906	throughtheto×5; eartedspaket×5; heseasidethe×4; roonhisjourn×3; unandmoonrun×2
+kalevala_en	direct	#3+	4	0.06695	644033	12.9	10	7	0	0.773	shimwithhismigh×1; sectgathersthee×1; etimesinthemont×1; etherhowtheeart×1; reddlesheardthe×1
+kalevala_en	direct	#4	2	0.06695	644034	2886.5	1732	1504	14	0.600	moinenancientm×30; etherecklessle×25; sthesethewords×16; ntheherolemmin×8; sthesemeasures×6
+kalevala_en	delta:1	#1	5	0.03514	644029	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#C0	6	0.03514	644023	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#C1	6	0.03514	644021	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#2-	3	0.03514	644022	27.9	36	29	0	1.288	ithwalkthecrimsonbordersof×1; rassyhillocksontheblueback×1; lyingthathemightthisthingc×1; efirstandbestadviserwaters×1; inenchidingthustheancienth×1
+kalevala_en	delta:1	#2	5	0.03514	644017	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#2+	7	0.03514	644014	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#S	6	0.03514	644016	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#F	5	0.03514	644028	0.0	0	0	0	0.000	
+kalevala_en	delta:1	#M	3	0.03514	644038	27.9	60	59	10	2.147	cklesslemm×43; nlanguages×2; ffixesatta×1; ybodyshake×1; neageagrie×1
+kalevala_en	delta:1	#M-	2	0.03514	644039	795.2	675	646	386	0.849	cklesslem×43; thewaterf×17; tothemaid×15; herandthe×12; sthegolde×9
+kalevala_en	delta:1	#3	3	0.03514	644035	27.9	17	16	4	0.608	estmaidenofth×2; eweaverswebth×1; rstrikeshimne×1; madethenorthw×1; stenssearchin×1
+kalevala_en	delta:1	#3+	4	0.03514	644032	1.0	2	2	0	2.037	estmaidenoftheno×2
+kalevala_en	delta:1	#4	2	0.03514	644033	795.2	715	689	53	0.899	thepleasureofth×11; hewizardlemmink×7; thelargestnorth×6; erthistheanswer×6; thefogpointinth×5
+kalevala_en	sigma:1	#1	5	0.04041	644029	0.1	1	1	0	14.411	infullcontentmentin×1
+kalevala_en	sigma:1	#C0	6	0.04041	644023	0.0	0	0	0	0.000	
+kalevala_en	sigma:1	#C1	6	0.04041	644021	0.0	0	0	0	0.000	
+kalevala_en	sigma:1	#2-	3	0.04041	644022	42.5	43	34	0	1.012	dsprinklesblackmilkoverthe×1; akysytminultakunsaatatomil×1; htscometoussinglythatthemo×1; romtroubletodelivermeintra×1; houshouldstgivemeallthehig×1
+kalevala_en	sigma:1	#2	5	0.04041	644017	0.1	1	0	0	14.412	heheroheadsofnorthlandthustheis×1
+kalevala_en	sigma:1	#2+	7	0.04041	644014	0.0	0	0	0	0.000	
+kalevala_en	sigma:1	#S	6	0.04041	644016	0.0	0	0	0	0.000	
+kalevala_en	sigma:1	#F	5	0.04041	644028	0.1	0	0	0	0.000	
+kalevala_en	sigma:1	#M	3	0.04041	644038	42.5	34	30	17	0.800	contentmen×8; eroesbring×2; stlethisth×2; ightyweigh×2; hofkaleval×2
+kalevala_en	sigma:1	#M-	2	0.04041	644039	1051.6	839	785	408	0.798	thebottom×43; inalldire×13; tothemoun×11; nefficien×11; singingth×9
+kalevala_en	sigma:1	#3	3	0.04041	644035	42.5	37	30	4	0.871	shepherdladwa×2; earthstonesth×2; omthefloorthe×2; tenderhearted×1; ingentirepine×1
+kalevala_en	sigma:1	#3+	4	0.04041	644032	1.7	2	2	0	1.165	eriwillneverneve×1; esinthehomesofth×1
+kalevala_en	sigma:1	#4	2	0.04041	644033	1051.6	1015	933	58	0.965	esethewordsofwa×7; dstheherouttere×6; tursosonofoldag×5; isoughttheseasi×4; esteedfliesonwa×4
+kalevala_en	psum	#1	5	0.03030	644030	0.0	0	0	0	0.000	
+kalevala_en	psum	#C0	6	0.03030	644024	0.0	0	0	0	0.000	
+kalevala_en	psum	#C1	6	0.03030	644022	0.0	0	0	0	0.000	
+kalevala_en	psum	#2-	3	0.03030	644023	17.9	18	17	0	1.004	erandwhenangrytheykeepsil×1; upledwiththenameofhisabod×1; shedthanitattractedtheatt×1; rjokannenkirjallayhenjouk×1; treamflowsonwardwainamoin×1
+kalevala_en	psum	#2	5	0.03030	644018	0.0	0	0	0	0.000	
+kalevala_en	psum	#2+	7	0.03030	644015	0.0	0	0	0	0.000	
+kalevala_en	psum	#S	6	0.03030	644017	0.0	0	0	0	0.000	
+kalevala_en	psum	#F	5	0.03030	644029	0.0	1	1	0	60.763	ndoldandtoothlesswi×1
+kalevala_en	psum	#M	3	0.03030	644039	17.9	55	28	18	3.069	ingspaket×16; owtolivea×5; othlesswi×5; withthecu×3; selrockin×2
+kalevala_en	psum	#M-	2	0.03030	644040	591.4	640	628	270	1.082	oughthed×21; ingspake×19; thehomes×18; osmotart×12; owtolive×10
+kalevala_en	psum	#3	3	0.03030	644036	17.9	20	17	0	1.116	thecuckoosin×6; sunthedaught×1; lkthourested×1; ofwinterquic×1; tstakeatonce×1
+kalevala_en	psum	#3+	4	0.03030	644033	0.5	4	4	0	7.365	thecuckoosingin×4
+kalevala_en	psum	#4	2	0.03030	644034	591.4	441	415	18	0.746	ainotothebotto×5; retosportamong×4; hemountainashe×3; linnunratabird×2; oesnotcheerthe×2
+kalevala_en	bigram:1	#1	5	0.00898	644029	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#C0	6	0.00898	644023	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#C1	6	0.00898	644021	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#2-	3	0.00898	644022	0.5	0	0	0	0.000	
+kalevala_en	bigram:1	#2	5	0.00898	644017	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#2+	7	0.00898	644014	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#S	6	0.00898	644016	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#F	5	0.00898	644028	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#M	3	0.00898	644038	0.5	1	1	0	2.146	singingsin×1
+kalevala_en	bigram:1	#M-	2	0.00898	644039	51.9	31	31	24	0.597	erthither×6; thinginth×6; rethethre×2; lpherhelp×1; stinginst×1
+kalevala_en	bigram:1	#3	3	0.00898	644035	0.5	0	0	0	0.000	
+kalevala_en	bigram:1	#3+	4	0.00898	644032	0.0	0	0	0	0.000	
+kalevala_en	bigram:1	#4	2	0.00898	644033	51.9	16	16	10	0.308	onthehearthston×3; ethatatonetimet×1; erstitioneveter×1; intheheavenssin×1; intheheroofwain×1
+finnish_kalevala	direct	#1	5	0.07337	453015	1.0	4	3	0	4.152	ntajaltakaiketisan×1; enkarsinastamitäne×1; kuohuminenvesivank×1; anarmasmaataastuma×1
+finnish_kalevala	direct	#C0	6	0.07337	453009	0.1	0	0	0	0.000	
+finnish_kalevala	direct	#C1	6	0.07337	453007	0.1	0	0	0	0.000	
+finnish_kalevala	direct	#2-	3	0.07337	453008	179.0	158	109	0	0.883	änemäntätapiolantarkkavai×3; theititkoivunkasvamahanpu×2; toistarunosiitälietolemmi×2; yäntyikovinsuuttuijavihas×2; ntyöntävitulehenliittikul×2
+finnish_kalevala	direct	#2	5	0.07337	453003	1.0	0	0	0	0.000	
+finnish_kalevala	direct	#2+	7	0.07337	453000	0.0	0	0	0	0.000	
+finnish_kalevala	direct	#S	6	0.07337	453002	0.1	0	0	0	0.000	
+finnish_kalevala	direct	#F	5	0.07337	453014	1.0	5	1	0	5.190	atarkempatataitajat×2; maataniomallamaalla×1; taneoluttapantanepa×1; allansavasarallaval×1
+finnish_kalevala	direct	#M	3	0.07337	453024	179.0	277	167	36	1.548	ahanvakav×5; llamaalla×5; nsimäisnä×4; emäntämet×4; nenminuni×4
+finnish_kalevala	direct	#M-	2	0.07337	453025	2439.0	3349	2418	615	1.373	uollalau×64; ävanhavä×61; nensanan×55; apohjola×32; llesiell×15
+finnish_kalevala	direct	#3	3	0.07337	453021	179.0	296	132	4	1.654	sakasuavassa×7; tasariolasta×6; lakannikalla×4; enenkynännen×4; mehiläinenmi×4
+finnish_kalevala	direct	#3+	4	0.07337	453018	13.1	32	15	0	2.437	kärestävätkeihä×3; sinisilkitsilmi×2; hätäpäiväthäätä×2; sikiitäviksisii×1; matarmahammatla×1
+finnish_kalevala	direct	#4	2	0.07337	453019	2439.0	2785	2048	1	1.142	nsananvirkkoin×76; amaatasaarenma×10; akkaharvahamma×8; assakasuavassa×7; nenähänutuisen×7
+finnish_kalevala	delta:1	#1	5	0.04050	453014	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#C0	6	0.04050	453008	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#C1	6	0.04050	453006	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#2-	3	0.04050	453007	30.1	28	20	0	0.930	ttymaanmaoillaaiastettukää×2; uumillekivillepalavillepaa×2; tainenylenikunkikunnahanku×1; analanmaillanoillatuonelan×1; kuulisukkulansurinanylähäl×1
+finnish_kalevala	delta:1	#2	5	0.04050	453002	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#2+	7	0.04050	452999	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#S	6	0.04050	453001	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#F	5	0.04050	453013	0.0	0	0	0	0.000	
+finnish_kalevala	delta:1	#M	3	0.04050	453023	30.1	23	22	14	0.764	ukkuvaksip×2; miestämiel×2; lvätiätäiä×1; kaonnutkah×1; tvakaisiks×1
+finnish_kalevala	delta:1	#M-	2	0.04050	453024	743.1	1012	960	417	1.362	kkoinoinn×188; etsänemän×18; miestämie×11; tupahantu×10; ahansanov×9
+finnish_kalevala	delta:1	#3	3	0.04050	453020	30.1	44	33	3	1.462	issasovissaka×2; nentaoitennen×2; ylvisoitakylv×1; iäsituuriasit×1; itaonnoitaits×1
+finnish_kalevala	delta:1	#3+	4	0.04050	453017	1.2	2	2	0	1.641	iäsituuriasituum×1; atperinvierivätp×1
+finnish_kalevala	delta:1	#4	2	0.04050	453018	743.1	656	607	18	0.883	ervonpoikasanan×13; nhaväinämöinenh×6; lenteälekuttele×5; iikkuisillanlii×5; ivimäestävaaran×5
+finnish_kalevala	sigma:1	#1	5	0.04086	453014	0.1	0	0	0	0.000	
+finnish_kalevala	sigma:1	#C0	6	0.04086	453008	0.0	0	0	0	0.000	
+finnish_kalevala	sigma:1	#C1	6	0.04086	453006	0.0	0	0	0	0.000	
+finnish_kalevala	sigma:1	#2-	3	0.04086	453007	30.9	30	24	0	0.971	mielimiekkoisienautuaallis×3; tuilänkilöihinvemmelvempel×1; uinonpimanalanmaillanoilla×1; tivirkkiviimeinkisanoiksii×1; arisenvieäviiletelläksensä×1
+finnish_kalevala	sigma:1	#2	5	0.04086	453002	0.1	0	0	0	0.000	
+finnish_kalevala	sigma:1	#2+	7	0.04086	452999	0.0	0	0	0	0.000	
+finnish_kalevala	sigma:1	#S	6	0.04086	453001	0.0	0	0	0	0.000	
+finnish_kalevala	sigma:1	#F	5	0.04086	453013	0.1	0	0	0	0.000	
+finnish_kalevala	sigma:1	#M	3	0.04086	453023	30.9	35	24	7	1.133	näänenääne×4; älleseläll×2; npistisuit×2; mpatataita×2; täkokkorau×2
+finnish_kalevala	sigma:1	#M-	2	0.04086	453024	756.2	927	855	305	1.226	lervokale×52; ensinisen×17; lmarinenk×12; nalanalan×12; enperiltä×10
+finnish_kalevala	sigma:1	#3	3	0.04086	453020	30.9	102	55	10	3.301	llalausehella×32; hyvänimmenhyp×12; kallistihekat×6; hanvakavanhav×5; setsinäilmois×2
+finnish_kalevala	sigma:1	#3+	4	0.04086	453017	1.3	6	3	0	4.753	llalausehellameh×1; asillamarjasetsi×1; ihinkeskelletule×1; mattakostamattat×1; etokylmähänkyläh×1
+finnish_kalevala	sigma:1	#4	2	0.04086	453018	756.2	797	730	21	1.054	elvällämerensel×5; inoinnimesiohoh×5; lapallaaukealla×4; nnemäkanakatosi×4; karoisehensaott×4
+finnish_kalevala	psum	#1	5	0.03571	453015	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#C0	6	0.03571	453009	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#C1	6	0.03571	453007	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#2-	3	0.03571	453008	20.6	23	15	0	1.114	lervonpoikahänpävarsinvas×3; masakkasenisanoarmasakkas×2; äikyominväkiniväikynväell×1; porollensasuinpuhelinytsi×1; päillekolmannenkohottelei×1
+finnish_kalevala	psum	#2	5	0.03571	453003	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#2+	7	0.03571	453000	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#S	6	0.03571	453002	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#F	5	0.03571	453014	0.0	0	0	0	0.000	
+finnish_kalevala	psum	#M	3	0.03571	453024	20.6	44	17	6	2.132	ikaikkika×7; tkaikkika×6; akaikkika×3; nkaikkika×2; äkaikkika×2
+finnish_kalevala	psum	#M-	2	0.03571	453025	577.9	558	552	193	0.966	siitälie×34; tkaikkik×11; takaksik×9; ikaikkik×8; vänimine×7
+finnish_kalevala	psum	#3	3	0.03571	453021	20.6	14	10	0	0.678	inkynnykselt×1; televioiskot×1; kurjaurohias×1; llonarkkuark×1; ikkikaikkika×1
+finnish_kalevala	psum	#3+	4	0.03571	453018	0.7	0	0	0	0.000	
+finnish_kalevala	psum	#4	2	0.03571	453019	577.8	424	418	7	0.734	apäinpahoillam×12; ellonpientarel×12; ohjanpitkähänp×4; uuttuijavihast×4; äivytjumalanlu×4
+finnish_kalevala	bigram:1	#1	5	0.00797	453014	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#C0	6	0.00797	453008	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#C1	6	0.00797	453006	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#2-	3	0.00797	453007	0.2	0	0	0	0.000	
+finnish_kalevala	bigram:1	#2	5	0.00797	453002	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#2+	7	0.00797	452999	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#S	6	0.00797	453001	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#F	5	0.00797	453013	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#M	3	0.00797	453023	0.2	0	0	0	0.000	
+finnish_kalevala	bigram:1	#M-	2	0.00797	453024	28.8	35	32	23	1.217	selälläse×2; inenmenin×2; käsiksikä×2; antultuan×1; sisässäsi×1
+finnish_kalevala	bigram:1	#3	3	0.00797	453020	0.2	0	0	0	0.000	
+finnish_kalevala	bigram:1	#3+	4	0.00797	453017	0.0	0	0	0	0.000	
+finnish_kalevala	bigram:1	#4	2	0.00797	453018	28.8	16	15	12	0.556	insananvirkkoin×2; takananlapsetta×2; ulevivirostasul×1; stakokohonmiest×1; empelellävierem×1
+finnish_bible	direct	#1	5	0.07340	3346706	7.1	11	2	0	1.543	aanomassamaassansa×2; itoipoikansaiisaki×1; tarenkaatjotkaovat×1; sraelinkansaensiks×1; niinhevastasivatan×1
+finnish_bible	direct	#C0	6	0.07340	3346700	0.5	2	1	0	3.821	itoipoikansaiisakinjapan×1; ristuksenkanssaperillisi×1
+finnish_bible	direct	#C1	6	0.07340	3346698	0.5	0	0	0	0.000	
+finnish_bible	direct	#2-	3	0.07340	3346699	1323.5	1119	720	0	0.845	seitsemänkymmentätuhattam×4; aabrahaminjumalaiisakinju×3; akukaonsinunvertaisesisin×3; ajokakiroaaisäänsätaiäiti×3; taistellessaanhasaeliaara×3
+finnish_bible	direct	#2	5	0.07340	3346694	7.1	7	1	0	0.982	srintalihanjaanniksiannetunrei×1; akansasilapsiavastaanvaanrakas×1; teettetulenäkemääntuultaettekä×1; akuninkaanlinnaanjahänistuikun×1; avastaanjasenvaotkaikkiitkivät×1
+finnish_bible	direct	#2+	7	0.07340	3346691	0.0	0	0	0	0.000	
+finnish_bible	direct	#S	6	0.07340	3346693	0.5	0	0	0	0.000	
+finnish_bible	direct	#F	5	0.07340	3346705	7.1	18	4	0	2.524	stysmajassanäitäkat×2; estätappelemassakes×1; lkakappaleihinkivik×1; nsaastaantahansajas×1; aamastanaisenkanssa×1
+finnish_bible	direct	#M	3	0.07340	3346715	1323.6	1703	1063	141	1.287	vastasiva×118; senkanssa×57; akastavat×44; saastaist×29; ssamaassa×27
+finnish_bible	direct	#M-	2	0.07340	3346716	18031.6	22664	18782	3977	1.257	äpäivänä×648; elilaise×268; inkaaksi×236; inkaikki×199; noastaan×195
+finnish_bible	direct	#3	3	0.07340	3346712	1323.6	1421	775	18	1.074	enastikunnes×14; ansakuninkaa×11; lisellamiele×11; äkenellekään×10; ikenniinkuin×9
+finnish_bible	direct	#3+	4	0.07340	3346709	97.2	152	81	0	1.565	änentykönsäniin×6; äneneteensäniin×4; pelinmolempiine×3; aavatasuamaassa×3; eniinkuinmeidän×2
+finnish_bible	direct	#4	2	0.07340	3346710	18031.5	17290	14138	12	0.959	ahänenpoikansa×108; ietämäänettämi×83; errasanoimoose×54; jeesusvastasij×36; natähänpäivään×34
+finnish_bible	delta:1	#1	5	0.04328	3346705	0.5	0	0	0	0.000	
+finnish_bible	delta:1	#C0	6	0.04328	3346699	0.0	0	0	0	0.000	
+finnish_bible	delta:1	#C1	6	0.04328	3346697	0.0	0	0	0	0.000	
+finnish_bible	delta:1	#2-	3	0.04328	3346698	271.2	274	208	0	1.010	sijakaikestasielustasijaka×4; llesaadokillejaebjatarille×3; inkuinsinäminunkansaniniin×3; ähänenpalvelijaansapalveli×2; taastakullastakäädytpunotu×2
+finnish_bible	delta:1	#2	5	0.04328	3346693	0.5	0	0	0	0.000	
+finnish_bible	delta:1	#2+	7	0.04328	3346690	0.0	0	0	0	0.000	
+finnish_bible	delta:1	#S	6	0.04328	3346692	0.0	0	0	0	0.000	
+finnish_bible	delta:1	#F	5	0.04328	3346704	0.5	0	0	0	0.000	
+finnish_bible	delta:1	#M	3	0.04328	3346714	271.2	255	231	104	0.940	nenympäril×33; inkaatjotk×13; nensäädöss×13; äntäjahäne×8; rinympäril×6
+finnish_bible	delta:1	#M-	2	0.04328	3346715	6267.8	6310	5928	3284	1.007	ooseksell×250; aelinheim×152; anjumalan×126; onantanut×87; aajumalaa×45
+finnish_bible	delta:1	#3	3	0.04328	3346711	271.2	298	233	39	1.099	elijattulivat×11; jatappoihänet×6; njajokainenjo×6; lleetminunään×6; etkuulivatett×5
+finnish_bible	delta:1	#3+	4	0.04328	3346708	11.7	11	9	0	0.937	ihänetluulihänhä×1; saniistätesaatte×1; ensaastainenniin×1; lttipesköönvaatt×1; hänetsillähäntap×1
+finnish_bible	delta:1	#4	2	0.04328	3346709	6267.8	6540	6232	189	1.043	abelinkuningast×20; juudankuninkaal×18; ähäntekiseonkir×15; unajuudankuning×15; raelinkuninkaal×14
+finnish_bible	sigma:1	#1	5	0.04111	3346705	0.4	0	0	0	0.000	
+finnish_bible	sigma:1	#C0	6	0.04111	3346699	0.0	0	0	0	0.000	
+finnish_bible	sigma:1	#C1	6	0.04111	3346697	0.0	0	0	0	0.000	
+finnish_bible	sigma:1	#2-	3	0.04111	3346698	232.5	248	198	0	1.067	jalustaaainakaksijalustaak×4; nsielunikostaisitämänkalta×3; nnutsinutomaisuuskansaksee×2; atonilainenabdonhillelinpo×2; ethaudattiinisänsädaavidin×2
+finnish_bible	sigma:1	#2	5	0.04111	3346693	0.4	0	0	0	0.000	
+finnish_bible	sigma:1	#2+	7	0.04111	3346690	0.0	0	0	0	0.000	
+finnish_bible	sigma:1	#S	6	0.04111	3346692	0.0	0	0	0	0.000	
+finnish_bible	sigma:1	#F	5	0.04111	3346704	0.4	1	0	0	2.545	nänäinteidänisännehe×1
+finnish_bible	sigma:1	#M	3	0.04111	3346714	232.5	186	151	91	0.800	iseonkirjo×18; arinherral×8; istavatsin×8; hollisenis×5; astuialass×4
+finnish_bible	sigma:1	#M-	2	0.04111	3346715	5656.1	5344	4971	1895	0.945	eidänjuma×400; ellaäänel×44; llesilloi×38; ttetietäm×37; teurastet×37
+finnish_bible	sigma:1	#3	3	0.04111	3346711	232.5	283	190	25	1.217	sellepuolelle×23; sellapuolella×10; aminäolenheid×9; akappalettaku×8; njajaakobinja×5
+finnish_bible	sigma:1	#3+	4	0.04111	3346708	9.6	11	6	1	1.151	sillänsätaisteli×1; stasorastajaesta×1; sistaperissiläis×1; änonrikkonutliit×1; sellapuolellaole×1
+finnish_bible	sigma:1	#4	2	0.04111	3346709	5656.1	5992	5643	202	1.059	lkoisistapellav×28; anooherraherran×17; ameidänjumalaam×14; eltalännenpuole×14; sinuntodistuksi×12
+finnish_bible	psum	#1	5	0.03571	3346706	0.2	0	0	0	0.000	
+finnish_bible	psum	#C0	6	0.03571	3346700	0.0	0	0	0	0.000	
+finnish_bible	psum	#C1	6	0.03571	3346698	0.0	0	0	0	0.000	
+finnish_bible	psum	#2-	3	0.03571	3346699	152.5	204	187	0	1.338	kaikkikansakunnatmaanpääl×3; akaikensisälmystenrasvanj×3; ikaikkisukukunnatmaanpääl×2; meäsilläherraeijätärankai×2; vaaksanpituinenjavaaksanl×2
+finnish_bible	psum	#2	5	0.03571	3346694	0.2	1	1	0	5.143	ittetehneetkunteittesitämikäon×1
+finnish_bible	psum	#2+	7	0.03571	3346691	0.0	0	0	0	0.000	
+finnish_bible	psum	#S	6	0.03571	3346693	0.0	0	0	0	0.000	
+finnish_bible	psum	#F	5	0.03571	3346705	0.2	1	0	0	5.143	taankuulkaakaikkika×1
+finnish_bible	psum	#M	3	0.03571	3346715	152.5	330	110	63	2.165	akaikkika×101; nkaikkika×31; tkaikkika×22; äkaikkika×20; ikaikkika×19
+finnish_bible	psum	#M-	2	0.03571	3346716	4268.8	4743	4693	1109	1.111	kaikkimi×251; inäherra×128; akaikkik×124; dänherra×81; nutherra×77
+finnish_bible	psum	#3	3	0.03571	3346712	152.5	166	103	16	1.089	ssaanolikaks×14; ulleethänenä×5; maanpaikkaan×5; nlainarkinet×4; taansotimaan×4
+finnish_bible	psum	#3+	4	0.03571	3346709	5.4	1	1	0	0.184	puhtaillakäsill×1
+finnish_bible	psum	#4	2	0.03571	3346710	4268.8	4113	3994	61	0.964	takaksikymment×29; aakaksikymment×23; vastaanjasanoi×22; ankäskynhaltij×20; minunpuolestan×19
+finnish_bible	bigram:1	#1	5	0.00795	3346705	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#C0	6	0.00795	3346699	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#C1	6	0.00795	3346697	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#2-	3	0.00795	3346698	1.7	1	0	0	0.595	inkuinmeribassaniinkuinmas×1
+finnish_bible	bigram:1	#2	5	0.00795	3346693	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#2+	7	0.00795	3346690	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#S	6	0.00795	3346692	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#F	5	0.00795	3346704	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#M	3	0.00795	3346714	1.7	1	1	0	0.595	illallaill×1
+finnish_bible	bigram:1	#M-	2	0.00795	3346715	211.5	192	189	151	0.908	valallava×24; inunkunin×17; enkeskeen×7; enikaiken×6; taasiasta×5
+finnish_bible	bigram:1	#3	3	0.00795	3346711	1.7	1	1	0	0.595	ttätekestätte×1
+finnish_bible	bigram:1	#3+	4	0.00795	3346708	0.0	0	0	0	0.000	
+finnish_bible	bigram:1	#4	2	0.00795	3346709	211.5	142	140	83	0.672	jasanansaattaja×8; tajapappipoltta×5; hrejajaruokauhr×4; elisasanoihänel×4; jumalallemikäju×3
+karelian_livvi	direct	#1	5	0.06271	1534681	1.5	2	0	0	1.344	annaioannovnuavena×1; tyksesmanganumanat×1
+karelian_livvi	direct	#C0	6	0.06271	1534675	0.1	0	0	0	0.000	
+karelian_livvi	direct	#C1	6	0.06271	1534673	0.1	0	0	0	0.000	
+karelian_livvi	direct	#2-	3	0.06271	1534674	378.5	314	202	0	0.830	itriimendelejevanalguaine×10; iäpöidysärgiisiiguahaugii×3; llaeliballaadejasaimaalta×3; nroinnuheskevätkuuduvuvve×2; isesijaiččoukymrinmuansuu×2
+karelian_livvi	direct	#2	5	0.06271	1534669	1.5	2	0	0	1.344	valamoisnovgorodahvalamoinmana×1; bdfdbddbddbdbedbddbdbbdcdbddbd×1
+karelian_livvi	direct	#2+	7	0.06271	1534666	0.0	0	0	0	0.000	
+karelian_livvi	direct	#S	6	0.06271	1534668	0.1	0	0	0	0.000	
+karelian_livvi	direct	#F	5	0.06271	1534680	1.5	1	0	0	0.672	dbddbdbbdcdbddbdfdb×1
+karelian_livvi	direct	#M	3	0.06271	1534690	378.5	420	315	178	1.110	nyhtehine×51; hanrunohu×27; ajattajat×15; nkielienl×7; usilaigua×7
+karelian_livvi	direct	#M-	2	0.06271	1534691	6035.6	9198	6864	2329	1.524	alantaza×969; nduaruan×305; npiälinn×294; akarjala×211; inekieli×144
+karelian_livvi	direct	#3	3	0.06271	1534687	378.5	545	258	24	1.440	anonieganran×49; ananuksenkan×43; stettuartist×12; aionsijoitan×12; jalazetkarja×5
+karelian_livvi	direct	#3+	4	0.06271	1534684	23.7	33	17	0	1.390	anonieganrannan×2; lalaatokanlaula×2; varaaltoalvaraa×1; kovehenhokkeivo×1; duvenanluodehpu×1
+karelian_livvi	direct	#4	2	0.06271	1534685	6035.6	6446	5049	26	1.068	antazavallaska×120; allananuksenka×43; antazavallanka×41; antazavallasla×41; arjalanrahvaha×36
+karelian_livvi	delta:1	#1	5	0.03253	1534680	0.1	2	1	0	35.755	uhjoloinkeskehmečän×1; zienaigaholipuolove×1
+karelian_livvi	delta:1	#C0	6	0.03253	1534674	0.0	0	0	0	0.000	
+karelian_livvi	delta:1	#C1	6	0.03253	1534672	0.0	0	0	0	0.000	
+karelian_livvi	delta:1	#2-	3	0.03253	1534673	52.8	56	46	0	1.060	uaiguakuuloiksedačuasuloik×1; arvetdakävyyniilöittähsula×1; kuikkujiäkuikkulibojiäguik×1; letarkoitetturunokirjusilm×1; oksenjohtajannuoliolgagorš×1
+karelian_livvi	delta:1	#2	5	0.03253	1534668	0.1	0	0	0	0.000	
+karelian_livvi	delta:1	#2+	7	0.03253	1534665	0.0	0	0	0	0.000	
+karelian_livvi	delta:1	#S	6	0.03253	1534667	0.0	0	0	0	0.000	
+karelian_livvi	delta:1	#F	5	0.03253	1534679	0.1	0	0	0	0.000	
+karelian_livvi	delta:1	#M	3	0.03253	1534689	52.8	49	38	26	0.927	vehellizii×3; rgeiškolan×3; estouniesl×2; nuvvessahv×2; endettuenn×2
+karelian_livvi	delta:1	#M-	2	0.03253	1534690	1624.4	1849	1758	1093	1.138	vuvvennut×79; nnikonpii×74; enanmeren×43; valmistam×41; rubeiruad×23
+karelian_livvi	delta:1	#3	3	0.03253	1534686	52.8	54	41	11	1.022	nepalnepalnep×2; opastuuopastu×2; merivienanmer×2; riukiulazetki×2; llistuaihettu×1
+karelian_livvi	delta:1	#3+	4	0.03253	1534683	1.7	5	4	1	2.908	vennuhänenvellen×1; järvisuurijänisj×1; oksisgaonvieolem×1; ddbdbbdcdbddbdfd×1; solncevorotpetro×1
+karelian_livvi	delta:1	#4	2	0.03253	1534684	1624.4	1541	1450	137	0.949	piirineländykoh×19; nsyväinmuavaldi×14; anarvostetturua×14; uanruadajienper×11; hteiskunnallize×11
+karelian_livvi	sigma:1	#1	5	0.03332	1534680	0.1	0	0	0	0.000	
+karelian_livvi	sigma:1	#C0	6	0.03332	1534674	0.0	0	0	0	0.000	
+karelian_livvi	sigma:1	#C1	6	0.03332	1534672	0.0	0	0	0	0.000	
+karelian_livvi	sigma:1	#2-	3	0.03332	1534673	56.8	65	52	0	1.145	kuvauksiaskshelsinkiilmari×3; ksiaskshelsinkiilmarimanni×3; oalakeskiškolakultuurutalo×2; askusadrianmerendaionianme×1; llizesalguainehespäidaiain×1
+karelian_livvi	sigma:1	#2	5	0.03332	1534668	0.1	0	0	0	0.000	
+karelian_livvi	sigma:1	#2+	7	0.03332	1534665	0.0	0	0	0	0.000	
+karelian_livvi	sigma:1	#S	6	0.03332	1534667	0.0	0	0	0	0.000	
+karelian_livvi	sigma:1	#F	5	0.03332	1534679	0.1	0	0	0	0.000	
+karelian_livvi	sigma:1	#M	3	0.03332	1534689	56.8	50	24	18	0.881	senjällest×14; eonkolmash×1; ilololoilo×1; dorekvador×1; čempionxkm×1
+karelian_livvi	sigma:1	#M-	2	0.03332	1534690	1703.6	1655	1477	743	0.971	senjälles×64; tarkoitta×50; honkargav×37; laonkmpid×29; ienhiimie×25
+karelian_livvi	sigma:1	#3	3	0.03332	1534686	56.8	98	71	16	1.727	uvuvvennuvuvv×8; eriazovanmeri×3; vonlinnanoupe×3; ahtavanmugaho×2; nvaldumerenvä×2
+karelian_livvi	sigma:1	#3+	4	0.03332	1534683	1.9	4	2	1	2.115	eriazovanmerionm×1; viludakongopiäli×1; ronoumiionluonno×1; nasnapoleonanvas×1
+karelian_livvi	sigma:1	#4	2	0.03332	1534684	1703.6	1759	1677	83	1.033	llizetkieletoll×40; guatapettuloinn×16; oliitonjoukkove×11; ikkelihniškoiki×11; olakultuurutalo×8
+karelian_livvi	psum	#1	5	0.03030	1534681	0.0	0	0	0	0.000	
+karelian_livvi	psum	#C0	6	0.03030	1534675	0.0	0	0	0	0.000	
+karelian_livvi	psum	#C1	6	0.03030	1534673	0.0	0	0	0	0.000	
+karelian_livvi	psum	#2-	3	0.03030	1534674	42.7	43	40	0	1.007	johätkenaigufiiziekasfiiz×1; sandrvasiljevičsuvorovale×1; mbantaloionkoupiivuvvennu×1; jittudakonzuseluajittuonk×1; ukudainygöieiruatalovusne×1
+karelian_livvi	psum	#2	5	0.03030	1534669	0.0	0	0	0	0.000	
+karelian_livvi	psum	#2+	7	0.03030	1534666	0.0	0	0	0	0.000	
+karelian_livvi	psum	#S	6	0.03030	1534668	0.0	0	0	0	0.000	
+karelian_livvi	psum	#F	5	0.03030	1534680	0.0	0	0	0	0.000	
+karelian_livvi	psum	#M	3	0.03030	1534690	42.7	51	44	6	1.194	anopastuj×9; spromhouz×8; enopastuj×7; onopastuj×5; inopastuj×3
+karelian_livvi	psum	#M-	2	0.03030	1534691	1409.3	1916	1852	765	1.360	svuongri×304; anopastu×32; enopastu×30; kekoilli×19; npiirika×18
+karelian_livvi	psum	#3	3	0.03030	1534687	42.7	55	38	10	1.288	bailijatläht×4; lkyliämyötem×4; tizenteourie×2; daharvinazih×2; ruinvahnembi×2
+karelian_livvi	psum	#3+	4	0.03030	1534684	1.3	0	0	0	0.000	
+karelian_livvi	psum	#4	2	0.03030	1534685	1409.3	1536	1497	75	1.090	vvostotazavald×14; joitunnuheskil×8; kuudunevvostol×7; ionispuanielai×6; uuzijyškyjärvi×5
+karelian_livvi	bigram:1	#1	5	0.00578	1534680	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#C0	6	0.00578	1534674	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#C1	6	0.00578	1534672	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#2-	3	0.00578	1534673	0.3	0	0	0	0.000	
+karelian_livvi	bigram:1	#2	5	0.00578	1534668	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#2+	7	0.00578	1534665	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#S	6	0.00578	1534667	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#F	5	0.00578	1534679	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#M	3	0.00578	1534689	0.3	1	1	0	3.380	pariaripar×1
+karelian_livvi	bigram:1	#M-	2	0.00578	1534690	51.2	42	42	34	0.820	nkielienk×5; elenienel×1; ndrabrand×1; evandanev×1; rufosforu×1
+karelian_livvi	bigram:1	#3	3	0.00578	1534686	0.3	1	0	0	3.380	ddbdbbdcdbddb×1
+karelian_livvi	bigram:1	#3+	4	0.00578	1534683	0.0	0	0	0	0.000	
+karelian_livvi	bigram:1	#4	2	0.00578	1534684	51.2	48	45	34	0.937	uadenenpaginlua×2; oisananpolviloi×2; laksesežogrönla×2; nudapappivuonnu×1; isnämämuatyhdis×1

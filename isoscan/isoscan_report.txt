@@ -1,0 +1,485 @@
+
+=== corpus english: 431566 letters, alphabet mod 26 ===
+[direct   ] #1   C=5 κ=0.0652 exp=      0.5 obs=      1 (distinct 0, strict 0) ratio=  1.97
+           top: squitetoogoodtolos×1
+[direct   ] #C0  C=6 κ=0.0652 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #C1  C=6 κ=0.0652 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2-  C=3 κ=0.0652 exp=    119.6 obs=    115 (distinct 84, strict 0) ratio=  0.96
+           top: lybalancedmindhewasitakei×1; ebohemiansoulremainedinou×1; natingfromweektoweekbetwe×1; erthenatthathouranddonott×1; remarkedwhatdoyouimaginet×1
+[direct   ] #2   C=5 κ=0.0652 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2+  C=7 κ=0.0652 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #S   C=6 κ=0.0652 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #F   C=5 κ=0.0652 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #M   C=3 κ=0.0652 exp=    119.6 obs=    106 (distinct 87, strict 47) ratio=  0.89
+           top: ckinhisch×7; thislittl×5; pinionupo×3; toogoodto×2; nvictiont×2
+[direct   ] #M-  C=2 κ=0.0652 exp=   1834.7 obs=   1876 (distinct 1744, strict 791) ratio=  1.02
+           top: avebeena×21; tseemedt×20; thegreat×18; epassage×16; edthathe×14
+[direct   ] #3   C=3 κ=0.0652 exp=    119.6 obs=     98 (distinct 79, strict 5) ratio=  0.82
+           top: ackinhischai×7; weshallseewh×6; ebetterablet×2; takethematte×2; thetimethatt×2
+[direct   ] #3+  C=4 κ=0.0652 exp=      7.8 obs=      6 (distinct 4, strict 0) ratio=  0.77
+           top: timakeamistakei×1; hereourredheade×1; ethroughtherift×1; thehourthatheth×1; hemachineihadbe×1
+[direct   ] #4   C=2 κ=0.0652 exp=   1834.7 obs=   1212 (distinct 1061, strict 10) ratio=  0.66
+           top: onetotheothero×5; somefewminutes×3; ntheverymornin×3; epresenceofthe×3; ofdrgrimesbyro×3
+[delta:1  ] #1   C=5 κ=0.0418 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C0  C=6 κ=0.0418 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C1  C=6 κ=0.0418 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2-  C=3 κ=0.0418 exp=     31.4 obs=     29 (distinct 24, strict 0) ratio=  0.92
+           top: enbeforeiwasawarethatiwasa×1; oomillkemptandsidewhiskere×1; ntwentyminutesthiswasquite×1; swereinfrontofthedoorwheni×1; erstreetanditstillwantedte×1
+[delta:1  ] #2   C=5 κ=0.0418 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2+  C=7 κ=0.0418 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #S   C=6 κ=0.0418 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #F   C=5 κ=0.0418 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #M   C=3 κ=0.0418 exp=     31.4 obs=     20 (distinct 18, strict 10) ratio=  0.64
+           top: essedwitha×2; rongnature×2; veforirene×1; chwouldine×1; rinstincti×1
+[delta:1  ] #M-  C=2 κ=0.0418 exp=    752.7 obs=    648 (distinct 629, strict 331) ratio=  0.86
+           top: thinginth×8; itwasquit×6; ithoutany×5; nthefront×4; thefirsth×4
+[delta:1  ] #3   C=3 κ=0.0418 exp=     31.4 obs=     39 (distinct 33, strict 7) ratio=  1.24
+           top: teveryquarter×2; ihavechangedm×1; urmajestythen×1; penwhichentit×1; ongratulatedm×1
+[delta:1  ] #3+  C=4 κ=0.0418 exp=      1.3 obs=      2 (distinct 1, strict 0) ratio=  1.52
+           top: unclesavethatiti×1; ndiamlivingwithm×1
+[delta:1  ] #4   C=2 κ=0.0418 exp=    752.7 obs=    705 (distinct 675, strict 18) ratio=  0.94
+           top: lockholmeshadbe×3; ossibleformetos×2; ithinafewminute×2; dbeyondthesesig×1; llremembereddoo×1
+[sigma:1  ] #1   C=5 κ=0.0451 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C0  C=6 κ=0.0451 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C1  C=6 κ=0.0451 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2-  C=3 κ=0.0451 exp=     39.6 obs=     35 (distinct 32, strict 0) ratio=  0.88
+           top: owanicelittlebroughamandap×1; ynoteheaskedwithadeepharsh×1; swalkedintotheroomaccustom×1; gewhichyouhavegainedonever×1; thosewhomhehadsethimselfto×1
+[sigma:1  ] #2   C=5 κ=0.0451 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2+  C=7 κ=0.0451 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #S   C=6 κ=0.0451 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #F   C=5 κ=0.0451 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #M   C=3 κ=0.0451 exp=     39.6 obs=     43 (distinct 34, strict 25) ratio=  1.08
+           top: pressionth×3; eincapable×2; rvedthatth×2; dhelplessi×1; dwhetheris×1
+[sigma:1  ] #M-  C=2 κ=0.0451 exp=    878.4 obs=    816 (distinct 769, strict 379) ratio=  0.93
+           top: stepfathe×21; avenodoub×19; dsomethin×10; thinginth×8; hesingula×7
+[sigma:1  ] #3   C=3 κ=0.0451 exp=     39.6 obs=     42 (distinct 33, strict 6) ratio=  1.06
+           top: sappearanceof×6; valleymystery×2; crackinoneofh×1; dbyhiswholeap×1; ongedikeepito×1
+[sigma:1  ] #3+  C=4 κ=0.0451 exp=      1.8 obs=      2 (distinct 2, strict 0) ratio=  1.12
+           top: lwatsonweshallse×1; estairssheseemst×1
+[sigma:1  ] #4   C=2 κ=0.0451 exp=    878.4 obs=    777 (distinct 727, strict 31) ratio=  0.88
+           top: ofyourreasoning×2; itrustthatiamno×2; ecracksbetweent×2; usfromthefirstt×2; dandshookmyhead×2
+[psum     ] #1   C=5 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C0  C=6 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C1  C=6 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2-  C=3 κ=0.0385 exp=     24.6 obs=     23 (distinct 21, strict 0) ratio=  0.94
+           top: tatothertimesexceptwhensh×1; seallhewantsisanolddogtoh×1; iveitalltoknowwhathasbeco×1; imagineamoredamningcaseir×1; oldmanitsaquestionwhether×1
+[psum     ] #2   C=5 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2+  C=7 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #S   C=6 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #F   C=5 κ=0.0385 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #M   C=3 κ=0.0385 exp=     24.6 obs=     39 (distinct 24, strict 9) ratio=  1.59
+           top: dnothaveb×5; ewthathew×3; ourfrench×2; chhouseiw×1; mokecurle×1
+[psum     ] #M-  C=2 κ=0.0385 exp=    638.4 obs=    829 (distinct 664, strict 173) ratio=  1.30
+           top: herewasn×37; dnothave×19; comefrom×10; dthathis×10; ethathew×10
+[psum     ] #3   C=3 κ=0.0385 exp=     24.6 obs=     22 (distinct 17, strict 1) ratio=  0.90
+           top: hedeathofwal×1; eennodoubtde×1; floomedbehin×1; asgonedoyoum×1; hadbeenonthe×1
+[psum     ] #3+  C=4 κ=0.0385 exp=      0.9 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #4   C=2 κ=0.0385 exp=    638.4 obs=   1251 (distinct 1176, strict 21) ratio=  1.96
+           top: thedisappearan×6; onotthinkthati×5; dfromonetotheo×4; heencyclopaedi×4; thecommissiona×4
+[bigram:1 ] #1   C=5 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C0  C=6 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C1  C=6 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2-  C=3 κ=0.0075 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2   C=5 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2+  C=7 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #S   C=6 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #F   C=5 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M   C=3 κ=0.0075 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M-  C=2 κ=0.0075 exp=     24.0 obs=     21 (distinct 21, strict 17) ratio=  0.88
+           top: thinginth×8; ewthathew×3; oseprepos×1; lleaveall×1; issonsois×1
+[bigram:1 ] #3   C=3 κ=0.0075 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #3+  C=4 κ=0.0075 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #4   C=2 κ=0.0075 exp=     24.0 obs=      3 (distinct 3, strict 3) ratio=  0.13
+           top: ngtheheavyirong×1; nedasasmallpane×1; thatitisoneofth×1
+
+=== corpus kalevala_en: 644047 letters, alphabet mod 33 ===
+[direct   ] #1   C=5 κ=0.0669 exp=      0.9 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #C0  C=6 κ=0.0669 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #C1  C=6 κ=0.0669 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2-  C=3 κ=0.0669 exp=    193.2 obs=    216 (distinct 147, strict 0) ratio=  1.12
+           top: sthesewordsinwonderguessi×4; littleheedinglemminkainen×3; nheknewtosatisfactionthat×3; ebluebackofthebroadseaont×2; aybyadvancingtribesthefin×1
+[direct   ] #2   C=5 κ=0.0669 exp=      0.9 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2+  C=7 κ=0.0669 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #S   C=6 κ=0.0669 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #F   C=5 κ=0.0669 exp=      0.9 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #M   C=3 κ=0.0669 exp=    193.2 obs=    143 (distinct 125, strict 51) ratio=  0.74
+           top: twithinth×10; estofthef×3; edthetree×3; inherhair×3; hismischi×3
+[direct   ] #M-  C=2 κ=0.0669 exp=   2886.5 obs=   2773 (distinct 2611, strict 1300) ratio=  0.96
+           top: sfollows×71; thegreat×39; estofthe×38; thesweet×25; owainamo×24
+[direct   ] #3   C=3 κ=0.0669 exp=    193.2 obs=    175 (distinct 141, strict 17) ratio=  0.91
+           top: throughtheto×5; eartedspaket×5; heseasidethe×4; roonhisjourn×3; unandmoonrun×2
+[direct   ] #3+  C=4 κ=0.0669 exp=     12.9 obs=     10 (distinct 7, strict 0) ratio=  0.77
+           top: shimwithhismigh×1; sectgathersthee×1; etimesinthemont×1; etherhowtheeart×1; reddlesheardthe×1
+[direct   ] #4   C=2 κ=0.0669 exp=   2886.5 obs=   1732 (distinct 1504, strict 14) ratio=  0.60
+           top: moinenancientm×30; etherecklessle×25; sthesethewords×16; ntheherolemmin×8; sthesemeasures×6
+[delta:1  ] #1   C=5 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C0  C=6 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C1  C=6 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2-  C=3 κ=0.0351 exp=     27.9 obs=     36 (distinct 29, strict 0) ratio=  1.29
+           top: ithwalkthecrimsonbordersof×1; rassyhillocksontheblueback×1; lyingthathemightthisthingc×1; efirstandbestadviserwaters×1; inenchidingthustheancienth×1
+[delta:1  ] #2   C=5 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2+  C=7 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #S   C=6 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #F   C=5 κ=0.0351 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #M   C=3 κ=0.0351 exp=     27.9 obs=     60 (distinct 59, strict 10) ratio=  2.15
+           top: cklesslemm×43; nlanguages×2; ffixesatta×1; ybodyshake×1; neageagrie×1
+[delta:1  ] #M-  C=2 κ=0.0351 exp=    795.2 obs=    675 (distinct 646, strict 386) ratio=  0.85
+           top: cklesslem×43; thewaterf×17; tothemaid×15; herandthe×12; sthegolde×9
+[delta:1  ] #3   C=3 κ=0.0351 exp=     27.9 obs=     17 (distinct 16, strict 4) ratio=  0.61
+           top: estmaidenofth×2; eweaverswebth×1; rstrikeshimne×1; madethenorthw×1; stenssearchin×1
+[delta:1  ] #3+  C=4 κ=0.0351 exp=      1.0 obs=      2 (distinct 2, strict 0) ratio=  2.04
+           top: estmaidenoftheno×2
+[delta:1  ] #4   C=2 κ=0.0351 exp=    795.2 obs=    715 (distinct 689, strict 53) ratio=  0.90
+           top: thepleasureofth×11; hewizardlemmink×7; thelargestnorth×6; erthistheanswer×6; thefogpointinth×5
+[sigma:1  ] #1   C=5 κ=0.0404 exp=      0.1 obs=      1 (distinct 1, strict 0) ratio= 14.41
+           top: infullcontentmentin×1
+[sigma:1  ] #C0  C=6 κ=0.0404 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C1  C=6 κ=0.0404 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2-  C=3 κ=0.0404 exp=     42.5 obs=     43 (distinct 34, strict 0) ratio=  1.01
+           top: dsprinklesblackmilkoverthe×1; akysytminultakunsaatatomil×1; htscometoussinglythatthemo×1; romtroubletodelivermeintra×1; houshouldstgivemeallthehig×1
+[sigma:1  ] #2   C=5 κ=0.0404 exp=      0.1 obs=      1 (distinct 0, strict 0) ratio= 14.41
+           top: heheroheadsofnorthlandthustheis×1
+[sigma:1  ] #2+  C=7 κ=0.0404 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #S   C=6 κ=0.0404 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #F   C=5 κ=0.0404 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #M   C=3 κ=0.0404 exp=     42.5 obs=     34 (distinct 30, strict 17) ratio=  0.80
+           top: contentmen×8; eroesbring×2; stlethisth×2; ightyweigh×2; hofkaleval×2
+[sigma:1  ] #M-  C=2 κ=0.0404 exp=   1051.6 obs=    839 (distinct 785, strict 408) ratio=  0.80
+           top: thebottom×43; inalldire×13; tothemoun×11; nefficien×11; singingth×9
+[sigma:1  ] #3   C=3 κ=0.0404 exp=     42.5 obs=     37 (distinct 30, strict 4) ratio=  0.87
+           top: shepherdladwa×2; earthstonesth×2; omthefloorthe×2; tenderhearted×1; ingentirepine×1
+[sigma:1  ] #3+  C=4 κ=0.0404 exp=      1.7 obs=      2 (distinct 2, strict 0) ratio=  1.16
+           top: eriwillneverneve×1; esinthehomesofth×1
+[sigma:1  ] #4   C=2 κ=0.0404 exp=   1051.6 obs=   1015 (distinct 933, strict 58) ratio=  0.97
+           top: esethewordsofwa×7; dstheherouttere×6; tursosonofoldag×5; isoughttheseasi×4; esteedfliesonwa×4
+[psum     ] #1   C=5 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C0  C=6 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C1  C=6 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2-  C=3 κ=0.0303 exp=     17.9 obs=     18 (distinct 17, strict 0) ratio=  1.00
+           top: erandwhenangrytheykeepsil×1; upledwiththenameofhisabod×1; shedthanitattractedtheatt×1; rjokannenkirjallayhenjouk×1; treamflowsonwardwainamoin×1
+[psum     ] #2   C=5 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2+  C=7 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #S   C=6 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #F   C=5 κ=0.0303 exp=      0.0 obs=      1 (distinct 1, strict 0) ratio= 60.76
+           top: ndoldandtoothlesswi×1
+[psum     ] #M   C=3 κ=0.0303 exp=     17.9 obs=     55 (distinct 28, strict 18) ratio=  3.07
+           top: ingspaket×16; owtolivea×5; othlesswi×5; withthecu×3; selrockin×2
+[psum     ] #M-  C=2 κ=0.0303 exp=    591.4 obs=    640 (distinct 628, strict 270) ratio=  1.08
+           top: oughthed×21; ingspake×19; thehomes×18; osmotart×12; owtolive×10
+[psum     ] #3   C=3 κ=0.0303 exp=     17.9 obs=     20 (distinct 17, strict 0) ratio=  1.12
+           top: thecuckoosin×6; sunthedaught×1; lkthourested×1; ofwinterquic×1; tstakeatonce×1
+[psum     ] #3+  C=4 κ=0.0303 exp=      0.5 obs=      4 (distinct 4, strict 0) ratio=  7.37
+           top: thecuckoosingin×4
+[psum     ] #4   C=2 κ=0.0303 exp=    591.4 obs=    441 (distinct 415, strict 18) ratio=  0.75
+           top: ainotothebotto×5; retosportamong×4; hemountainashe×3; linnunratabird×2; oesnotcheerthe×2
+[bigram:1 ] #1   C=5 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C0  C=6 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C1  C=6 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2-  C=3 κ=0.0090 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2   C=5 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2+  C=7 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #S   C=6 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #F   C=5 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M   C=3 κ=0.0090 exp=      0.5 obs=      1 (distinct 1, strict 0) ratio=  2.15
+           top: singingsin×1
+[bigram:1 ] #M-  C=2 κ=0.0090 exp=     51.9 obs=     31 (distinct 31, strict 24) ratio=  0.60
+           top: erthither×6; thinginth×6; rethethre×2; lpherhelp×1; stinginst×1
+[bigram:1 ] #3   C=3 κ=0.0090 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #3+  C=4 κ=0.0090 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #4   C=2 κ=0.0090 exp=     51.9 obs=     16 (distinct 16, strict 10) ratio=  0.31
+           top: onthehearthston×3; ethatatonetimet×1; erstitioneveter×1; intheheavenssin×1; intheheroofwain×1
+
+=== corpus finnish_kalevala: 453032 letters, alphabet mod 28 ===
+[direct   ] #1   C=5 κ=0.0734 exp=      1.0 obs=      4 (distinct 3, strict 0) ratio=  4.15
+           top: ntajaltakaiketisan×1; enkarsinastamitäne×1; kuohuminenvesivank×1; anarmasmaataastuma×1
+[direct   ] #C0  C=6 κ=0.0734 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #C1  C=6 κ=0.0734 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2-  C=3 κ=0.0734 exp=    179.0 obs=    158 (distinct 109, strict 0) ratio=  0.88
+           top: änemäntätapiolantarkkavai×3; theititkoivunkasvamahanpu×2; toistarunosiitälietolemmi×2; yäntyikovinsuuttuijavihas×2; ntyöntävitulehenliittikul×2
+[direct   ] #2   C=5 κ=0.0734 exp=      1.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2+  C=7 κ=0.0734 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #S   C=6 κ=0.0734 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #F   C=5 κ=0.0734 exp=      1.0 obs=      5 (distinct 1, strict 0) ratio=  5.19
+           top: atarkempatataitajat×2; maataniomallamaalla×1; taneoluttapantanepa×1; allansavasarallaval×1
+[direct   ] #M   C=3 κ=0.0734 exp=    179.0 obs=    277 (distinct 167, strict 36) ratio=  1.55
+           top: ahanvakav×5; llamaalla×5; nsimäisnä×4; emäntämet×4; nenminuni×4
+[direct   ] #M-  C=2 κ=0.0734 exp=   2439.0 obs=   3349 (distinct 2418, strict 615) ratio=  1.37
+           top: uollalau×64; ävanhavä×61; nensanan×55; apohjola×32; llesiell×15
+[direct   ] #3   C=3 κ=0.0734 exp=    179.0 obs=    296 (distinct 132, strict 4) ratio=  1.65
+           top: sakasuavassa×7; tasariolasta×6; lakannikalla×4; enenkynännen×4; mehiläinenmi×4
+[direct   ] #3+  C=4 κ=0.0734 exp=     13.1 obs=     32 (distinct 15, strict 0) ratio=  2.44
+           top: kärestävätkeihä×3; sinisilkitsilmi×2; hätäpäiväthäätä×2; sikiitäviksisii×1; matarmahammatla×1
+[direct   ] #4   C=2 κ=0.0734 exp=   2439.0 obs=   2785 (distinct 2048, strict 1) ratio=  1.14
+           top: nsananvirkkoin×76; amaatasaarenma×10; akkaharvahamma×8; assakasuavassa×7; nenähänutuisen×7
+[delta:1  ] #1   C=5 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C0  C=6 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C1  C=6 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2-  C=3 κ=0.0405 exp=     30.1 obs=     28 (distinct 20, strict 0) ratio=  0.93
+           top: ttymaanmaoillaaiastettukää×2; uumillekivillepalavillepaa×2; tainenylenikunkikunnahanku×1; analanmaillanoillatuonelan×1; kuulisukkulansurinanylähäl×1
+[delta:1  ] #2   C=5 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2+  C=7 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #S   C=6 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #F   C=5 κ=0.0405 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #M   C=3 κ=0.0405 exp=     30.1 obs=     23 (distinct 22, strict 14) ratio=  0.76
+           top: ukkuvaksip×2; miestämiel×2; lvätiätäiä×1; kaonnutkah×1; tvakaisiks×1
+[delta:1  ] #M-  C=2 κ=0.0405 exp=    743.1 obs=   1012 (distinct 960, strict 417) ratio=  1.36
+           top: kkoinoinn×188; etsänemän×18; miestämie×11; tupahantu×10; ahansanov×9
+[delta:1  ] #3   C=3 κ=0.0405 exp=     30.1 obs=     44 (distinct 33, strict 3) ratio=  1.46
+           top: issasovissaka×2; nentaoitennen×2; ylvisoitakylv×1; iäsituuriasit×1; itaonnoitaits×1
+[delta:1  ] #3+  C=4 κ=0.0405 exp=      1.2 obs=      2 (distinct 2, strict 0) ratio=  1.64
+           top: iäsituuriasituum×1; atperinvierivätp×1
+[delta:1  ] #4   C=2 κ=0.0405 exp=    743.1 obs=    656 (distinct 607, strict 18) ratio=  0.88
+           top: ervonpoikasanan×13; nhaväinämöinenh×6; lenteälekuttele×5; iikkuisillanlii×5; ivimäestävaaran×5
+[sigma:1  ] #1   C=5 κ=0.0409 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C0  C=6 κ=0.0409 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C1  C=6 κ=0.0409 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2-  C=3 κ=0.0409 exp=     30.9 obs=     30 (distinct 24, strict 0) ratio=  0.97
+           top: mielimiekkoisienautuaallis×3; tuilänkilöihinvemmelvempel×1; uinonpimanalanmaillanoilla×1; tivirkkiviimeinkisanoiksii×1; arisenvieäviiletelläksensä×1
+[sigma:1  ] #2   C=5 κ=0.0409 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2+  C=7 κ=0.0409 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #S   C=6 κ=0.0409 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #F   C=5 κ=0.0409 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #M   C=3 κ=0.0409 exp=     30.9 obs=     35 (distinct 24, strict 7) ratio=  1.13
+           top: näänenääne×4; älleseläll×2; npistisuit×2; mpatataita×2; täkokkorau×2
+[sigma:1  ] #M-  C=2 κ=0.0409 exp=    756.2 obs=    927 (distinct 855, strict 305) ratio=  1.23
+           top: lervokale×52; ensinisen×17; lmarinenk×12; nalanalan×12; enperiltä×10
+[sigma:1  ] #3   C=3 κ=0.0409 exp=     30.9 obs=    102 (distinct 55, strict 10) ratio=  3.30
+           top: llalausehella×32; hyvänimmenhyp×12; kallistihekat×6; hanvakavanhav×5; setsinäilmois×2
+[sigma:1  ] #3+  C=4 κ=0.0409 exp=      1.3 obs=      6 (distinct 3, strict 0) ratio=  4.75
+           top: llalausehellameh×1; asillamarjasetsi×1; ihinkeskelletule×1; mattakostamattat×1; etokylmähänkyläh×1
+[sigma:1  ] #4   C=2 κ=0.0409 exp=    756.2 obs=    797 (distinct 730, strict 21) ratio=  1.05
+           top: elvällämerensel×5; inoinnimesiohoh×5; lapallaaukealla×4; nnemäkanakatosi×4; karoisehensaott×4
+[psum     ] #1   C=5 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C0  C=6 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C1  C=6 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2-  C=3 κ=0.0357 exp=     20.6 obs=     23 (distinct 15, strict 0) ratio=  1.11
+           top: lervonpoikahänpävarsinvas×3; masakkasenisanoarmasakkas×2; äikyominväkiniväikynväell×1; porollensasuinpuhelinytsi×1; päillekolmannenkohottelei×1
+[psum     ] #2   C=5 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2+  C=7 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #S   C=6 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #F   C=5 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #M   C=3 κ=0.0357 exp=     20.6 obs=     44 (distinct 17, strict 6) ratio=  2.13
+           top: ikaikkika×7; tkaikkika×6; akaikkika×3; nkaikkika×2; äkaikkika×2
+[psum     ] #M-  C=2 κ=0.0357 exp=    577.9 obs=    558 (distinct 552, strict 193) ratio=  0.97
+           top: siitälie×34; tkaikkik×11; takaksik×9; ikaikkik×8; vänimine×7
+[psum     ] #3   C=3 κ=0.0357 exp=     20.6 obs=     14 (distinct 10, strict 0) ratio=  0.68
+           top: inkynnykselt×1; televioiskot×1; kurjaurohias×1; llonarkkuark×1; ikkikaikkika×1
+[psum     ] #3+  C=4 κ=0.0357 exp=      0.7 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #4   C=2 κ=0.0357 exp=    577.8 obs=    424 (distinct 418, strict 7) ratio=  0.73
+           top: apäinpahoillam×12; ellonpientarel×12; ohjanpitkähänp×4; uuttuijavihast×4; äivytjumalanlu×4
+[bigram:1 ] #1   C=5 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C0  C=6 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C1  C=6 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2-  C=3 κ=0.0080 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2   C=5 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2+  C=7 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #S   C=6 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #F   C=5 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M   C=3 κ=0.0080 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M-  C=2 κ=0.0080 exp=     28.8 obs=     35 (distinct 32, strict 23) ratio=  1.22
+           top: selälläse×2; inenmenin×2; käsiksikä×2; antultuan×1; sisässäsi×1
+[bigram:1 ] #3   C=3 κ=0.0080 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #3+  C=4 κ=0.0080 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #4   C=2 κ=0.0080 exp=     28.8 obs=     16 (distinct 15, strict 12) ratio=  0.56
+           top: insananvirkkoin×2; takananlapsetta×2; ulevivirostasul×1; stakokohonmiest×1; empelellävierem×1
+
+=== corpus finnish_bible: 3346723 letters, alphabet mod 28 ===
+[direct   ] #1   C=5 κ=0.0734 exp=      7.1 obs=     11 (distinct 2, strict 0) ratio=  1.54
+           top: aanomassamaassansa×2; itoipoikansaiisaki×1; tarenkaatjotkaovat×1; sraelinkansaensiks×1; niinhevastasivatan×1
+[direct   ] #C0  C=6 κ=0.0734 exp=      0.5 obs=      2 (distinct 1, strict 0) ratio=  3.82
+           top: itoipoikansaiisakinjapan×1; ristuksenkanssaperillisi×1
+[direct   ] #C1  C=6 κ=0.0734 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2-  C=3 κ=0.0734 exp=   1323.5 obs=   1119 (distinct 720, strict 0) ratio=  0.85
+           top: seitsemänkymmentätuhattam×4; aabrahaminjumalaiisakinju×3; akukaonsinunvertaisesisin×3; ajokakiroaaisäänsätaiäiti×3; taistellessaanhasaeliaara×3
+[direct   ] #2   C=5 κ=0.0734 exp=      7.1 obs=      7 (distinct 1, strict 0) ratio=  0.98
+           top: srintalihanjaanniksiannetunrei×1; akansasilapsiavastaanvaanrakas×1; teettetulenäkemääntuultaettekä×1; akuninkaanlinnaanjahänistuikun×1; avastaanjasenvaotkaikkiitkivät×1
+[direct   ] #2+  C=7 κ=0.0734 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #S   C=6 κ=0.0734 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #F   C=5 κ=0.0734 exp=      7.1 obs=     18 (distinct 4, strict 0) ratio=  2.52
+           top: stysmajassanäitäkat×2; estätappelemassakes×1; lkakappaleihinkivik×1; nsaastaantahansajas×1; aamastanaisenkanssa×1
+[direct   ] #M   C=3 κ=0.0734 exp=   1323.6 obs=   1703 (distinct 1063, strict 141) ratio=  1.29
+           top: vastasiva×118; senkanssa×57; akastavat×44; saastaist×29; ssamaassa×27
+[direct   ] #M-  C=2 κ=0.0734 exp=  18031.6 obs=  22664 (distinct 18782, strict 3977) ratio=  1.26
+           top: äpäivänä×648; elilaise×268; inkaaksi×236; inkaikki×199; noastaan×195
+[direct   ] #3   C=3 κ=0.0734 exp=   1323.6 obs=   1421 (distinct 775, strict 18) ratio=  1.07
+           top: enastikunnes×14; ansakuninkaa×11; lisellamiele×11; äkenellekään×10; ikenniinkuin×9
+[direct   ] #3+  C=4 κ=0.0734 exp=     97.2 obs=    152 (distinct 81, strict 0) ratio=  1.56
+           top: änentykönsäniin×6; äneneteensäniin×4; pelinmolempiine×3; aavatasuamaassa×3; eniinkuinmeidän×2
+[direct   ] #4   C=2 κ=0.0734 exp=  18031.5 obs=  17290 (distinct 14138, strict 12) ratio=  0.96
+           top: ahänenpoikansa×108; ietämäänettämi×83; errasanoimoose×54; jeesusvastasij×36; natähänpäivään×34
+[delta:1  ] #1   C=5 κ=0.0433 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C0  C=6 κ=0.0433 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C1  C=6 κ=0.0433 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2-  C=3 κ=0.0433 exp=    271.2 obs=    274 (distinct 208, strict 0) ratio=  1.01
+           top: sijakaikestasielustasijaka×4; llesaadokillejaebjatarille×3; inkuinsinäminunkansaniniin×3; ähänenpalvelijaansapalveli×2; taastakullastakäädytpunotu×2
+[delta:1  ] #2   C=5 κ=0.0433 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2+  C=7 κ=0.0433 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #S   C=6 κ=0.0433 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #F   C=5 κ=0.0433 exp=      0.5 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #M   C=3 κ=0.0433 exp=    271.2 obs=    255 (distinct 231, strict 104) ratio=  0.94
+           top: nenympäril×33; inkaatjotk×13; nensäädöss×13; äntäjahäne×8; rinympäril×6
+[delta:1  ] #M-  C=2 κ=0.0433 exp=   6267.8 obs=   6310 (distinct 5928, strict 3284) ratio=  1.01
+           top: ooseksell×250; aelinheim×152; anjumalan×126; onantanut×87; aajumalaa×45
+[delta:1  ] #3   C=3 κ=0.0433 exp=    271.2 obs=    298 (distinct 233, strict 39) ratio=  1.10
+           top: elijattulivat×11; jatappoihänet×6; njajokainenjo×6; lleetminunään×6; etkuulivatett×5
+[delta:1  ] #3+  C=4 κ=0.0433 exp=     11.7 obs=     11 (distinct 9, strict 0) ratio=  0.94
+           top: ihänetluulihänhä×1; saniistätesaatte×1; ensaastainenniin×1; lttipesköönvaatt×1; hänetsillähäntap×1
+[delta:1  ] #4   C=2 κ=0.0433 exp=   6267.8 obs=   6540 (distinct 6232, strict 189) ratio=  1.04
+           top: abelinkuningast×20; juudankuninkaal×18; ähäntekiseonkir×15; unajuudankuning×15; raelinkuninkaal×14
+[sigma:1  ] #1   C=5 κ=0.0411 exp=      0.4 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C0  C=6 κ=0.0411 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C1  C=6 κ=0.0411 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2-  C=3 κ=0.0411 exp=    232.5 obs=    248 (distinct 198, strict 0) ratio=  1.07
+           top: jalustaaainakaksijalustaak×4; nsielunikostaisitämänkalta×3; nnutsinutomaisuuskansaksee×2; atonilainenabdonhillelinpo×2; ethaudattiinisänsädaavidin×2
+[sigma:1  ] #2   C=5 κ=0.0411 exp=      0.4 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2+  C=7 κ=0.0411 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #S   C=6 κ=0.0411 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #F   C=5 κ=0.0411 exp=      0.4 obs=      1 (distinct 0, strict 0) ratio=  2.54
+           top: nänäinteidänisännehe×1
+[sigma:1  ] #M   C=3 κ=0.0411 exp=    232.5 obs=    186 (distinct 151, strict 91) ratio=  0.80
+           top: iseonkirjo×18; arinherral×8; istavatsin×8; hollisenis×5; astuialass×4
+[sigma:1  ] #M-  C=2 κ=0.0411 exp=   5656.1 obs=   5344 (distinct 4971, strict 1895) ratio=  0.94
+           top: eidänjuma×400; ellaäänel×44; llesilloi×38; ttetietäm×37; teurastet×37
+[sigma:1  ] #3   C=3 κ=0.0411 exp=    232.5 obs=    283 (distinct 190, strict 25) ratio=  1.22
+           top: sellepuolelle×23; sellapuolella×10; aminäolenheid×9; akappalettaku×8; njajaakobinja×5
+[sigma:1  ] #3+  C=4 κ=0.0411 exp=      9.6 obs=     11 (distinct 6, strict 1) ratio=  1.15
+           top: sillänsätaisteli×1; stasorastajaesta×1; sistaperissiläis×1; änonrikkonutliit×1; sellapuolellaole×1
+[sigma:1  ] #4   C=2 κ=0.0411 exp=   5656.1 obs=   5992 (distinct 5643, strict 202) ratio=  1.06
+           top: lkoisistapellav×28; anooherraherran×17; ameidänjumalaam×14; eltalännenpuole×14; sinuntodistuksi×12
+[psum     ] #1   C=5 κ=0.0357 exp=      0.2 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C0  C=6 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C1  C=6 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2-  C=3 κ=0.0357 exp=    152.5 obs=    204 (distinct 187, strict 0) ratio=  1.34
+           top: kaikkikansakunnatmaanpääl×3; akaikensisälmystenrasvanj×3; ikaikkisukukunnatmaanpääl×2; meäsilläherraeijätärankai×2; vaaksanpituinenjavaaksanl×2
+[psum     ] #2   C=5 κ=0.0357 exp=      0.2 obs=      1 (distinct 1, strict 0) ratio=  5.14
+           top: ittetehneetkunteittesitämikäon×1
+[psum     ] #2+  C=7 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #S   C=6 κ=0.0357 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #F   C=5 κ=0.0357 exp=      0.2 obs=      1 (distinct 0, strict 0) ratio=  5.14
+           top: taankuulkaakaikkika×1
+[psum     ] #M   C=3 κ=0.0357 exp=    152.5 obs=    330 (distinct 110, strict 63) ratio=  2.16
+           top: akaikkika×101; nkaikkika×31; tkaikkika×22; äkaikkika×20; ikaikkika×19
+[psum     ] #M-  C=2 κ=0.0357 exp=   4268.8 obs=   4743 (distinct 4693, strict 1109) ratio=  1.11
+           top: kaikkimi×251; inäherra×128; akaikkik×124; dänherra×81; nutherra×77
+[psum     ] #3   C=3 κ=0.0357 exp=    152.5 obs=    166 (distinct 103, strict 16) ratio=  1.09
+           top: ssaanolikaks×14; ulleethänenä×5; maanpaikkaan×5; nlainarkinet×4; taansotimaan×4
+[psum     ] #3+  C=4 κ=0.0357 exp=      5.4 obs=      1 (distinct 1, strict 0) ratio=  0.18
+           top: puhtaillakäsill×1
+[psum     ] #4   C=2 κ=0.0357 exp=   4268.8 obs=   4113 (distinct 3994, strict 61) ratio=  0.96
+           top: takaksikymment×29; aakaksikymment×23; vastaanjasanoi×22; ankäskynhaltij×20; minunpuolestan×19
+[bigram:1 ] #1   C=5 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C0  C=6 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C1  C=6 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2-  C=3 κ=0.0079 exp=      1.7 obs=      1 (distinct 0, strict 0) ratio=  0.59
+           top: inkuinmeribassaniinkuinmas×1
+[bigram:1 ] #2   C=5 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2+  C=7 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #S   C=6 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #F   C=5 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M   C=3 κ=0.0079 exp=      1.7 obs=      1 (distinct 1, strict 0) ratio=  0.59
+           top: illallaill×1
+[bigram:1 ] #M-  C=2 κ=0.0079 exp=    211.5 obs=    192 (distinct 189, strict 151) ratio=  0.91
+           top: valallava×24; inunkunin×17; enkeskeen×7; enikaiken×6; taasiasta×5
+[bigram:1 ] #3   C=3 κ=0.0079 exp=      1.7 obs=      1 (distinct 1, strict 0) ratio=  0.59
+           top: ttätekestätte×1
+[bigram:1 ] #3+  C=4 κ=0.0079 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #4   C=2 κ=0.0079 exp=    211.5 obs=    142 (distinct 140, strict 83) ratio=  0.67
+           top: jasanansaattaja×8; tajapappipoltta×5; hrejajaruokauhr×4; elisasanoihänel×4; jumalallemikäju×3
+
+=== corpus karelian_livvi: 1534698 letters, alphabet mod 33 ===
+[direct   ] #1   C=5 κ=0.0627 exp=      1.5 obs=      2 (distinct 0, strict 0) ratio=  1.34
+           top: annaioannovnuavena×1; tyksesmanganumanat×1
+[direct   ] #C0  C=6 κ=0.0627 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #C1  C=6 κ=0.0627 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #2-  C=3 κ=0.0627 exp=    378.5 obs=    314 (distinct 202, strict 0) ratio=  0.83
+           top: itriimendelejevanalguaine×10; iäpöidysärgiisiiguahaugii×3; llaeliballaadejasaimaalta×3; nroinnuheskevätkuuduvuvve×2; isesijaiččoukymrinmuansuu×2
+[direct   ] #2   C=5 κ=0.0627 exp=      1.5 obs=      2 (distinct 0, strict 0) ratio=  1.34
+           top: valamoisnovgorodahvalamoinmana×1; bdfdbddbddbdbedbddbdbbdcdbddbd×1
+[direct   ] #2+  C=7 κ=0.0627 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #S   C=6 κ=0.0627 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[direct   ] #F   C=5 κ=0.0627 exp=      1.5 obs=      1 (distinct 0, strict 0) ratio=  0.67
+           top: dbddbdbbdcdbddbdfdb×1
+[direct   ] #M   C=3 κ=0.0627 exp=    378.5 obs=    420 (distinct 315, strict 178) ratio=  1.11
+           top: nyhtehine×51; hanrunohu×27; ajattajat×15; nkielienl×7; usilaigua×7
+[direct   ] #M-  C=2 κ=0.0627 exp=   6035.6 obs=   9198 (distinct 6864, strict 2329) ratio=  1.52
+           top: alantaza×969; nduaruan×305; npiälinn×294; akarjala×211; inekieli×144
+[direct   ] #3   C=3 κ=0.0627 exp=    378.5 obs=    545 (distinct 258, strict 24) ratio=  1.44
+           top: anonieganran×49; ananuksenkan×43; stettuartist×12; aionsijoitan×12; jalazetkarja×5
+[direct   ] #3+  C=4 κ=0.0627 exp=     23.7 obs=     33 (distinct 17, strict 0) ratio=  1.39
+           top: anonieganrannan×2; lalaatokanlaula×2; varaaltoalvaraa×1; kovehenhokkeivo×1; duvenanluodehpu×1
+[direct   ] #4   C=2 κ=0.0627 exp=   6035.6 obs=   6446 (distinct 5049, strict 26) ratio=  1.07
+           top: antazavallaska×120; allananuksenka×43; antazavallanka×41; antazavallasla×41; arjalanrahvaha×36
+[delta:1  ] #1   C=5 κ=0.0325 exp=      0.1 obs=      2 (distinct 1, strict 0) ratio= 35.75
+           top: uhjoloinkeskehmečän×1; zienaigaholipuolove×1
+[delta:1  ] #C0  C=6 κ=0.0325 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #C1  C=6 κ=0.0325 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2-  C=3 κ=0.0325 exp=     52.8 obs=     56 (distinct 46, strict 0) ratio=  1.06
+           top: uaiguakuuloiksedačuasuloik×1; arvetdakävyyniilöittähsula×1; kuikkujiäkuikkulibojiäguik×1; letarkoitetturunokirjusilm×1; oksenjohtajannuoliolgagorš×1
+[delta:1  ] #2   C=5 κ=0.0325 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #2+  C=7 κ=0.0325 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #S   C=6 κ=0.0325 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #F   C=5 κ=0.0325 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[delta:1  ] #M   C=3 κ=0.0325 exp=     52.8 obs=     49 (distinct 38, strict 26) ratio=  0.93
+           top: vehellizii×3; rgeiškolan×3; estouniesl×2; nuvvessahv×2; endettuenn×2
+[delta:1  ] #M-  C=2 κ=0.0325 exp=   1624.4 obs=   1849 (distinct 1758, strict 1093) ratio=  1.14
+           top: vuvvennut×79; nnikonpii×74; enanmeren×43; valmistam×41; rubeiruad×23
+[delta:1  ] #3   C=3 κ=0.0325 exp=     52.8 obs=     54 (distinct 41, strict 11) ratio=  1.02
+           top: nepalnepalnep×2; opastuuopastu×2; merivienanmer×2; riukiulazetki×2; llistuaihettu×1
+[delta:1  ] #3+  C=4 κ=0.0325 exp=      1.7 obs=      5 (distinct 4, strict 1) ratio=  2.91
+           top: vennuhänenvellen×1; järvisuurijänisj×1; oksisgaonvieolem×1; ddbdbbdcdbddbdfd×1; solncevorotpetro×1
+[delta:1  ] #4   C=2 κ=0.0325 exp=   1624.4 obs=   1541 (distinct 1450, strict 137) ratio=  0.95
+           top: piirineländykoh×19; nsyväinmuavaldi×14; anarvostetturua×14; uanruadajienper×11; hteiskunnallize×11
+[sigma:1  ] #1   C=5 κ=0.0333 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C0  C=6 κ=0.0333 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #C1  C=6 κ=0.0333 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2-  C=3 κ=0.0333 exp=     56.8 obs=     65 (distinct 52, strict 0) ratio=  1.15
+           top: kuvauksiaskshelsinkiilmari×3; ksiaskshelsinkiilmarimanni×3; oalakeskiškolakultuurutalo×2; askusadrianmerendaionianme×1; llizesalguainehespäidaiain×1
+[sigma:1  ] #2   C=5 κ=0.0333 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #2+  C=7 κ=0.0333 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #S   C=6 κ=0.0333 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #F   C=5 κ=0.0333 exp=      0.1 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[sigma:1  ] #M   C=3 κ=0.0333 exp=     56.8 obs=     50 (distinct 24, strict 18) ratio=  0.88
+           top: senjällest×14; eonkolmash×1; ilololoilo×1; dorekvador×1; čempionxkm×1
+[sigma:1  ] #M-  C=2 κ=0.0333 exp=   1703.6 obs=   1655 (distinct 1477, strict 743) ratio=  0.97
+           top: senjälles×64; tarkoitta×50; honkargav×37; laonkmpid×29; ienhiimie×25
+[sigma:1  ] #3   C=3 κ=0.0333 exp=     56.8 obs=     98 (distinct 71, strict 16) ratio=  1.73
+           top: uvuvvennuvuvv×8; eriazovanmeri×3; vonlinnanoupe×3; ahtavanmugaho×2; nvaldumerenvä×2
+[sigma:1  ] #3+  C=4 κ=0.0333 exp=      1.9 obs=      4 (distinct 2, strict 1) ratio=  2.12
+           top: eriazovanmerionm×1; viludakongopiäli×1; ronoumiionluonno×1; nasnapoleonanvas×1
+[sigma:1  ] #4   C=2 κ=0.0333 exp=   1703.6 obs=   1759 (distinct 1677, strict 83) ratio=  1.03
+           top: llizetkieletoll×40; guatapettuloinn×16; oliitonjoukkove×11; ikkelihniškoiki×11; olakultuurutalo×8
+[psum     ] #1   C=5 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C0  C=6 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #C1  C=6 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2-  C=3 κ=0.0303 exp=     42.7 obs=     43 (distinct 40, strict 0) ratio=  1.01
+           top: johätkenaigufiiziekasfiiz×1; sandrvasiljevičsuvorovale×1; mbantaloionkoupiivuvvennu×1; jittudakonzuseluajittuonk×1; ukudainygöieiruatalovusne×1
+[psum     ] #2   C=5 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #2+  C=7 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #S   C=6 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #F   C=5 κ=0.0303 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #M   C=3 κ=0.0303 exp=     42.7 obs=     51 (distinct 44, strict 6) ratio=  1.19
+           top: anopastuj×9; spromhouz×8; enopastuj×7; onopastuj×5; inopastuj×3
+[psum     ] #M-  C=2 κ=0.0303 exp=   1409.3 obs=   1916 (distinct 1852, strict 765) ratio=  1.36
+           top: svuongri×304; anopastu×32; enopastu×30; kekoilli×19; npiirika×18
+[psum     ] #3   C=3 κ=0.0303 exp=     42.7 obs=     55 (distinct 38, strict 10) ratio=  1.29
+           top: bailijatläht×4; lkyliämyötem×4; tizenteourie×2; daharvinazih×2; ruinvahnembi×2
+[psum     ] #3+  C=4 κ=0.0303 exp=      1.3 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[psum     ] #4   C=2 κ=0.0303 exp=   1409.3 obs=   1536 (distinct 1497, strict 75) ratio=  1.09
+           top: vvostotazavald×14; joitunnuheskil×8; kuudunevvostol×7; ionispuanielai×6; uuzijyškyjärvi×5
+[bigram:1 ] #1   C=5 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C0  C=6 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #C1  C=6 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2-  C=3 κ=0.0058 exp=      0.3 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2   C=5 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #2+  C=7 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #S   C=6 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #F   C=5 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #M   C=3 κ=0.0058 exp=      0.3 obs=      1 (distinct 1, strict 0) ratio=  3.38
+           top: pariaripar×1
+[bigram:1 ] #M-  C=2 κ=0.0058 exp=     51.2 obs=     42 (distinct 42, strict 34) ratio=  0.82
+           top: nkielienk×5; elenienel×1; ndrabrand×1; evandanev×1; rufosforu×1
+[bigram:1 ] #3   C=3 κ=0.0058 exp=      0.3 obs=      1 (distinct 0, strict 0) ratio=  3.38
+           top: ddbdbbdcdbddb×1
+[bigram:1 ] #3+  C=4 κ=0.0058 exp=      0.0 obs=      0 (distinct 0, strict 0) ratio=  0.00
+[bigram:1 ] #4   C=2 κ=0.0058 exp=     51.2 obs=     48 (distinct 45, strict 34) ratio=  0.94
+           top: uadenenpaginlua×2; oisananpolviloi×2; laksesežogrönla×2; nudapappivuonnu×1; isnämämuatyhdis×1
