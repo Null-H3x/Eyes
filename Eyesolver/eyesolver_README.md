@@ -70,11 +70,23 @@ crib/overlap gates before believing it.
 
 ## Placement
 
-Drop into a new folder (e.g. `eyesolver/`) at the repo root. It imports
-`iso_relax` (for pins) and reads `noita_eye_core/corpus.json`; keep it reachable
-to `eyeforward/` and `noita_eye_core/`, or pass `--corpus` / `--corpora`
-explicitly. The selftest is self-contained (it plants its own instances) and
-needs only `../corpora/english_big.txt`.
+Drop `eyesolver.py` into a new folder at the repo root (e.g. `Eyesolver/`). It is
+**self-contained**: it needs no other repo modules to run on the real corpus.
+
+- **Corpora** are found automatically — `find_corpora()` searches the script dir,
+  its parents, and the CWD for a folder containing `english_big.txt` (or
+  `corpus-olo/` for Karelian). If your corpora live elsewhere, pass
+  `--corpora <dir>`. A missing corpus now prints a clear, actionable error naming
+  the exact file and where it looked, instead of a raw traceback.
+- **`corpus.json`** is auto-discovered under `noita_eye_core/` or the CWD; override
+  with `--corpus <path>`.
+- **Pins** come from `iso_relax` if it happens to be importable, otherwise from a
+  hardcoded `KNOWN_PINS` constant (the 16 gauge-invariant pins) — so the tool
+  runs even if the rest of the repo isn't on the path. Override with
+  `--pins-file` (TSV: `symbol<TAB>position`) when you have more pins.
+
+So the minimal footprint is just `eyesolver.py` + a `corpora/` folder reachable
+up-tree (or via `--corpora`). Everything else is optional.
 
 ## Honest expectations
 
