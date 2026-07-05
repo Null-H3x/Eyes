@@ -168,6 +168,20 @@ labelings) and leaves two live readings, both historically instantiated:
   different pair set than the linear-drift leak does, so on its own it explains
   d=1 ≈ 0 only under near-drift-0 mechanics; treat it as the minority reading.
 
+**Provenance decision (repo owner).** Plaintext preprocessing is elevated to a
+**working assumption** on production grounds: the messages are hard-coded
+ciphertext constants in `noita.exe` with **no decrypt path anywhere in the
+game** (`binary_provenance`), so the plaintext never round-trips. Nothing in the
+pipeline constrains it to be clean, recoverable text — normalization, null
+insertion, doubles-collapse, space-stripping, even *lossy* transforms cost the
+author nothing. This is an argument from the production pipeline, and it is
+**orthogonal to the zero-doubles fingerprint**: under the surviving linear-drift
+class, plaintext *repeats* are invisible to the doubles statistic (a repeat at
+distance d produces a q-difference of drift·d, not a ciphertext equality), so
+zero doubles neither requires nor evidences doubles-removal. The statistics
+argue scattered `E` (§4b); the provenance argues preprocessing; both are carried,
+answering different questions. The direct evidence on repeats is in §4e.
+
 ### 4c. The d=4 / d=8 discriminator
 
 The 2.16× excess at d=4 with a **flat d=8** cuts two ways:
@@ -194,6 +208,52 @@ spectrum diagonals (products σ·drift·d), the embedding's scatter (4b), and th
 per-triplet base/key structure. Ciphertext-only campaigns to "prove it's Beaufort"
 are category errors; the docs should stop treating σ/drift as open empirical
 questions and start treating them as coordinate choices.
+
+### 4e. The repeat probe — direct (thin) evidence on preprocessing
+
+Repeats are invisible to the doubles statistic under linear drift (§4b note),
+**except inside the pinned component**, where relative `q` is known and a repeat
+at distance d is exactly a pinned-pair q-difference of ±d (sign = the
+component's drift gauge). Using the 16 refrain-component pins (29% occurrence
+coverage of Triplet 1, ~150 both-pinned pairs at d ≤ 5):
+
+```
+ d   n_pairs   repeats   rate     English   Finnish
+ 1     31         0      0.000     0.028     0.070    <- geminate cell EMPTY
+ 2     26         5      0.192     0.038     0.071    <- only populated cell
+ 3     36         0      0.000     0.060     0.091
+ 4     32         0      0.000     0.061     0.070
+ 5     23         1      0.043     0.067     0.080
+        pooled:  6/148 = 0.041     ~0.051    ~0.077
+```
+
+Readings, with the sample-size caveat up front (n ≈ 150, look-elsewhere across
+±d × 5 distances):
+
+- **Pooled repeat rate 4.1% sits below unpreprocessed-Finnish expectation**
+  (≈11.4 expected, 6 observed, P ≈ 0.06) and comfortably within English range.
+  The d=1 (geminate) cell is empty where Finnish predicts ≈ 2.2. Direction
+  **supports the preprocessing working assumption** (or a non-geminating
+  source text); it does not prove it.
+- The d=2 concentration (5/26) lands on a single repeat diagonal and, taken at
+  face value, **orients the drift gauge of the T1 component** (all five counts
+  above use that orientation consistently). Under Finnish base rates the spike
+  is unremarkable after look-elsewhere correction; under English rates it stays
+  mildly interesting. Hypothesis-grade.
+- **The probe scales quadratically with pins.** Covered pairs grow ~n² in pin
+  count, so every future pin sharpens this instrument automatically, and any
+  correct crib settles the preprocessing question outright (it exposes the
+  plaintext of a 25/15-glyph span directly).
+
+Consequences now carried as requirements: (i) `jointcrib`/`refrain_sweep`
+candidate loaders need **normalization modes** — doubles-collapsed,
+space-stripped, null-inserted variants of every phrase candidate; (ii) LM
+scorers (`order_anneal`, eyesieve) must be **calibrated on normalized corpora**
+(a doubles-collapsed Finnish plaintext scores differently against a raw-Finnish
+LM, shifting the letter-soup baseline); (iii) the risk register gains
+**lossy normalization** — if the author dropped characters, naive LM gates can
+reject true plaintext, so readability thresholds should be validated against
+deliberately-mangled plants.
 
 ## 5. Reproduce the measurements
 
@@ -250,12 +310,17 @@ SOLID: the family is the aperiodic progressive/clock branch with interrelated
 fixed alphabets; periodic, autokey, dynamic-alphabet, fractionated, and
 homophonic branches are excluded by the battery in §3. NEW-SOLID (this cycle):
 the plaintext embedding is **not a consecutive block** — the system is
-double-mixed, the literature's hard case (§4b). SUPPORTED: keystream is linear
-drift (no short-period K component; §4c). REFRAMED: σ/drift are gauge
-coordinates, not discoverable facts (§4d). The bottleneck remains the external
-anchor or correct crib, exactly as the clock literature predicts for
-double-mixed devices — with our depth and isomorph assets as the levers the
-historical attackers lacked.
+double-mixed, the literature's hard case (§4b). WORKING ASSUMPTION (provenance,
+§4b/§4e): the plaintext was **preprocessed offline** — no decrypt path exists in
+the game, so normalization/lossy transforms were costless; the pinned-component
+repeat probe leans the same way (pooled repeat rate 4.1% vs Finnish-natural
+7.7%, empty geminate cell), thin-n. SUPPORTED: keystream is linear drift (no
+short-period K component; §4c). REFRAMED: σ/drift are gauge coordinates, not
+discoverable facts (§4d). The bottleneck remains the external anchor or correct
+crib, exactly as the clock literature predicts for double-mixed devices — with
+our depth and isomorph assets as the levers the historical attackers lacked, and
+with all candidate/scorer machinery now required to operate on **normalized**
+text variants, not just raw language.
 
 ## 8. Sources
 
