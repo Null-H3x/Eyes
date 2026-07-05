@@ -1,0 +1,284 @@
+# Cipher Family Field Guide — Taxonomy, Fingerprints, and What They Narrow
+
+*A literature survey of how the relevant cipher families behave, how professionals
+fingerprint and identify them from ciphertext alone, and what that knowledge —
+plus fresh measurements on the Eye corpus — narrows in our formula. Sources at
+the end; every corpus number in this document is either reproduced by the inline
+script (§5) or cited to a repo report.*
+
+Repo placement: `cipher_data/`. Companion docs: `STATE_OF_THE_SOLVE.md` (status),
+`FINGERPRINT.md` (granular corpus statistics), `cribscan/CRIBSCAN_MATH.md`
+(passage/crib math).
+
+---
+
+## 1. The pinned formula, and the literature's name for it
+
+Our surviving model class:
+
+```
+c_m[t] = C[(σ·p_m[t] + base_m + drift·t) mod N]        N = 83, σ ∈ {±1}, drift ∈ {+1,0,−1}
+```
+
+The 2020 Kaeding analysis of "cipher clocks" (Wheatstone Cryptograph, Wadsworth
+disk, Urkryptografen) factors that entire device class as
+
+```
+E(P) = M(S(M′(P)))
+```
+
+— a **keyless stream cipher `S` followed by a monoalphabetic substitution `M`**,
+with an optional inner substitution `M′` when the plaintext ring is also mixed.
+That is *exactly* our shape: `M = C` (the mixed alphabet, the key), `M′ = E` (the
+plaintext letter→code embedding), and `S` = the index-space stream
+`σp + base + drift·t`. Two of Kaeding's structural observations transfer verbatim:
+
+- **Rotation gauge.** "Starting the cipher from an initial state that is not zero
+  is equivalent to rotating the mixed ciphertext alphabet… if we cut a ciphertext
+  at any point, then from that point onward it is as if it had been enciphered
+  with a rotated key." This is our `base_m` gauge — per-message bases are key
+  rotations, which is why every crib/pin result in this repo is "up to one
+  rotation."
+- **The hard case is ours.** The automated ciphertext-only attack achieves >90%
+  success at ~125 characters for Wheatstone/Urkryptografen and ~250 for Wadsworth
+  — but only with a **known plaintext ring**. Friedman (1918) proposed the
+  double-mixed variant (both rings mixed); Kaeding states plainly that his attack
+  **cannot break the double-mixed device with random alphabets**, and Friedman's
+  own pen-and-paper attack on it relied on keyword-derived (non-random) alphabets.
+  Our unknown-`E` × unknown-`C` situation *is* the double-mixed clock. The wall
+  we hit (order_anneal floor ≈ shuffled floor) is the same wall the literature
+  documents for this exact configuration. Our extra assets — 9 messages, triplet
+  depth, isomorph anchors — are things the clock literature never had.
+
+Within the hand-cipher (ACA) nomenclature the same object is a **Quagmire-family
+substitution driven by a progressive (Trithemius-style) key instead of a periodic
+indicator keyword**; NCID's 55-type battery contains our whole neighborhood as
+named types: `progressive_key`, `quagmire2/3/4`, `gromark`, `periodic_gromark`,
+`beaufort`, `porta`, `vigenere`.
+
+## 2. Taxonomy — the families, their recurrences, and their tells
+
+| Family | Recurrence (letters as ℤ_N codes) | Primary ciphertext tells | Eye-corpus verdict |
+|---|---|---|---|
+| Monoalphabetic | `c = C[p]` | Rough unigram histogram (language IoC survives) | **Excluded** — unigrams flat (repo) |
+| Periodic Vigenère / Quagmire I–IV | `c = C_k[p]`, `k = t mod L` | **Kasiski repeats at multiples of L; periodic IoC spike at L**; per-column language IoC | **Excluded** — no Kasiski / periodic IoC signal at any period (repo sweeps) |
+| Progressive key (Trithemius; ACA `progressive_key`) | `c = C[(p + t) mod N]` (+ key) | No fixed period; **repeats appear as isomorphs, not literal repeats**; coincidence spectrum diagonal effects (§4) | **Leading class** (with per-message base) |
+| Cipher clocks (Wheatstone 1867 / Wadsworth 1817 / Urkryptografen) | `M(S(M′(p)))`, state = cumulative hand steps (plaintext-history dependent) | **Ciphertext doubles ⟺ plaintext-ring-adjacent pairs** (Friedman's leak); doubles disguised by procedure (Wheatstone: second letter → Q); mixed plaintext rings exist (Urkryptografen preprinted rings) | Exact clock mechanics (plaintext-sum state) **excluded** by anchor constraint tests (repo `model_power`: Alberti/psum contradictions); the *factored form* is our model |
+| Gromark / running numeric key | `c = C[(p + k_t)]`, `k` from lagged-Fibonacci primer | Aperiodic like progressive; key stream has small-digit structure; NCID separates it from `progressive_key` statistically | **Open at the margin** — subsumed under "general per-triplet K_g[t]"; linear drift currently sufficient (keyspace ledger) |
+| Autokey (PT or CT) | key extends with plaintext / ciphertext | CT-autokey: error/state propagation, **re-sync events impossible** | **Excluded** — 5 clean re-sync events E1/W1 (`resync`); PT-autokey excluded by anchor constraint counts |
+| Chaocipher-class dynamic alphabets | alphabets permuted after each letter as f(history) | Isomorphs only between **messages in depth**, never at within-message offsets; broken via divide-and-conquer + IoC on in-depth traffic (Lasry et al. 2016) | **Excluded** — our isomorphs occur at within-message offsets with constant q-difference, impossible if the alphabet mutates with history |
+| Fractionation (bifid/trifid/fractionated Morse) | sub-symbol mixing | per-digit stream structure; period seams | **Excluded** — per-eye-mark streams uniform, digit-transpose sweep clean (repo) |
+| Homophonic | one letter → several symbols | flattened unigrams but **language-rate repeats/bigram texture** (the Z340 route) | **Excluded** — repeat texture is isomorphic, not homophonic (z≈117 isomorph evidence requires interrelated alphabets) |
+
+The taxonomy places us precisely: **aperiodic-key, fixed-interrelated-alphabet
+substitution — the progressive/clock branch — with both the plaintext embedding
+and the ciphertext alphabet mixed** (the literature's acknowledged hard
+configuration).
+
+## 3. The identification battery the professionals use
+
+From the ACA/NCID/practical tradition, cipher-type identification from ciphertext
+alone rests on a stack of statistics, in rough order of power:
+
+1. **Unigram IoC / entropy** — separates mono (language-rough) from poly (flat).
+   Ours: flat at the uniform-83 floor, κ ≈ 0.012 (repo).
+2. **Kasiski + periodic IoC** — finds a repeating-key period. Quagmire I–IV are
+   *defined* by having one ("all four quagmire variants are vulnerable to Kasiski
+   examination… because they all use repeating indicator keywords"). Ours: none →
+   off the periodic branch entirely.
+3. **Kappa (coincidence) between messages in depth** — Kullback's depth test; the
+   Chaocipher break ran on exactly this (in-depth messages, IoC-driven
+   divide-and-conquer). Ours: within-triplet aligned kappa z = 20.4 (E1/W1) and
+   9.4 (E4/E5); cross-triplet ≈ 0 (repo `keystream_scope`) → per-triplet keys.
+4. **Isomorph census** — the machine-era tell (Purple; Chaocipher in depth) for
+   interrelated alphabets. Ours: z ≈ 117 (repo), including within-message offset
+   isomorphs, which additionally kill history-dependent alphabets (§2).
+5. **Coincidence spectrum by distance** (`c[t] = c[t+d]` counts) — under a
+   sliding cipher each distance d probes one *diagonal* of the joint
+   (text-distance × code-difference) plaintext distribution; under a periodic key
+   it probes key periodicity. This is the micro-tool that does the new narrowing
+   below.
+6. **Doubles as a family tell** — for clock ciphers, Friedman (1918, via Kaeding)
+   identified that ciphertext doubles leak plaintext-ring adjacency, and
+   operating procedure *disguised* plaintext doubles (Wheatstone: second letter
+   replaced by Q). Zero-doubles is thus a documented clock/progressive-family
+   signature, not an anomaly.
+7. **ML type-ID as a calibration standard** — NCID's ensembles identify 55 ACA
+   types at ~80–83% accuracy from 100-character samples using engineered
+   statistical features + learned features. Relevance to us is methodological:
+   these fingerprints demonstrably suffice to *type* a cipher at lengths far
+   below ours (1036 glyphs), which is why the family identification here is
+   considered settled even though the key is not.
+
+## 4. New measurements and what they narrow (this cycle)
+
+### 4a. The coincidence spectrum, measured
+
+Pooled over all 9 messages (script in §5):
+
+```
+ d   obs   exp(uniform)     z
+ 1     0      12.37      -3.54     <- zero doubles
+ 2     5      12.27      -2.09
+ 3     9      12.16      -0.91
+ 4    26      12.05      +4.04     <- the hot diagonal (2.16x)
+ 5    11      11.94      -0.27
+ 6    12      11.83      +0.05
+ 7    12      11.72      +0.08
+ 8    11      11.61      -0.18     <- flat where a period-4 key would spike
+ 9    18      11.51      +1.93     (sub-threshold; watch)
+10-12  ~flat
+```
+
+Under the linear class, `c[t]=c[t+d]` ⟺ the plaintext codes at distance d differ
+by exactly `−σ·drift·d`. Each row is therefore one diagonal slice of the
+plaintext's (distance × code-difference) joint distribution — the spectrum is a
+**plaintext/embedding probe**, not noise.
+
+### 4b. Zero doubles excludes the consecutive-block embedding
+
+If the plaintext letters occupied a consecutive block of ℤ₈₃ (the "straight
+ring"), then for every (σ, drift = ±1) combination, ciphertext doubles occur at
+the language's **alphabet-adjacent-pair** rate. Measured on our corpora:
+
+```
+English  : descending-adjacent 4.53%  -> predicts ~47 doubles in 1027 pairs
+           ascending-adjacent  4.69%  -> predicts ~48
+Finnish  : descending-adjacent 3.08%  -> predicts ~32
+           ascending-adjacent  3.96%  -> predicts ~41
+OBSERVED : 0        (Poisson P(0 | ≥32) < 10⁻¹³)
+```
+
+**Verdict: consecutive-block embedding × {English, Finnish} × all four
+σ·drift = ±1 members is excluded.** This retro-explains part of the
+`alphabet_sweep` null (its frames assumed structured/consecutive plaintext
+labelings) and leaves two live readings, both historically instantiated:
+
+- **Scattered embedding (mixed plaintext ring).** If ~26–30 letter codes are
+  scattered among 83 slots, adjacent-code pairs rarely land on two co-occurring
+  letters, and doubles ≈ 0 automatically. Urkryptografen shipped with *preprinted
+  mixed plaintext rings* — the configuration Friedman recommended and Kaeding
+  couldn't attack. This is the parsimonious reading and it sharpens the target:
+  we are hunting a **double-mixed clock**, i.e. both `E` and `C` unstructured.
+- **Doubles-disguise procedure.** Wheatstone's own instructions disguise
+  plaintext doubles (second letter → Q) because the device cannot encode them;
+  Wadsworth-class usage advances a full revolution so "double letters never
+  appear in the ciphertext." An author imitating clock procedure would produce
+  a zero-doubles ciphertext by *convention*. Note this convention suppresses a
+  different pair set than the linear-drift leak does, so on its own it explains
+  d=1 ≈ 0 only under near-drift-0 mechanics; treat it as the minority reading.
+
+### 4c. The d=4 / d=8 discriminator
+
+The 2.16× excess at d=4 with a **flat d=8** cuts two ways:
+
+- Against a periodic keystream component: a period-4 element in a general
+  `K_g[t]` would elevate *every* multiple of 4 (classic periodic-IoC logic);
+  d=8 sits at expectation. So the spectrum shape mildly **disfavors short-period
+  structure in K** and is consistent with pure linear drift.
+- For the plaintext/embedding reading: under linear drift the excess means one
+  or a few **frequent letter pairs at text-distance 4 whose code difference is
+  exactly ∓4** — a single hot diagonal cell, i.e. one soft equation on `E`
+  involving high-frequency letters. That is a crumb of embedding structure,
+  recoverable the moment any anchor orients the code axis. (d=9 at z=1.9 is
+  logged as a second candidate cell, below threshold.)
+
+### 4d. Gauge equivalence — what "narrowing σ and drift" can even mean
+
+σ = −1 is absorbed by relabeling `E → −E`; drift sign is absorbed by reflecting
+`C` and `E` jointly; bases are key rotations (Kaeding's cut-point observation).
+So the class members {pmp, pure, beaufort} are **gauge images of one another**,
+which is the same fact `model_power` proved empirically (indistinguishable on
+isomorph evidence). The narrowable objects are gauge-invariants only: the
+spectrum diagonals (products σ·drift·d), the embedding's scatter (4b), and the
+per-triplet base/key structure. Ciphertext-only campaigns to "prove it's Beaufort"
+are category errors; the docs should stop treating σ/drift as open empirical
+questions and start treating them as coordinate choices.
+
+## 5. Reproduce the measurements
+
+```python
+import json, math
+d = json.load(open('noita_eye_core/corpus.json')); N = d['deck_size']
+cts = [list(c) for c in d['ciphertexts']]
+for dd in range(1, 13):
+    obs = sum(1 for ct in cts for t in range(len(ct)-dd) if ct[t] == ct[t+dd])
+    npairs = sum(max(0, len(ct)-dd) for ct in cts)
+    exp = npairs / N; z = (obs-exp) / math.sqrt(exp*(1-1/N))
+    print(dd, obs, round(exp,2), round(z,2))
+```
+
+Language adjacent-pair rates: count `pos[next] == pos[prev] ∓ 1` over
+`corpora/english_big.txt` and `corpora/kalevala_finnish_clean.txt` (script in
+session log; rates above). Plain double-letter rates measured en 2.83%, fi 6.97%
+(relevant to any drift-0/general-K discussion: Finnish plaintext under a
+doubles-transparent cipher would show ~70 doubles; we see 0).
+
+## 6. Methodology imports (for the search side)
+
+1. **Rotation-invariant scoring (from Kaeding).** His "outer fitness" scores
+   candidate keys against n-gram tables compiled from a *stream-enciphered*
+   corpus, with every polygram canonicalized by shifting its first symbol to a
+   fixed origin — the statistic is invariant to the rotation gauge, so the
+   search never wastes capacity fitting bases, and "constraints on the key are
+   more evenly spread over it." Our `order_anneal` objective should be checked
+   against this standard: score decrypts in **difference-canonicalized** n-gram
+   space (subtract the first code of each n-gram) so per-message `base_m` drops
+   out of the objective by construction. This is a concrete candidate for why
+   the anneal floor ≈ shuffled floor: an objective with 9 free bases in it has
+   exactly the surplus freedom the overfit control detects.
+2. **Depth-first, divide-and-conquer (from the Chaocipher break).** Lasry et
+   al. cracked in-depth Chaocipher traffic ciphertext-only with a
+   divide-and-conquer hill climb driven by IoC, and a known-plaintext variant
+   for *short* in-depth segments. Our per-triplet depth (136 exploitable 2-deep
+   positions) is the analogous asset; any new search should climb on the depth
+   residuals, not on whole messages.
+3. **Metaheuristic hygiene (Lasry 2018).** The dissertation-length treatment of
+   hill climbing / simulated annealing for classical ciphers — scoring functions
+   matched to the key-recovery stage, restart discipline, smooth fitness
+   landscapes — is the standing reference for making our anneal trustworthy;
+   it demonstrably broke systems (Playfair, double transposition, ADFGVX,
+   M-209, Enigma double indicators) that resisted prior automation.
+4. **Type-ID battery as a dashboard (NCID).** Generalize the engineered feature
+   set to N = 83 and pin it as a standing `cipher_data` dashboard so any future
+   model proposal is auto-checked against the full battery, not just the
+   statistic it was invented to fit.
+
+## 7. Standing conclusions for the formula
+
+SOLID: the family is the aperiodic progressive/clock branch with interrelated
+fixed alphabets; periodic, autokey, dynamic-alphabet, fractionated, and
+homophonic branches are excluded by the battery in §3. NEW-SOLID (this cycle):
+the plaintext embedding is **not a consecutive block** — the system is
+double-mixed, the literature's hard case (§4b). SUPPORTED: keystream is linear
+drift (no short-period K component; §4c). REFRAMED: σ/drift are gauge
+coordinates, not discoverable facts (§4d). The bottleneck remains the external
+anchor or correct crib, exactly as the clock literature predicts for
+double-mixed devices — with our depth and isomorph assets as the levers the
+historical attackers lacked.
+
+## 8. Sources
+
+- T. Kaeding, "Automated ciphertext-only attack on the Wheatstone Cryptograph
+  and related devices," IACR ePrint 2020/1492 — the factorization, the
+  rotation-gauge observation, doubles leak (citing Friedman 1918, Riverbank
+  Pub. 20), success-rate curves, and the double-mixed hardness statement.
+  https://eprint.iacr.org/2020/1492
+- G. Lasry, M. Rubin, N. Kopal, A. Wacker, "Cryptanalysis of Chaocipher and
+  solution of Exhibit 6," Cryptologia 40(6):487–514 (2016) — in-depth
+  divide-and-conquer + IoC attack; known-plaintext attack for short in-depth
+  messages.
+- G. Lasry, "A Methodology for the Cryptanalysis of Classical Ciphers with
+  Search Metaheuristics," U. Kassel, 2018, ISBN 978-3-7376-0458-1 (open PDF via
+  Kassel University Press) — metaheuristic framework and case studies.
+- E. Leierzopf, N. Kopal et al., NCID (Neural Cipher Identifier) — 55 ACA types,
+  ~80–83% at 100 chars; type list includes progressive_key, quagmire2/3/4,
+  gromark. https://github.com/ernstleierzopf/ncid and
+  https://legacy.cryptool.org/en/cto/ncid (BION classifier comparison there).
+- ACA / cryptogram.org cipher pages and the "Madness" *Book on Classical
+  Cryptography* (cipherchallenge.org) — Quagmire I–IV definitions, period
+  detection via Kasiski/periodic IoC, progressive-key and clock units.
+- Wheatstone Cryptograph history and mechanics: jproc.ca/crypto/wheatstone
+  (1867 Paris Exposition; Wadsworth 1817 priority) and J. Stanley,
+  incoherency.co.uk (26/27-tooth gearing; double-letter disguise "HELXLO";
+  collapse to simple substitution when one ring is known).
