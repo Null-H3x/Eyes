@@ -85,35 +85,56 @@ recovering the exact dot-spacing (three of my first-pass transcriptions were one
 dot short in the long gaps), **all 13 occurrence counts match the chart exactly**
 — 43 located instances, **65 aligned same-plaintext pairs**. This is now shipped
 as `isomorph_atlas.json` (id, exact pattern, positions across all nine messages,
-score, regime) so the pipeline can consume it directly.
+score, validated rank, and trust tier) so the pipeline can consume it directly.
 
-Why this is a real increase and not just "more skeleton matches": the chart's
-first legend number is `length − distinct_symbols`, which is **exactly the repo's
-`find_isomorphs` `min_repeats` threshold**. So a class is only reachable by the
-repo's own clean-anchor pipeline if its internal-repeats ≥ the level where the
-shuffle-null stays tiny. Measuring that boundary on this corpus:
+**The scores are real, and I reproduced them.** The chart's right-hand number is
+a log-improbability confidence (higher = rarer by chance). Two independent checks:
+(1) an **empirical floor test** — under a 5000× per-message permutation null,
+*every one of the 13 classes* fails to reach its observed count even once
+(p < 2×10⁻⁴). **Nothing in this atlas is discardable as noise.** The score is
+therefore a **reliability *weight*, not an include/exclude gate.** (2) an
+**analytic reproduction** — scoring each class by a Poisson tail under a
+uniform-83 null tracks the community's numbers at **Pearson 0.975** (mine run
+~0.5–5 points higher, consistent with their using a slightly more conservative
+null). The chart's confidence column is trustworthy; use it to rank.
 
-| `min_repeats` (L=8) | observed pairs | null mean | z |
-|---|---|---|---|
-| 2 | 48 | 1.40 | 22.5 |
-| 3 | 0 | 0.01 | ≈0 |
+**Two orthogonal axes — this is the part worth getting right.** Reliability (the
+score) and *reachability* (whether the repo's own pipeline can surface the class)
+are different things, and conflating them misvalues the atlas:
 
-Eleven of the thirteen classes sit at internal-repeats ≥ 3 — the clean regime the
-repo's anchor set already reaches. **Two do not: `#M-` (`A.B..B.A`) and `#4`
-(`A..B.B.......A`) — the ABBA-nesting family — sit at internal-repeats = 2**,
-where 48 raw pairs swamp ~1–2 expected by chance and the repo *cannot cleanly
-separate genuine alignments from contamination on its own*. `#M-` alone carries
-**7 occurrences / 21 aligned pairs** — the single largest anchor contributor in
-the whole atlas. The chart supplies the one thing the bootstrap in
-`chain_extract` otherwise has to manufacture: an **externally-scored alignment
-judgment** for exactly these low-repeat classes. That is the "~4 → 13" jump made
-concrete: 10 of the 13 are usable clean-regime anchors, and the **10 ABBA-family
-instances that were previously unusable now come in with a confidence weight**.
+- **Reliability** = the confidence score. Drives how much *weight* a class's links
+  deserve.
+- **Reachability** = internal-repeats (`length − distinct_symbols`), which **is
+  exactly the repo's `find_isomorphs` `min_repeats` threshold**. On this corpus
+  the clean/noisy boundary is sharp: at min_repeats = 2 you get 48 raw pairs vs a
+  null mean of 1.4; at ≥ 3 it collapses to zero-vs-null. Classes at
+  internal-repeats = 2 are ones the repo's clean-anchor pass *structurally skips*.
 
-**How to use it (wired into P1/P4 below):** feed `isomorph_atlas.json` as a
-*weighted external anchor set* to the `chain_extract` bootstrap — trust
-high-score clean classes as hard links, admit the two ABBA classes as
-score-weighted soft links rather than discarding them. This is additive to
+The prize classes are **high-reliability *and* low-reachability** — reliable
+anchors the repo could not reach on its own. Exactly one class qualifies: **`#M-`
+(`A.B..B.A`) — analytic score 10.3, seven occurrences / 21 aligned pairs, but
+internal-repeats = 2.** It is the single largest anchor contributor in the whole
+atlas *and* invisible to the repo's own enumeration. That, not raw class count, is
+the concrete "genuine increase." **This corrects my earlier lumping:** `#M-` and
+`#4` both sit at internal-repeats = 2, but they are *not* equivalent — `#M-` is a
+solidly-reliable Tier-B anchor (more reliable than the clean-regime `#3`), while
+`#4` is the sole Tier-C floor (score 3.5, the only class within striking distance
+of chance). Reachability lumped them; reliability separates them.
+
+**Ranked, with trust tiers:**
+
+| tier | classes (by score) | use |
+|---|---|---|
+| **A** (score ≥ 17) | #1 (28.0), #2+ (21.4), #2 (20.9), #F (20.8), #M (19.5), #S/#C0/#C1 (17.5) | hard, load-bearing links |
+| **B** (score 8–13) | #2- (12.8), #M- (9.7)★, #3+ (9.7), #3 (9.1) | score-weighted soft anchors |
+| **C** (score < 8) | #4 (3.5) | tiebreak-only, never load-bearing |
+
+★ `#M-` is the high-reliability / repo-unreachable standout.
+
+**How to use it (wired into P1/P4 below):** feed `isomorph_atlas.json` to the
+`chain_extract` bootstrap **weighted by tier** — Tier A as hard links, Tier B
+(including `#M-`) as score-weighted soft links, Tier C (`#4`) admitted only as a
+tiebreaker and never as a constraint anything rests on. This is additive to
 `iso_relax`, not a replacement: certified ordered-pin counts still come only from
 `iso_relax` (§5 guardrail).
 
@@ -300,6 +321,24 @@ gate earning its keep.
 and take *certified ordered-pin counts only from `iso_relax`*. Don't let a
 hand-rolled solver claim ordered pins again.
 
+**Status — BUILT (`cribscan/order_gate.py`).** The gate is implemented and
+plant-validated (`--selftest`, 18/18). It drives `place_crib`-style value-mode
+placement on both targets under one joint (T1-phrase, T3-phrase, ordering, σ,
+drift) hypothesis, applies the hard overlap-consistency gate (`q_A[s]−q_B[s]` must
+be a single δ on the overlap), welds to one map, seeds the atlas (tier-A/B, with a
+cross-index consistency guard) to extend coverage, and scores survivors by a
+corpus IoC z that is invariant to base and rotation. Findings, calibrated: (a) on
+these targets value-mode per-target placement is *already* sharp — **0 false
+positives over thousands of random candidates**, and even an isomorph-preserving
+relabel (which passes pattern-mode) self-contradicts — so the gate's role is to
+confirm the joint hypothesis, weld, and resolve the single-target rotation, not to
+rescue a permissive check; (b) a correct pair welds to a full solve (plant: 70/83,
+100% read, IoC z ≈ 50; a 49-pair candidate run selects the truth uniquely); (c)
+real-corpus reachability (`--real`) confirms this plan's numbers exactly — **31
+hard checks**, union **69/83 (83.1%)**, atlas grand union **82/83 (98.8%)**. Next
+action is to feed real candidate lists (salakieli/noita-lexicon) and hand any gate
+pass with high z to `iso_relax` for the certified count.
+
 ### Priority 2 — Model the deck cipher as a generator (the thin spot)
 Both §3 and the community point at S83/A83 dynamic permutations. The repo's deck
 tooling (`deck_infer`, `deck_sweep`) is thin relative to this. **Build a
@@ -353,15 +392,16 @@ placing the crib without any ordering assumption, then cascading.
 Run `eyeforward/iso_relax` against the **Triplet-3** and **cross-triplet
 (W2/E4/W4)** structures for a *certified* sound-pin count (the repo flags this as
 not-yet-done) — but **seed it with `isomorph_atlas.json` first**. The 65 aligned
-same-plaintext pairs (43 instances across 13 verified classes) are precisely the
-`chain_extract` input, and the two score-weighted ABBA classes (`#M-`'s 7
-occurrences especially) are alignment material the repo's own `min_repeats`≥3
+same-plaintext pairs (43 instances across 13 verified, now *ranked* classes) are
+precisely the `chain_extract` input, and `#M-`'s 7 occurrences are reliable
+alignment material (analytic score 10.3) that the repo's own `min_repeats` ≥ 3
 anchor pass structurally skips. Concretely: (1) load the atlas, (2) run the
-`chain_extract` anchor-then-classify bootstrap with the high-score clean classes
-as the anchor set and the two ABBA classes admitted as soft links, (3) hand the
-resulting linkage to `iso_relax` for a certified count, (4) if the floor lifts,
-feed `support_min`. Cheap, parallelizable, and it now has genuinely new anchor
-material to chew on rather than re-running the same enumeration.
+`chain_extract` anchor-then-classify bootstrap **weighted by tier** — Tier A
+(score ≥ 17) as the hard anchor set, Tier B (incl. `#M-`) as score-weighted soft
+links, Tier C (`#4`, score 3.5) as a tiebreaker only, never load-bearing, (3) hand
+the resulting linkage to `iso_relax` for a certified count, (4) if the floor
+lifts, feed `support_min`. Cheap, parallelizable, and it now has genuinely new
+anchor material to chew on rather than re-running the same enumeration.
 
 ---
 
