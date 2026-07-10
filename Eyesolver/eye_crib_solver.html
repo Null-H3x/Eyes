@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eye Crib Tester — multi-cipher pin propagation</title>
+<style>
+  :root{
+    --bg:#05090c; --panel:#0a1218; --panel2:#0d1a22; --line:#12303a;
+    --ink:#c9f5e6; --dim:#5a6f74; --cyan:#22d3ee; --mint:#3ddc84;
+    --magenta:#f0abfc; --amber:#fbbf24; --err:#ff5c7a; --gold:#e7c66b; --blue:#4a9eff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.5 ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;padding:20px 22px 90px}
+  h1{font-size:16px;letter-spacing:.5px;margin:0 0 2px}
+  .sub{color:var(--dim);font-size:12px;margin-bottom:16px;max-width:1100px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;margin-bottom:10px}
+  label.tog{color:var(--dim);font-size:12px;margin-right:14px;cursor:pointer;user-select:none}
+  input[type=text],select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font:inherit}
+  input.pos{width:56px} input#injOrder{width:100%;letter-spacing:1px}
+  button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
+  button:hover{border-color:var(--cyan);color:var(--cyan)}
+  button.rm{padding:4px 8px;color:var(--err);border-color:#3a1520}
+  button.nud{padding:4px 8px;line-height:1;font-weight:700}
+  .place-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .place-row .idx{color:var(--gold);width:18px;text-align:right}
+  .hint{color:var(--dim);font-size:11px}
+  .cwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#04080b;padding:5px}
+  table.corpus{border-collapse:collapse;font-size:11px}
+  table.corpus td{padding:0;text-align:center}
+  td.lab{color:var(--dim);text-align:right;padding:0 8px;white-space:nowrap;position:sticky;left:0;background:#04080b;font-size:11px}
+  .cell{width:15px;height:19px;display:flex;align-items:center;justify-content:center;color:var(--dim);cursor:pointer;border-right:1px solid #0a161c;position:relative}
+  .cell:hover{outline:1px solid var(--cyan);z-index:5}
+  .rule{width:15px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+  .rule span{writing-mode:vertical-rl;text-orientation:upright;font-size:9px;letter-spacing:-2px;line-height:1;color:#46585c}
+  .rule.ten span{color:var(--cyan);font-weight:700} .rule.five span{color:var(--amber)}
+  .cell.crib{background:#123;color:var(--amber);font-weight:600}
+  .cell.dec{color:var(--mint)}
+  .cell.pinned{background:#07211a}
+  .cell.clash{background:#3a1520;color:var(--err)}
+  .cell.anchor{outline:2px solid var(--gold);z-index:4}
+  .cell.depth{box-shadow:inset 0 -2px 0 var(--magenta)}
+  .cell.isoT{border-top:2px solid var(--blue)} .cell.isoB{border-bottom:2px solid var(--blue)}
+  .cell.isoL{border-left:2px solid var(--blue)} .cell.isoR{border-right:2px solid var(--blue)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .card h3{margin:0 0 2px;font-size:13px} .card .tier{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px}
+  .stat{display:flex;justify-content:space-between;margin-top:8px;font-size:12px} .stat .k{color:var(--dim)}
+  .ok{color:var(--mint)} .bad{color:var(--err)} .warn{color:var(--amber)} .big{font-size:18px}
+  .note{color:var(--dim);font-size:11px;margin-top:8px;line-height:1.55}
+  .banner{background:#1a1030;border:1px solid #3a2a5a;color:var(--magenta);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;display:none}
+  .banner.on{display:block}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{border:0;border-radius:0;border-right:1px solid var(--line)} .seg button:last-child{border-right:0}
+  .seg button.active{background:#07211a;color:var(--mint)}
+  code{color:var(--gold)}
+  .math{border-left:2px solid var(--line);padding:2px 0 2px 12px;margin:10px 0}
+  .math .eq{color:var(--ink)} .math .lbl{color:var(--cyan);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  .math .kv{color:var(--mint)} .math .av{color:var(--amber)}
+  .blue{color:var(--blue)}
+  .kv{color:var(--mint)} .av{color:var(--amber)}
+  #familyTabs{flex-wrap:wrap}
+  #familyTabs button{padding:8px 14px;font-size:12px}
+  .fam-eq{font-size:15px;line-height:2.1;color:var(--ink)}
+  .fam-sub{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.7}
+  .chip{display:inline-block;padding:1px 7px;border-radius:5px;font-weight:700;margin:0 1px}
+  .chip.set{background:#07271c;color:var(--mint);border:1px solid #10402e}
+  .chip.unk{background:#2a1f06;color:var(--amber);border:1px solid #4a3410}
+  @keyframes chippulse{0%{box-shadow:0 0 0 3px rgba(61,220,132,.9);background:#0e4a34}100%{box-shadow:0 0 0 0 transparent}}
+  .chip.pulse{animation:chippulse .65s ease-out}
+</style>
+</head>
+<body>
+<h1>Eye Crib Tester</h1>
+<div class="sub">Drop a crib set anywhere in the corpus. Pick a cipher family below — each propagates the pins under <b>its own math</b> and back-decrypts everywhere the implied key forces a value. Consistency is necessary, not sufficient — a correct crib cascades into readable plaintext across the whole corpus.</div>
+
+<div id="depthBanner" class="banner"></div>
+
+<div class="panel">
+  <div class="eyebrow">Corpus &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">click a ruler tick / cell to set crib offset · the overlay follows the active family below</span></div>
+  <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center" class="hint">
+    <span>overlay:</span>
+    <span class="seg" id="overlayTog"><button data-o="1" class="active">decrypt · active family</button><button data-o="0">glyphs</button></span>
+    <label class="tog"><input type="checkbox" id="depthTog"> depth</label>
+    <label class="tog"><input type="checkbox" id="isoTog" checked> isomorph boxes</label>
+    <label class="tog"><input type="checkbox" id="sharedTog" checked> shared openings</label>
+    <label class="tog"><input type="checkbox" id="stutTog" checked> stutter</label>
+    <label class="tog"><input type="checkbox" id="b64Tog"> base64 panel</label>
+  </div>
+  <div class="cwrap"><table class="corpus" id="grid"></table></div>
+  <div style="margin-top:8px" class="hint"><span style="color:var(--mint)">green</span>=decrypted · <span style="color:var(--amber)">amber</span>=crib · <span style="color:var(--err)">red</span>=clash · <span style="color:var(--magenta)">magenta underline</span>=in-depth · <span class="blue">blue box</span>=isomorph</div>
+  <div id="isoLegend" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px"></div>
+</div>
+
+<div class="panel">
+  <div class="eyebrow">Crib set &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">any phrase at any message + offset; <code>.</code> = wildcard letter; add as many as you like</span></div>
+  <div id="places"></div>
+  <div style="margin-top:6px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><button id="addPlace">+ add crib</button>
+    <label class="tog"><input type="checkbox" id="wrapLine"> wrap ±1 within message line <span class="hint">(off = roll to next line at the edge)</span></label>
+    <span class="hint">Click a ruler tick or a cell below to set the offset of the crib you're editing.</span></div>
+</div>
+
+<div class="panel">
+  <div class="eyebrow">Crib search &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">find every joint placement where 2+ phrases are simultaneously consistent under the current alphabet + σ + drift (progressive, no per-msg base — the strongest absolute filter). Ranked by cascade.</span></div>
+  <div id="searchPhrases"></div>
+  <div style="margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <button id="addPhrase">+ add phrase</button>
+    <button id="runSearch">search placements</button>
+    <span class="hint" id="searchStatus"></span>
+  </div>
+  <div id="searchResults" style="margin-top:10px;overflow-x:auto"></div>
+</div>
+
+<div class="panel">
+  <div class="eyebrow">Alphabet length &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">the modulus for all linear math — a hypothesis, not a fact. 83 = count of distinct symbols; 125 = full 5×5×5 trigram space; try anything.</span></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="hint">N =</span>
+    <input type="text" id="modN" class="pos" value="83" style="width:64px">
+    <span class="seg" id="nPresets"><button data-n="83">83</button><button data-n="125">125</button><button data-n="82">82</button></span>
+    <span class="hint" id="nStatus"></span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="eyebrow">Injection &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">alphabet order — index = value. The plaintext letter&rarr;value map is an unknown; this is the hypothesis. Edit it, preset it, or randomize it.</span></div>
+  <input type="text" id="injOrder" spellcheck="false" autocomplete="off">
+  <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <button id="pA">A-Z a-z 0-9 sym</button>
+    <button id="pB">Z-A z-a 9-0 sym</button>
+    <button id="pASCII">ASCII</button>
+    <button id="pB64">base64</button>
+    <button id="pRand">🎲 randomize</button>
+    <span class="hint" id="injStatus" style="margin-left:8px"></span>
+  </div>
+  <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <span class="hint">alphabet offset (rotate readout, crib stays fixed):</span>
+    <button id="offMinus">−1</button>
+    <span id="offVal" style="min-width:30px;text-align:center;color:var(--amber);font-weight:600">0</span>
+    <button id="offPlus">+1</button>
+    <button id="offReset">reset</button>
+    <span class="hint" id="offPreview" style="margin-left:6px"></span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="eyebrow">Cipher families &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">one skeleton c = C[(σ·p + off) mod N] — each family is a different <code>off</code>. Pick a family: its math, its knobs, and its fit against the crib. <span class="kv">green</span> = set / known · <span class="av">amber</span> = unknown / solved-for.</span></div>
+  <div class="seg" id="familyTabs">
+    <button data-f="prog" class="active">Progressive</button>
+    <button data-f="gromark">Gromark</button>
+    <button data-f="pt_cumul">PT-Σ</button>
+    <button data-f="pt_lag">PT-lag</button>
+    <button data-f="xgak">XGAK</button>
+  </div>
+  <div id="familyMeta" class="hint" style="margin-top:10px"></div>
+  <div id="familyControls" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center"></div>
+  <div id="gscanOut" class="hint" style="margin-top:8px"></div>
+  <div id="familyEq" class="math" style="margin-top:14px"></div>
+  <div id="familyFit" style="margin-top:12px;max-width:400px"></div>
+  <div id="familyNote" class="note" style="margin-top:10px;max-width:760px"></div>
+</div>
+
+<div class="panel" id="b64Panel" style="display:none">
+  <div class="eyebrow">base64 → ASCII &nbsp;·&nbsp; <span style="color:var(--dim);text-transform:none;letter-spacing:0">decrypted values (0–63) read as base64 sextets, decoded 4→3 to ASCII; <code>.</code> = unknown / non-base64 / undecoded</span></div>
+  <div id="b64Out" style="font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-all"></div>
+</div>
+
+<script>
+const LABELS=["East 1", "West 1", "East 2", "West 2", "East 3", "West 3", "East 4", "West 4", "East 5"];
+const CORPUS_STR=[
+  "Rb%P^-k=8]Jfb^@.q(/n\"=-Q!prH_q53 HSa:.5fOLPJ3P-O3Qh?%8#K[cAQI\\5:>%94g+jX$j3g$SIKphV_oq/0L?>,AY<-`KP",
+  "pb%P^-k=8]Jfb^@.q(/n\"=-Q!=+>Tq53 9:V4.5fOLPJ3P-O3QL:[m`Ko<h`!>i7c&A9`qdN1D-15d-)NcYB^r/*i^\"+ahEL*Kd^)B2",
+  "Db%P^-k=8]Jfb^@.q(/n\"=-Q!elT)Pbp6`YHQn#0X3OHp&-`=Q`_&Q?-0*M8:m*\\q]BVf5/$bmJE>6 +IhY47YaI72hJ%#:n(%VMm9`]0LVS4_9+:MU\\FB",
+  "lb%QkVeN@!J\\:PRp@8W]O,5,QVB9D/XW4)(^-r)L=\\UrJp%Kg#pmOnB9^2*Q^`Tq+b^-O1Tf:7@?`7C@R&!9(EOK:ladp1'M_.U_\\0",
+  "_b%QkV\"\\=HnO\\kcg\\\"a'O.Mj[Ip-\\-q6CRHG\"[P?l\"pk!Xc+5(HaMkWG\\J-#6Y\"&Z)f!ZX_d9o'43`\"bi>g0,>aE4-6_2N`[Iqr6nDO1$&1%Do_!`e/K$ZX?.`Z2Lne! N4gi9C(8",
+  "Bb%QkV7j+-<:3PcYE\\B<j*1@+23K3qJ$^)NQ@SlZ$KO1co5@L0>E:<IdYBS*ef(&NK2GOK/-A>C^E E%FWE-H9)5+`%oJd+g+P#c]H6.CR]G+\"bQSU1iDkjV8>Vf",
+  ";b%QkV\"\\=H\"W)/[2d#D%OmLF!2<l$B\\_Zp1VokPVW3^`.OSfk%+OMZdeo9FMiOdRBMn:oY$X6\\2kK\\[c_JQAHaom'#:^?n:YeH$7:-cJFh+Ga\\9&pbdm[n3",
+  "mb%QkV\"\\=H\"W)/[2d#D%O\\5p!hW0rCY3!b2;G1jqG.n 9aKb`Fq78RY>gk:dVYXRgi.5(@:_%E3KbOUBb7i?VFmc+_o&65Sej5%1cE=5\\.rL>$4JC!?VN4H>",
+  "Ab%QkV\"\\=H\"W)/[2d#D%OA5[L2<l[B\\_o;,V%QPVWT^he*Y6ZPcU'B@>?3:(BN'>gWBkV)&\\%79MJp9,6l4S^5H)I*Li(Afi&?5h%H]SJb`j]9_J8I",
+];
+let N=83;                         // alphabet length — a HYPOTHESIS, not a fact. Editable in the UI.
+const CORPUS=CORPUS_STR.map(s=>[...s].map(c=>c.charCodeAt(0)-32));
+const CLEN=CORPUS.reduce((a,m)=>a+m.length,0);
+const MAXGLYPH=Math.max(...CORPUS.flat());   // largest observed symbol; N must exceed it
+const GLYPHFREQ=(()=>{const f={};for(let m=0;m<9;m++)for(const g of CORPUS[m])f[g]=(f[g]||0)+1;return f;})();
+const ISO=[["#1",1,34,18,"A"],["#1",1,64,18,"A"],["#1",2,39,18,"A"],["#1",2,74,18,"A"],["#2+",6,68,33,"A"],["#2+",7,71,33,"A"],["#2",6,68,30,"A"],["#2",7,71,30,"A"],["#2",8,69,30,"A"],["#F",0,30,19,"A"],["#F",1,30,19,"A"],["#F",2,35,19,"A"],["#M",0,40,9,"A"],["#M",0,68,9,"A"],["#M",1,40,9,"A"],["#M",1,70,9,"A"],["#M",2,45,9,"A"],["#M",2,80,9,"A"],["#C0",2,39,24,"A"],["#C0",2,74,24,"A"],["#C1",1,34,26,"A"],["#C1",1,64,26,"A"],["#S",7,36,31,"A"],["#S",8,35,31,"A"],["#2-",4,64,25,"B"],["#2-",6,73,25,"B"],["#2-",7,76,25,"B"],["#2-",8,74,25,"B"],["#M-",0,40,8,"B"],["#M-",0,68,8,"B"],["#M-",1,40,8,"B"],["#M-",1,70,8,"B"],["#M-",2,45,8,"B"],["#M-",2,80,8,"B"],["#M-",4,101,8,"B"],["#3+",6,51,15,"B"],["#3+",8,52,15,"B"],["#3",6,51,12,"B"],["#3",7,53,12,"B"],["#3",8,52,12,"B"],["#4",3,18,14,"C"],["#4",4,24,14,"C"],["#4",5,23,14,"C"]];
+
+const mod=(a,m=N)=>((a%m)+m)%m;
+function modpow(b,e,m){b=mod(b,m);let r=1;while(e>0){if(e&1)r=r*b%m;b=b*b%m;e>>=1;}return r;}
+// modular inverse via extended Euclid — valid for ANY modulus m; returns null iff gcd(a,m)≠1
+// (Fermat's a^(m-2) only works when m is prime, i.e. when Z/m is the field GF(m))
+function egcdInv(a,m=N){ a=mod(a,m); let [r0,r1]=[a,m],[s0,s1]=[1,0];
+  while(r1!==0){ const q=Math.floor(r0/r1); [r0,r1]=[r1,r0-q*r1]; [s0,s1]=[s1,s0-q*s1]; }
+  return r0===1? mod(s0,m) : null; }
+function isPrime(n){ if(n<2)return false; if(n%2===0)return n===2;
+  for(let i=3;i*i<=n;i+=2) if(n%i===0)return false; return true; }
+
+const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ", LOW="abcdefghijklmnopqrstuvwxyz", DIG="0123456789";
+// ordered pool of distinct printable chars (ASCII 33-126 then Latin-1 161-255) to fill any N up to ~189
+const POOL=(()=>{let s="";for(let c=33;c<=126;c++)s+=String.fromCharCode(c);for(let c=161;c<=255;c++)s+=String.fromCharCode(c);return s;})();
+function fillFrom(base,n){ let out=base; for(const ch of POOL){ if(out.length>=n)break; if(out.indexOf(ch)<0) out+=ch; }
+  while(out.length<n) out+="·"; return out.slice(0,n); }
+const presetA=n=>fillFrom(UP+LOW+DIG, n);
+const presetB=n=>fillFrom([...UP].reverse().join("")+[...LOW].reverse().join("")+[...DIG].reverse().join(""), n);
+const presetASCII=n=>Array.from({length:n},(_,v)=>String.fromCharCode(v+32)).join("");
+const B64="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";  // values 0-63; >=64 non-base64
+const presetB64=n=>fillFrom(B64, n);
+// per-class colors approximating the community image, so boxes map 1:1 to its legend
+const ICOL={"#1":"#e0203a","#C0":"#8b1a2a","#2-":"#1f6b5c","#2+":"#8b3fc0","#2":"#159b8a",
+  "#C1":"#2fa84f","#M-":"#3a6ff0","#S":"#1f8f6b","#F":"#9a8a2a","#3":"#5aa0ff","#3+":"#b0a53f",
+  "#M":"#f08a1e","#4":"#e05ad0"};
+// shared opening blocks — IDENTICAL ciphertext across messages (in depth), anchored at pos 1.
+// [family, msg, start, len]. P = b%P^… branch (E1/W1/E2); Q = b%QkV… branch (the other six).
+const SHARED=[["P",0,1,24],["P",1,1,24],["P",2,1,24],
+  ["Q",3,1,5],["Q",4,1,9],["Q",5,1,5],["Q",6,1,20],["Q",7,1,20],["Q",8,1,20]];
+const SCOL={"P":"#c0392b","Q":"#16a085"};
+// stutter: E4 & E5 are in depth over 2<l · B\_ ; they differ only at pos 28 ($ vs [) — the stutter point.
+// [msg, start, len, isPoint]  isPoint=1 -> dashed marker on the single differing glyph
+const STUTTER=[[6,25,3,0],[6,28,1,1],[6,29,3,0],[8,25,3,0],[8,28,1,1],[8,29,3,0]];
+const STUTCOL="#9aa4ad";
+function buildInj(order){
+  const f={}, g={}; const arr=[...order];
+  arr.forEach((ch,v)=>{ if(v<N){ if(f[ch]===undefined)f[ch]=v; if(g[v]===undefined)g[v]=ch; }});
+  return {toVal:ch=>f[ch], toChar:v=>{v=mod(v);return g[v]!==undefined?g[v]:"·";}, order,
+          dup:(new Set(arr.slice(0,N))).size!==Math.min(arr.length,N), len:arr.length};
+}
+
+// Solve A x = b over Z/m. The pmp system is a signed incidence matrix (each row one +1, one -1),
+// i.e. totally unimodular, so a UNIT (±1) pivot always exists — no field assumption needed.
+function solveMod(numVars, eqs, m=N){
+  const rows=eqs.map(eq=>{ const r=new Array(numVars+1).fill(0);
+    for(const k in eq.c) r[k]=mod(eq.c[k],m); r[numVars]=mod(eq.rhs,m); return r; });
+  const piv=[]; let rank=0;
+  for(let col=0; col<numVars && rank<rows.length; col++){
+    // pick a row (at/below rank) whose entry in this column is invertible mod m
+    let p=-1, inv=null;
+    for(let i=rank;i<rows.length;i++){ if(!rows[i][col]) continue; const iv=egcdInv(rows[i][col],m); if(iv!==null){p=i;inv=iv;break;} }
+    if(p<0) continue;                       // no unit pivot here -> free variable
+    [rows[rank],rows[p]]=[rows[p],rows[rank]];
+    for(let j=col;j<=numVars;j++) rows[rank][j]=mod(rows[rank][j]*inv,m);
+    for(let i=0;i<rows.length;i++) if(i!==rank && rows[i][col]){ const f=rows[i][col];
+      for(let j=col;j<=numVars;j++) rows[i][j]=mod(rows[i][j]-f*rows[rank][j],m); }
+    piv.push(col); rank++;
+  }
+  for(let i=0;i<rows.length;i++){ let z=true; for(let j=0;j<numVars;j++) if(rows[i][j]){z=false;break;}
+    if(z && rows[i][numVars]) return {ok:false}; }
+  const sol=new Array(numVars).fill(0), known=new Array(numVars).fill(false);
+  piv.forEach((col,r)=>{ sol[col]=rows[r][numVars]; known[col]=true; });
+  // Paranoia self-certification: verify the particular solution against EVERY original equation.
+  // Contract: solveMod is SOUND for any modulus/coefficients — it never returns a wrong solution.
+  // It is COMPLETE for unit-pivot-solvable systems (all ±1 / totally-unimodular systems the engines
+  // produce — difference equations q[g]−base = known), where the RREF particular solution satisfies
+  // the system, so this check never rejects them. For non-unit coefficients over a COMPOSITE modulus
+  // it is intentionally conservative: it reports inconsistent rather than risk a false "solution"
+  // (e.g. 2x=4 mod 12 is solvable but not via unit pivots). The engines never build such systems.
+  for(const eq of eqs){ let s=0; for(const k in eq.c) s=mod(s+eq.c[k]*sol[k], m); if(s!==mod(eq.rhs,m)) return {ok:false}; }
+  return {ok:true, sol, known};
+}
+
+function clashCellsFor(pred){ const s=new Set();
+  places.forEach(p=>{ for(let j=0;j<p.word.length;j++){ if(p.word[j]===null) continue;
+    const t=p.start+j; if(t>=0&&t<CORPUS[p.m].length && pred(CORPUS[p.m][t])) s.add(p.m+":"+t); }}); return s; }
+
+// ================= ENGINES =================
+// All families share one skeleton:  c_m[t] = C[( σ·p + off_m[t] ) mod N].
+// They differ ONLY in how the offset off_m[t] is generated.
+
+// ---- STATIC families (off is position-driven): corpus-wide pin propagation. ----
+// off_m[t] = base_m + K(t).  K(t)=drift·t → Progressive ;  K = order-2 recurrence → Gromark.
+function engineStatic(sign, withBase, K, places, inj){
+  let placed=0, skipped=0;
+  if(!withBase){
+    const q={}; let clashG=null;
+    for(const pl of places) for(let j=0;j<pl.word.length;j++){
+      const ch=pl.word[j]; if(ch===null) continue;
+      const t=pl.start+j; if(t<0||t>=CORPUS[pl.m].length) continue;
+      const p=inj.toVal(ch); if(p===undefined){skipped++;continue;}
+      const g=CORPUS[pl.m][t], slot=mod(sign*p+K(t)); placed++;
+      if(q[g]!==undefined && q[g]!==slot){ clashG=g; } else q[g]=slot;
+    }
+    if(clashG!==null){ const cg=clashG;
+      return {ok:false, contradiction:"glyph "+cg+" ('"+String.fromCharCode(cg+32)+"') forced to two positions", placed, skipped, clashCells:clashCellsFor(x=>x===cg)}; }
+    const decrypt=new Map(), decVal=new Map(), pinnedSet=new Set(Object.keys(q).map(Number));
+    for(let m=0;m<9;m++) for(let t=0;t<CORPUS[m].length;t++){ const g=CORPUS[m][t];
+      if(q[g]!==undefined){ const val=mod(sign*(q[g]-K(t))); decrypt.set(m+":"+t, inj.toChar(val)); decVal.set(m+":"+t, val); } }
+    return {ok:true, placed, skipped, pinned:Object.keys(q).length, cover:decrypt.size, decrypt, decVal, pinnedSet};
+  }
+  const gi={}, bi={}; let nv=0;
+  const gidx=g=>{if(gi[g]===undefined)gi[g]=nv++;return gi[g];};
+  const bidx=m=>{if(bi[m]===undefined)bi[m]=nv++;return bi[m];};
+  const eqs=[];
+  for(const pl of places) for(let j=0;j<pl.word.length;j++){
+    const ch=pl.word[j]; if(ch===null) continue;
+    const t=pl.start+j; if(t<0||t>=CORPUS[pl.m].length) continue;
+    const p=inj.toVal(ch); if(p===undefined){skipped++;continue;}
+    const g=CORPUS[pl.m][t]; placed++;
+    const c={}; c[gidx(g)]=1; c[bidx(pl.m)]=-1;
+    eqs.push({c, rhs:mod(sign*p+K(t))});
+  }
+  if(!placed) return {ok:true, placed:0, skipped, pinned:0, cover:0, decrypt:new Map(), decVal:new Map(), pinnedSet:new Set()};
+  const res=solveMod(nv,eqs);
+  if(!res.ok) return {ok:false, contradiction:"linear system inconsistent (a glyph forced to two positions across placements)", placed, skipped, clashCells:new Set()};
+  const q={}; for(const g in gi){ q[g]=res.sol[gi[g]]; }   // include the gauge-free glyph (value = gauge choice)
+  const base={}; for(const m in bi){ base[m]=res.sol[bi[m]]; }
+  const usable=new Set(Object.keys(bi).map(Number));
+  const parent=Array.from({length:nv},(_,i)=>i);
+  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
+  for(const eq of eqs){ const ks=Object.keys(eq.c).map(Number); if(ks.length>=2) parent[find(ks[0])]=find(ks[1]); }
+  const decrypt=new Map(), decVal=new Map(), pinnedSet=new Set(Object.keys(q).map(Number));
+  for(let m=0;m<9;m++){ if(!usable.has(m)) continue; const bm=base[m]||0, bvar=bi[m];
+    for(let t=0;t<CORPUS[m].length;t++){ const g=CORPUS[m][t];
+      if(q[g]!==undefined && gi[g]!==undefined && find(gi[g])===find(bvar)){ const val=mod(sign*(q[g]-bm-K(t))); decrypt.set(m+":"+t, inj.toChar(val)); decVal.set(m+":"+t, val); } } }
+  return {ok:true, placed, skipped, pinned:Object.keys(q).length, cover:decrypt.size, decrypt, decVal, pinnedSet,
+    extra:"base-anchored: "+[...usable].map(i=>LABELS[i]).join(", ")};
+}
+
+// Gromark order-2 recurrence keystream from a primer (g0,g1): K[t]=K[t-1]+K[t-2] mod N.
+// Aperiodic (period up to N²−1 ≫ message length), so it clears the no-period filter.
+let GKcache=[], GKkey="";
+function gromarkK(g0,g1){ const key=g0+","+g1+","+N;
+  if(GKkey!==key){ const L=Math.max(...CORPUS.map(m=>m.length)); const K=[mod(g0),mod(g1)];
+    for(let t=2;t<L;t++) K.push(mod(K[t-1]+K[t-2])); GKcache=K; GKkey=key; }
+  return GKcache; }
+
+// ---- DYNAMIC families (off is plaintext-history-driven): FORWARD-CHAIN from an anchored crib. ----
+// off_m[t] = β_m + A_m[t], A accumulated from KNOWN plaintext (crib, then forward-decrypt):
+//   cumul : A = Σ_{i=s0}^{t-1} p_i            (autokey Alberti running sum)
+//   xgak  : A = drift·(t−s0) + Σ p_i          (position clock + autokey)
+//   lag   : A = p_{t−k}                       (Vigenère plaintext-autokey, lag k)
+// Decrypting position t needs the running state from earlier positions, so these decrypt
+// only FORWARD of the anchor and break at the first unpinned glyph — the fundamental asymmetry.
+function engineAutokey(sign, mode, params, places, inj){
+  const drift=params.drift||0, lag=Math.max(1,params.lag||1);
+  const P=CORPUS.map(m=>new Array(m.length).fill(undefined));
+  let placed=0, skipped=0, cribClash=false;
+  for(const pl of places) for(let j=0;j<pl.word.length;j++){
+    const ch=pl.word[j]; if(ch===null) continue;
+    const t=pl.start+j; if(t<0||t>=CORPUS[pl.m].length) continue;
+    const p=inj.toVal(ch); if(p===undefined){skipped++;continue;}
+    if(P[pl.m][t]!==undefined && P[pl.m][t]!==p) cribClash=true; else P[pl.m][t]=p; placed++;
+  }
+  if(cribClash) return {ok:false, contradiction:"the same crib cell is assigned two different plaintext values", placed, skipped, clashCells:new Set()};
+  const gi={}, bi={}; let nv=0;
+  const gidx=g=>{if(gi[g]===undefined)gi[g]=nv++;return gi[g];};
+  const bidx=m=>{if(bi[m]===undefined)bi[m]=nv++;return bi[m];};
+  const eqs=[]; const anchors={};
+  for(let m=0;m<9;m++){
+    let s0=-1; for(let t=0;t<CORPUS[m].length;t++){ if(P[m][t]!==undefined){s0=t;break;} }
+    if(s0<0) continue; anchors[m]=s0;
+    if(mode==="lag"){
+      for(let t=s0;t<CORPUS[m].length;t++){ if(P[m][t]===undefined) continue;
+        if(t-lag<s0 || P[m][t-lag]===undefined) continue;
+        const g=CORPUS[m][t], c={}; c[gidx(g)]=1; c[bidx(m)]=-1; eqs.push({c, rhs:mod(sign*P[m][t]+P[m][t-lag])}); }
+    } else { let sum=0;
+      for(let t=s0;t<CORPUS[m].length;t++){
+        const A=mod((mode==="xgak"?drift*(t-s0):0)+sum);
+        if(P[m][t]!==undefined){ const g=CORPUS[m][t], c={}; c[gidx(g)]=1; c[bidx(m)]=-1; eqs.push({c, rhs:mod(sign*P[m][t]+A)}); }
+        if(P[m][t]===undefined) break;                 // contiguity broken — can't accumulate
+        sum=mod(sum+P[m][t]);
+      }
+    }
+  }
+  if(!eqs.length) return {ok:true, placed, skipped, pinned:0, cover:0, decrypt:new Map(), decVal:new Map(), pinnedSet:new Set(),
+    extra:"no usable pins — a plaintext-driven engine needs a CONTIGUOUS crib anchored at (or before) the region to read; the running state can't be seeded mid-message"};
+  const res=solveMod(nv,eqs);
+  if(!res.ok) return {ok:false, contradiction:"forward-chain inconsistent — this crib is incompatible with the "+mode+" state recurrence", placed, skipped, clashCells:new Set()};
+  const q={}; for(const g in gi){ q[g]=res.sol[gi[g]]; }   // include gauge-free glyphs
+  const beta={}; for(const m in bi) beta[m]=res.sol[bi[m]];
+  const parent=Array.from({length:nv},(_,i)=>i);
+  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
+  for(const eq of eqs){ const ks=Object.keys(eq.c).map(Number); if(ks.length>=2) parent[find(ks[0])]=find(ks[1]); }
+  const decrypt=new Map(), decVal=new Map(), pinnedSet=new Set(Object.keys(q).map(Number));
+  for(const mStr in anchors){ const m=+mStr, s0=anchors[m], bvar=bi[m];
+    if(beta[m]===undefined) continue; const bm=beta[m]; const Pd=P[m].slice();
+    if(mode==="lag"){
+      for(let t=s0;t<CORPUS[m].length;t++){
+        const A=(t-lag>=s0 && Pd[t-lag]!==undefined)?Pd[t-lag]:undefined, g=CORPUS[m][t];
+        if(Pd[t]===undefined && A!==undefined && q[g]!==undefined && gi[g]!==undefined && find(gi[g])===find(bvar)) Pd[t]=mod(sign*(q[g]-bm-A));
+        if(Pd[t]!==undefined){ decVal.set(m+":"+t,Pd[t]); decrypt.set(m+":"+t,inj.toChar(Pd[t])); }
+      }
+    } else { let sum=0;
+      for(let t=s0;t<CORPUS[m].length;t++){
+        const A=mod((mode==="xgak"?drift*(t-s0):0)+sum), g=CORPUS[m][t];
+        if(Pd[t]===undefined){
+          if(q[g]!==undefined && gi[g]!==undefined && find(gi[g])===find(bvar)) Pd[t]=mod(sign*(q[g]-bm-A));
+          else break;                                   // chain broken — future sums unknown
+        }
+        decVal.set(m+":"+t,Pd[t]); decrypt.set(m+":"+t,inj.toChar(Pd[t])); sum=mod(sum+Pd[t]);
+      }
+    }
+  }
+  return {ok:true, placed, skipped, pinned:Object.keys(q).length, cover:decrypt.size, decrypt, decVal, pinnedSet,
+    extra:"forward-chains from "+Object.keys(anchors).map(m=>LABELS[+m]+"@"+anchors[m]).join(", ")+" · reads only forward of the anchor, stopping at the first unpinned glyph"};
+}
+
+// Gromark primer scan: for the current crib, try all N² primers, keep the non-contradicting
+// ones with the most cascade (a discriminator only when the crib carries internal repeats).
+function gromarkScan(){
+  const inj=INJ||buildInj($("injOrder").value); const out=[];
+  for(let a=0;a<N;a++) for(let b=0;b<N;b++){ const K=gromarkK(a,b);
+    const r=engineStatic(SIGMA, WBASE, t=>K[t]||0, places, inj);
+    if(r.ok && r.placed>0) out.push({a,b,cover:r.cover,pinned:r.pinned}); }
+  out.sort((x,y)=>y.cover-x.cover || y.pinned-x.pinned); return out;
+}
+
+const ENGINES={
+  prog:{name:"Progressive",tier:"static · corpus-wide",dyn:false,run:(pl,inj)=>engineStatic(SIGMA,WBASE,t=>DRIFT*t,pl,inj)},
+  gromark:{name:"Gromark",tier:"static · order-2 recurrence",dyn:false,run:(pl,inj)=>{const K=gromarkK(GG0,GG1);return engineStatic(SIGMA,WBASE,t=>K[t]||0,pl,inj);}},
+  pt_cumul:{name:"PT-autokey Σ",tier:"dynamic · forward-chain",dyn:true,run:(pl,inj)=>engineAutokey(SIGMA,"cumul",{},pl,inj)},
+  pt_lag:{name:"PT-autokey lag-k",tier:"dynamic · forward-chain",dyn:true,run:(pl,inj)=>engineAutokey(SIGMA,"lag",{lag:LAG},pl,inj)},
+  xgak:{name:"XGAK (clock+autokey)",tier:"dynamic · forward-chain",dyn:true,run:(pl,inj)=>engineAutokey(SIGMA,"xgak",{drift:DRIFT},pl,inj)},
+};
+
+function depthRuns(minLen=6){ const runs=[];
+  for(let a=0;a<9;a++) for(let b=a+1;b<9;b++){ const A=CORPUS[a],B=CORPUS[b],L=Math.min(A.length,B.length); let s=-1;
+    for(let t=0;t<=L;t++){ const eq=t<L&&A[t]===B[t]; if(eq&&s<0)s=t; else if(!eq&&s>=0){ if(t-s>=minLen)runs.push({a,b,s,e:t}); s=-1; } } }
+  return runs; }
+function nearIdentical(minSpan=15, maxDiffRate=0.30){ const pairs=[];
+  for(let a=0;a<9;a++)for(let b=a+1;b<9;b++){ const A=CORPUS[a],B=CORPUS[b],L=Math.min(A.length,B.length);
+    let bs=0,be=0,bl=0;
+    for(let s=0;s<L;s++){ let diff=0; for(let e=s+1;e<=L;e++){ if(A[e-1]!==B[e-1])diff++;
+      if(diff/(e-s)<=maxDiffRate && e-s>bl){bl=e-s;bs=s;be=e;} } }
+    if(bl>=minSpan){ let d=0; for(let t=bs;t<be;t++) if(A[t]!==B[t])d++; pairs.push({a,b,s:bs,e:be,diff:d,len:be-bs}); } }
+  return pairs.sort((x,y)=>y.len-x.len); }
+
+const $=id=>document.getElementById(id);
+let places=[{word:[],start:25,m:6,raw:""}];
+let editing=0, DRIFT=1, activeFamily="prog", overlayOn=true, lastResults={};
+let SIGMA=1, WBASE=false, GG0=0, GG1=1, LAG=1;   // σ, per-msg base, Gromark primer, autokey lag
+let cribCells=new Set(), clashCells=new Set();
+let injOffset=0, INJ=null;   // injOffset rotates the readout only (scans the crib's free gauge)
+let wrapInLine=false;        // ±1 nudge: wrap within the current message vs. roll to the next line
+
+// shift a crib's start by ±1. wrapInLine ⇒ stay on the same message (mod its length);
+// else, crossing the line edge rolls the whole crib to the adjacent message.
+function nudge(idx, delta){
+  const c=places[idx], len=CORPUS[c.m].length, ns=c.start+delta;
+  if(wrapInLine){ c.start=((ns%len)+len)%len; }
+  else if(ns<0){ c.m=(c.m-1+9)%9; c.start=CORPUS[c.m].length+ns; }
+  else if(ns>=len){ c.m=(c.m+1)%9; c.start=ns-len; }
+  else c.start=ns;
+  editing=idx; renderPlaces(); recompute();
+}
+const parseWord=raw=>[...raw].map(c=>c==="."?null:c);
+
+// ================= JOINT CRIB SEARCH =================
+// Under no-base progressive (absolute pins), enumerate every full-fit placement of each phrase
+// (any message, any offset) and find combinations where all phrases are simultaneously consistent
+// — i.e. their merged glyph→value pins never conflict. Ranked by cascade coverage (corpus positions
+// the merged pins would decrypt). σ, drift and the alphabet come from the current settings.
+function cribPlacements(word, inj, sign, drift){
+  const res=[], wl=word.length; if(!wl) return res;
+  for(let m=0;m<9;m++){ const L=CORPUS[m].length;
+    for(let s=0; s+wl<=L; s++){ const pins=new Map(); let ok=true;
+      for(let j=0;j<wl;j++){ const ch=word[j]; if(ch===null) continue;
+        const p=inj.toVal(ch); if(p===undefined) continue;          // letter not in this alphabet → no pin
+        const g=CORPUS[m][s+j], v=mod(sign*p+drift*(s+j));
+        if(pins.has(g)){ if(pins.get(g)!==v){ ok=false; break; } } else pins.set(g,v); }
+      if(ok && pins.size){ let cov=0; for(const g of pins.keys()) cov+=GLYPHFREQ[g]||0; res.push({m,s,pins,cov}); } }
+  }
+  return res;
+}
+// merge two pin-sets: null if any shared glyph disagrees, else {cov, shared} (cov = union coverage)
+function mergeCheck(pinsA, covA, pinsB, covB){
+  const [sm,lg]=pinsA.size<=pinsB.size?[pinsA,pinsB]:[pinsB,pinsA]; let sharedCov=0, shared=0;
+  for(const [g,v] of sm){ if(lg.has(g)){ if(lg.get(g)!==v) return null; sharedCov+=GLYPHFREQ[g]||0; shared++; } }
+  return {cov:covA+covB-sharedCov, shared};
+}
+function runCribSearch(words, inj, sign, drift){
+  const lists=words.map(w=>cribPlacements(w,inj,sign,drift));
+  const counts=lists.map(l=>l.length);
+  if(counts.some(n=>n===0)) return {results:[], tested:0, counts, empty:true};
+  if(words.length===2 && counts[0]*counts[1] > 4e6) return {results:[], tested:counts[0]*counts[1], counts, tooBig:true};
+  // Correctness-preserving search: keep EVERY consistent partial (no heuristic pruning, since no
+  // alphabet-blind metric correlates with the true placement). A safety cap aborts loudly rather
+  // than risk silently dropping placements — longer/adjacent phrases keep the partial count small.
+  const CAP=150000;
+  let beam = lists[0].map(p=>({placements:[{m:p.m,s:p.s}], pins:p.pins, cov:p.cov, shared:0, pinCount:p.pins.size}));
+  let tested=0;
+  for(let i=1;i<lists.length;i++){ const isLast=i===lists.length-1; const next=[];
+    for(const combo of beam) for(const p of lists[i]){ tested++;
+      const mc=mergeCheck(combo.pins, combo.cov, p.pins, p.cov); if(!mc) continue;
+      const entry={placements:[...combo.placements,{m:p.m,s:p.s}], cov:mc.cov,
+                   shared:combo.shared+mc.shared, pinCount:combo.pinCount+p.pins.size-mc.shared};
+      if(!isLast){ const merged=new Map(combo.pins); for(const [g,v] of p.pins) merged.set(g,v); entry.pins=merged;
+        if(next.length>=CAP) return {results:[], tested, counts, tooManyPartials:true, atPhrase:i+1}; }
+      next.push(entry); }
+    beam=next;
+  }
+  beam.sort((a,b)=>b.cov-a.cov || b.shared-a.shared);
+  return {results:beam, tested, counts};
+}
+function renderSearchResults(res, words){
+  const host=$("searchResults"), st=$("searchStatus");
+  if(res.empty){ st.innerHTML=`<span class="warn">phrase ${res.counts.indexOf(0)+1} has no full-fit placement (too long for any message, or no letters in the current alphabet)</span>`; host.innerHTML=""; return; }
+  if(res.tooBig){ st.innerHTML=`<span class="warn">phrases too short — ${res.counts.join("×")} placements is over the search cap; add more letters</span>`; host.innerHTML=""; return; }
+  if(res.tooManyPartials){ st.innerHTML=`<span class="warn">too many consistent partials after phrase ${res.atPhrase} — reduce to 2 phrases, or make phrases longer / place them adjacently (a longer combined phrase constrains far more)</span>`; host.innerHTML=""; return; }
+  const top=res.results.slice(0,40);
+  st.innerHTML=`${res.results.length.toLocaleString()} consistent placement${res.results.length===1?"":"s"} (of ${res.tested.toLocaleString()} tested) · showing top ${top.length}`;
+  if(!top.length){ host.innerHTML=`<span class="hint">no joint placement is consistent under this alphabet / σ / drift — try a different alphabet, offset, or σ, or shorten a phrase.</span>`; return; }
+  host.innerHTML=`<table style="font-size:11px;border-collapse:collapse;white-space:nowrap">`+
+    `<tr class="hint"><td style="padding:2px 8px">#</td><td style="padding:2px 8px">placements</td><td style="padding:2px 8px" title="distinct alphabet symbols the joint crib pins">glyphs pinned</td><td style="padding:2px 8px" title="corpus positions the merged pins would decrypt">decrypts</td><td style="padding:2px 8px" title="glyphs both phrases pin and agree on — real mutual constraint">shared</td><td></td></tr>`+
+    top.map((r,i)=>`<tr style="border-top:1px solid var(--line)">`+
+      `<td style="padding:2px 8px;color:var(--dim)">${i+1}</td>`+
+      `<td style="padding:2px 8px;color:var(--gold)">${r.placements.map(pl=>LABELS[pl.m]+"@"+pl.s).join(" · ")}</td>`+
+      `<td style="padding:2px 8px">${r.pinCount} / ${N}</td>`+
+      `<td style="padding:2px 8px"><span class="big" style="font-size:12px">${(100*r.cov/CLEN).toFixed(0)}%</span></td>`+
+      `<td style="padding:2px 8px;${r.shared>0?"color:var(--mint)":"color:var(--dim)"}">${r.shared}</td>`+
+      `<td style="padding:2px 8px"><button class="nud" data-i="${i}">load</button></td></tr>`).join("")+`</table>`;
+  host.querySelectorAll("button").forEach(b=>b.onclick=()=>loadSearchResult(top[+b.dataset.i], words));
+}
+function loadSearchResult(r, words){
+  places = r.placements.map((pl,i)=>({raw:words[i].raw, word:words[i].word, m:pl.m, start:pl.s}));
+  editing=0; renderPlaces(); recompute();
+  try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){}
+}
+let searchPhrases=["",""];
+function renderSearchPhrases(){
+  const host=$("searchPhrases"); if(!host) return; host.innerHTML="";
+  searchPhrases.forEach((val,i)=>{ const row=document.createElement("div");
+    row.style="display:flex;gap:8px;align-items:center;margin-bottom:6px";
+    const lbl=document.createElement("span"); lbl.style="color:var(--gold);min-width:16px;text-align:right"; lbl.textContent=(i+1);
+    const inp=document.createElement("input"); inp.type="text"; inp.value=val; inp.style.width="340px";
+    inp.placeholder=["THEGODSAREIMPRESSED","WITHYOUREFFORTS"][i]||("phrase "+(i+1));
+    inp.addEventListener("input",()=>{ searchPhrases[i]=inp.value; });
+    row.append(lbl,inp);
+    if(searchPhrases.length>2){ const rm=document.createElement("button"); rm.className="rm"; rm.textContent="✕";
+      rm.onclick=()=>{ searchPhrases.splice(i,1); renderSearchPhrases(); }; row.append(rm); }
+    host.appendChild(row); });
+}
+function runSearch(){
+  const inj=INJ||buildInj($("injOrder").value);
+  const words=searchPhrases.map(raw=>({raw, word:parseWord(raw)})).filter(w=>w.raw.trim().length>0 && w.word.some(c=>c!==null));
+  if(words.length<2){ $("searchStatus").innerHTML=`<span class="warn">enter at least 2 phrases</span>`; $("searchResults").innerHTML=""; return; }
+  $("searchStatus").textContent="searching…"; $("searchResults").innerHTML="";
+  setTimeout(()=>{ const res=runCribSearch(words.map(w=>w.word), inj, SIGMA, DRIFT); renderSearchResults(res, words); }, 20);
+}
+
+function renderPlaces(){
+  const host=$("places"); host.innerHTML="";
+  places.forEach((p,i)=>{
+    const row=document.createElement("div"); row.className="place-row";
+    row.innerHTML=`<span class="idx">${i+1}</span>`;
+    const w=document.createElement("input"); w.type="text"; w.value=p.raw; w.style.width="230px"; w.placeholder="plaintext… (. = wildcard)";
+    w.addEventListener("input",()=>{p.raw=w.value;p.word=parseWord(w.value);recompute();});
+    w.addEventListener("focus",()=>editing=i);
+    const msg=document.createElement("select");
+    LABELS.forEach((l,mi)=>{const o=document.createElement("option");o.value=mi;o.textContent=l;if(mi===p.m)o.selected=true;msg.appendChild(o);});
+    msg.addEventListener("change",()=>{p.m=+msg.value;recompute();});
+    const at=document.createElement("span");at.className="hint";at.textContent="@";
+    const minus=document.createElement("button");minus.className="nud";minus.textContent="−";minus.title="shift −1";minus.onclick=()=>nudge(i,-1);
+    const pos=document.createElement("input");pos.type="text";pos.className="pos";pos.value=p.start;
+    pos.addEventListener("input",()=>{p.start=parseInt(pos.value)||0;recompute();});
+    const plus=document.createElement("button");plus.className="nud";plus.textContent="+";plus.title="shift +1";plus.onclick=()=>nudge(i,1);
+    const rm=document.createElement("button");rm.className="rm";rm.textContent="✕";
+    rm.addEventListener("click",()=>{places.splice(i,1);if(!places.length)places.push({word:[],start:0,m:0,raw:""});editing=0;renderPlaces();recompute();});
+    row.append(w,msg,at,minus,pos,plus,rm); host.appendChild(row);
+  });
+}
+
+function buildGrid(){
+  const g=$("grid"); g.innerHTML="";
+  const maxLen=Math.max(...CORPUS.map(m=>m.length));
+  const eng=overlayOn?lastResults[activeFamily]:null;
+  const isoOn=$("isoTog").checked, depthOn=$("depthTog").checked, sharedOn=$("sharedTog").checked, stutOn=$("stutTog").checked;
+  const p0=places[editing];
+  const hr=document.createElement("tr");
+  const hl=document.createElement("td"); hl.className="lab"; hl.textContent="pos →"; hr.appendChild(hl);
+  for(let t=0;t<maxLen;t++){ const td=document.createElement("td");
+    const r=document.createElement("div"); r.className="rule"+(t%10===0?" ten":(t%5===0?" five":""));
+    r.innerHTML="<span>"+t+"</span>"; r.title="position "+t;
+    r.addEventListener("click",()=>{ const p=places[editing]||places[0]; p.start=t; renderPlaces(); recompute(); });
+    td.appendChild(r); hr.appendChild(td); }
+  g.appendChild(hr);
+  for(let m=0;m<9;m++){
+    const tr=document.createElement("tr");
+    const lab=document.createElement("td"); lab.className="lab"; lab.textContent=LABELS[m]; tr.appendChild(lab);
+    for(let t=0;t<CORPUS[m].length;t++){
+      const td=document.createElement("td"); const cell=document.createElement("div");
+      cell.className="cell"; cell.title=LABELS[m]+" · pos "+t+" · glyph "+CORPUS[m][t];
+      const key=m+":"+t;
+      let txt=String.fromCharCode(CORPUS[m][t]+32);
+      if(overlayOn && eng && eng.decrypt && eng.decrypt.has(key)){
+        if(eng.decVal && eng.decVal.has(key)) txt=INJ.toChar(mod(eng.decVal.get(key)-injOffset));  // linear: shift value
+        else txt=rotChar(eng.decrypt.get(key));                                                     // Trifid: rotate char
+        cell.classList.add("dec");
+      }
+      if(txt===" ") txt="·";                       // value-0 space shown faintly so counting matches the image
+      cell.textContent=txt;
+      if(cribCells.has(key)) cell.classList.add("crib");
+      if(clashCells.has(key)) cell.classList.add("clash");
+      if(eng && eng.pinnedSet && eng.pinnedSet.has(CORPUS[m][t])) cell.classList.add("pinned");
+      if(p0 && p0.m===m && t===p0.start) cell.classList.add("anchor");
+      cell.addEventListener("click",()=>{ const p=places[editing]||places[0]; p.m=m; p.start=t; renderPlaces(); recompute(); });
+      td.appendChild(cell); tr.appendChild(td);
+    }
+    g.appendChild(tr);
+  }
+  if(isoOn) ISO.forEach(row=>{ const id=row[0],m=row[1],s=row[2],len=row[3], col=ICOL[id]||"#4a9eff";
+    for(let t=s;t<s+len && t<CORPUS[m].length;t++){
+      const c=g.querySelector(`tr:nth-child(${m+2}) td:nth-child(${t+2}) .cell`); if(!c)continue;
+      c.style.borderTop="2px solid "+col; c.style.borderBottom="2px solid "+col;
+      if(t===s)c.style.borderLeft="2px solid "+col;
+      if(t===s+len-1||t===CORPUS[m].length-1)c.style.borderRight="2px solid "+col;
+      if(!c.title.includes("iso:")) c.title+=" · iso:"+id; }});
+  if(sharedOn) SHARED.forEach(row=>{ const fam=row[0],m=row[1],s=row[2],len=row[3], col=SCOL[fam];
+    for(let t=s;t<s+len && t<CORPUS[m].length;t++){
+      const c=g.querySelector(`tr:nth-child(${m+2}) td:nth-child(${t+2}) .cell`); if(!c)continue;
+      if(!c.classList.contains("crib")) c.style.background=col+"2e";
+      c.style.borderTop="2px solid "+col; c.style.borderBottom="2px solid "+col;
+      if(t===s)c.style.borderLeft="2px solid "+col;
+      if(t===s+len-1||t===CORPUS[m].length-1)c.style.borderRight="2px solid "+col;
+      c.title+=" · shared:"+(fam==="P"?"b%P^…":"b%QkV…"); }});
+  if(stutOn) STUTTER.forEach(row=>{ const m=row[0],s=row[1],len=row[2],pt=row[3], col=STUTCOL, bs=(pt?"2px dashed ":"2px solid ")+col;
+    for(let t=s;t<s+len && t<CORPUS[m].length;t++){
+      const c=g.querySelector(`tr:nth-child(${m+2}) td:nth-child(${t+2}) .cell`); if(!c)continue;
+      if(!c.classList.contains("crib")) c.style.background=col+(pt?"3a":"22");
+      c.style.borderTop=bs; c.style.borderBottom=bs;
+      if(t===s)c.style.borderLeft=bs;
+      if(t===s+len-1)c.style.borderRight=bs;
+      c.title+=pt?" · stutter-point (E4 $ / E5 [)":" · stutter"; }});
+  if(depthOn) depthRuns(6).forEach(r=>{ for(const mm of [r.a,r.b]) for(let t=r.s;t<r.e;t++){
+      const c=g.querySelector(`tr:nth-child(${mm+2}) td:nth-child(${t+2}) .cell`); if(c)c.classList.add("depth"); }});
+}
+
+function computeCribCells(){ cribCells=new Set();
+  places.forEach(p=>{ for(let j=0;j<p.word.length;j++){ if(p.word[j]===null) continue;
+    const t=p.start+j; if(t>=0&&t<CORPUS[p.m].length) cribCells.add(p.m+":"+t); }}); }
+
+function depthBanner(){
+  const b=$("depthBanner");
+  if(!$("depthTog").checked){b.classList.remove("on");return;}
+  const runs=depthRuns(6), near=nearIdentical();
+  let cribPairs=new Set();
+  places.forEach(p=>{ for(let j=0;j<p.word.length;j++){ if(p.word[j]===null) continue; const t=p.start+j;
+    near.forEach(r=>{ if((r.a===p.m||r.b===p.m)&&t>=r.s&&t<r.e) cribPairs.add(LABELS[r.a]+"≈"+LABELS[r.b]); }); }});
+  const nl=near.slice(0,6).map(r=>LABELS[r.a]+"≈"+LABELS[r.b]+" ["+r.s+"–"+(r.e-1)+"] "+r.diff+" diffs").join(" · ");
+  let msg="<b>Depth detector on.</b> ";
+  if(cribPairs.size) msg+="Crib sits in near-identical pair <b>"+[...cribPairs].join(", ")+"</b> — on matching glyphs the plaintext AND keystream slot are shared, so a letter placed in one message is forced in the other; the isolated differences are the real single-letter changes. ";
+  msg+="Strong structure — near-identical spans (≥15, ≤30% diff): "+nl+". &nbsp; Strict identical runs (≥6): "+runs.length+".";
+  b.innerHTML=msg; b.classList.add("on");
+}
+
+// ---------- CIPHER FAMILIES (tabs · math · modifiers · fit) ----------
+const FAM={
+  prog:{name:"Progressive", tier:"static · position-driven", skel:"c = C[( σ·p + base_m + drift·t ) mod N]", mods:["sigma","base","drift"],
+    note:"Position-only offset: base + drift·t. Cascades corpus-wide from a crib dropped anywhere — no per-position state. The simplest survivor; under a literal header the per-message bases collapse to one and this becomes pure progressive."},
+  gromark:{name:"Gromark", tier:"static · order-2 recurrence", skel:"c = C[( σ·p + base_m + K[t] ) mod N]", mods:["sigma","base","primer"],
+    note:"Offset = base + K[t], K an order-2 recurrence seeded by the primer (g₀,g₁). Aperiodic (period up to N²−1), so it passes the no-period filter; a repeat-carrying crib makes the primer testable. 'scan primers' ranks all N² seeds by cascade."},
+  pt_cumul:{name:"PT-autokey Σ", tier:"dynamic · forward-chain", skel:"c = C[( σ·p + β_m + Σp ) mod N]", mods:["sigma"],
+    note:"Offset = β + running plaintext sum (Alberti). β is solved from the anchor, not chosen. Forward-only: decrypts from a CONTIGUOUS crib anchor forward and breaks at the first unpinned glyph — it cannot seed mid-message."},
+  pt_lag:{name:"PT-autokey lag-k", tier:"dynamic · forward-chain", skel:"c = C[( σ·p + β_m + p₍t−k₎ ) mod N]", mods:["sigma","lag"],
+    note:"Offset = β + p₍t−k₎ (Vigenère plaintext-autokey). Needs the crib to cover the first k positions after the anchor to seed, then chains one step at a time. Lag-4 would generate the d=4 anomaly directly."},
+  xgak:{name:"XGAK", tier:"hybrid · clock + autokey", skel:"c = C[( σ·p + β_m + drift·(t−s₀) + Σp ) mod N]", mods:["sigma","drift"],
+    note:"Offset = β + drift·(t−s₀) + running plaintext sum. Same forward-only behaviour as PT-Σ; the +drift·t term is what separates it from pure autokey and pure progressive — the reconciler for the static-vs-dynamic fork."},
+};
+function renderFamilyControls(id){
+  const m=FAM[id].mods; let h="";
+  if(m.includes("sigma")) h+=`<span class="hint">σ:</span><span class="seg" data-mod="sigma"><button data-val="1" class="${SIGMA===1?'active':''}">+</button><button data-val="-1" class="${SIGMA===-1?'active':''}">−</button></span>`;
+  if(m.includes("base"))  h+=`<span class="hint">base:</span><span class="seg" data-mod="base"><button data-val="0" class="${!WBASE?'active':''}">none</button><button data-val="1" class="${WBASE?'active':''}">per-msg</button></span>`;
+  if(m.includes("drift")) h+=`<span class="hint">drift:</span><span class="seg" data-mod="drift"><button data-val="-1" class="${DRIFT===-1?'active':''}">−1</button><button data-val="0" class="${DRIFT===0?'active':''}">0</button><button data-val="1" class="${DRIFT===1?'active':''}">+1</button></span>`;
+  if(m.includes("primer"))h+=`<span class="hint">primer g₀,g₁:</span><input type="text" data-mod="g0" value="${GG0}" style="width:44px"><input type="text" data-mod="g1" value="${GG1}" style="width:44px"><button data-mod="gscan">scan primers</button>`;
+  if(m.includes("lag"))   h+=`<span class="hint">lag k:</span><input type="text" data-mod="lag" value="${LAG}" style="width:44px">`;
+  $("familyControls").innerHTML=h;
+  $("familyMeta").innerHTML=`<span style="color:var(--gold)">${FAM[id].name}</span> &nbsp;·&nbsp; ${FAM[id].tier} &nbsp;·&nbsp; <code>${FAM[id].skel}</code>`;
+}
+function renderFamilyEquation(id, pv){
+  const chip=(v,val,set)=>`<span class="chip ${set?'set':'unk'}${v===pv?' pulse':''}">${val}</span>`;
+  const sg=chip("sigma", SIGMA>0?"+1":"−1", true);
+  const dr=chip("drift", DRIFT>0?"+1":DRIFT<0?"−1":"0", true);
+  const bs= WBASE ? chip("base","base_m",false) : chip("base","0",true);
+  const q =`<span class="chip unk">q[c]</span>`;
+  const nn=`<span class="chip set">${N}</span>`;
+  const beta=`<span class="chip unk">β_m</span>`;
+  let eq="", sub="";
+  if(id==="prog"){ eq=`p = ${sg} · ( ${q} − ${bs} − ${dr}·t ) mod ${nn}`;
+    sub=`<b>q[c]</b> the crib pins only the glyphs it covers · <b>base_m</b> ${WBASE?'solved per message (gauged)':'fixed to 0'} · drift is your slide rate`; }
+  else if(id==="gromark"){ const g0=chip("primer",GG0,true), g1=chip("primer",GG1,true);
+    eq=`p = ${sg} · ( ${q} − ${bs} − <span class="chip set${'primer'===pv?' pulse':''}">K[t]</span> ) mod ${nn}`;
+    sub=`K[t] = ( K[t−1] + K[t−2] ) mod ${N},&nbsp; seed ( ${g0} , ${g1} ) — fixed once the primer is set`; }
+  else if(id==="pt_cumul"){ eq=`p = ${sg} · ( ${q} − ${beta} − Σp ) mod ${nn}`;
+    sub=`Σp = running plaintext sum, known only where the crib pins p · β_m = anchor constant (solved) · forward-only from a contiguous anchor`; }
+  else if(id==="pt_lag"){ const lg=chip("lag",LAG,true);
+    eq=`p = ${sg} · ( ${q} − ${beta} − p₍t−${lg}₎ ) mod ${nn}`;
+    sub=`p₍t−k₎ known at crib cells and at t−k · β_m solved · seeds only if the crib covers the first k positions after the anchor`; }
+  else { const dr2=chip("drift", DRIFT>0?"+1":DRIFT<0?"−1":"0", true);
+    eq=`p = ${sg} · ( ${q} − ${beta} − ${dr2}·(t−s₀) − Σp ) mod ${nn}`;
+    sub=`clock term drift·(t−s₀) + autokey Σp · β_m solved · the +drift·t is what separates XGAK from pure autokey and pure progressive`; }
+  $("familyEq").innerHTML=`<div class="lbl">decrypt · ${FAM[id].name}</div><div class="fam-eq">${eq}</div><div class="fam-sub">${sub}</div>`;
+}
+function renderFamilyFit(id){
+  const r=lastResults[id]; if(!r){ $("familyFit").innerHTML=""; return; }
+  let h="";
+  if(r.placed===0){ h=`<div class="note">no crib letters land in range under this alphabet — place a crib / check the injection.</div>`; }
+  else if(!r.ok){ h=`<div class="stat"><span class="k">fit</span><span class="bad">✗ contradiction</span></div>`+
+      `<div class="note bad">${r.contradiction}</div>`+
+      `<div class="note">This crib cannot sit here under ${FAM[id].name} — a real elimination for this family at this placement.</div>`+(r.extra?`<div class="note">${r.extra}</div>`:``); }
+  else { const pct=(100*r.cover/CLEN).toFixed(0);
+    h=`<div class="stat"><span class="k">fit</span><span class="ok">✓ consistent</span></div>`+
+      `<div class="stat"><span class="k">glyphs pinned</span><span>${r.pinned} / ${N}</span></div>`+
+      `<div class="stat"><span class="k">positions decrypted</span><span class="big">${r.cover} <span class="k" style="font-size:11px">(${pct}%)</span></span></div>`+
+      (r.skipped?`<div class="stat"><span class="k warn">crib letters not in alphabet</span><span class="warn">${r.skipped} skipped</span></div>`:``)+
+      (r.extra?`<div class="note">${r.extra}</div>`:``); }
+  $("familyFit").innerHTML=h;
+}
+function renderFamilyBody(pv){ const id=activeFamily; renderFamilyEquation(id,pv); renderFamilyFit(id); $("familyNote").innerHTML=FAM[id].note; }
+function selectFamily(id){ activeFamily=id;
+  document.querySelectorAll("#familyTabs button").forEach(b=>b.classList.toggle("active",b.dataset.f===id));
+  renderFamilyControls(id); $("gscanOut").innerHTML=""; recompute(); }
+function runGromarkScan(){ const top=gromarkScan().slice(0,8);
+  if(!top.length){ $("gscanOut").innerHTML=`<span class="hint">place a crib first (scan ranks primers by cascade — most useful on a repeat-carrying crib)</span>`; return; }
+  $("gscanOut").innerHTML=`<span class="hint">top non-contradicting primers (g₀,g₁ · cover):</span> `+
+    top.map(r=>`<button class="nud" data-a="${r.a}" data-b="${r.b}">${r.a},${r.b} · ${r.cover}</button>`).join(" ");
+  $("gscanOut").querySelectorAll("button").forEach(btn=>btn.onclick=()=>{ GG0=+btn.dataset.a; GG1=+btn.dataset.b;
+    const i0=$("familyControls").querySelector('input[data-mod="g0"]'), i1=$("familyControls").querySelector('input[data-mod="g1"]');
+    if(i0)i0.value=GG0; if(i1)i1.value=GG1; recompute("primer"); }); }
+
+function recompute(pv){
+  const inj=buildInj($("injOrder").value); INJ=inj;
+  $("injStatus").innerHTML = (inj.len!==N? `<span class="warn">order has ${inj.len} chars (want ${N})</span> · ` : `${N} chars · `)
+    + (inj.dup? `<span class="warn">duplicate letters present</span>`:`no duplicates`);
+  $("nStatus").innerHTML = (isPrime(N)? `<span style="color:var(--mint)">prime → GF(${N}) is a field</span>`
+      : `<span class="warn">composite → Z/${N} is a ring (only units invert; solver pivots on ±1)</span>`)
+    + (N<=MAXGLYPH? ` · <span style="color:var(--err)">N ≤ largest symbol (${MAXGLYPH}) — glyphs will wrap!</span>`:``);
+  computeCribCells(); lastResults={};
+  for(const id of Object.keys(ENGINES)) lastResults[id]=ENGINES[id].run(places, inj);
+  clashCells=new Set();
+  const ar=lastResults[activeFamily];
+  if(ar && !ar.ok && ar.clashCells) clashCells=ar.clashCells;
+  renderFamilyBody(pv); buildGrid(); depthBanner(); renderB64(); updateOffPreview();
+}
+
+
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+// rotate a decrypted CHAR by the readout offset (used for Trifid, whose output is char-direct)
+function rotChar(ch){ if(injOffset===0||!INJ) return ch; const v=INJ.toVal(ch); if(v===undefined) return ch; return INJ.toChar(mod(v-injOffset)); }
+// preview the effective (rotated) alphabet: value v now reads as order[(v-offset) mod N]
+function updateOffPreview(){ if(!INJ){$("offPreview").textContent="";return;}
+  let s=""; for(let v=0;v<Math.min(16,N);v++) s+=INJ.toChar(mod(v-injOffset));
+  $("offPreview").innerHTML = injOffset===0 ? `<span class="hint">order as typed</span>`
+    : `→ reads as <span style="color:var(--ink)">${esc(s)}${N>16?"…":""}</span>`; }
+// base64 decode: values 0-63 = sextets; group 4 sextets -> 3 ASCII bytes; unknown/non-b64 -> "."
+function b64decode(vals){
+  const sx=vals.map(v=>(v!==undefined && v>=0 && v<64)? v : -1);
+  let out="";
+  for(let i=0;i<sx.length;i+=4){
+    const s0=sx[i], s1=sx[i+1], s2=sx[i+2], s3=sx[i+3];
+    const emit=b=>{ out += (b<0)? "." : (b>=32&&b<127? String.fromCharCode(b) : "."); };
+    if(i+1<sx.length) emit((s0<0||s1<0)?-1:((s0<<2)|(s1>>4))&255);
+    if(i+2<sx.length) emit((s1<0||s2<0)?-1:(((s1&15)<<4)|(s2>>2))&255);
+    if(i+3<sx.length) emit((s2<0||s3<0)?-1:(((s2&3)<<6)|s3)&255);
+  }
+  return out;
+}
+function renderIsoLegend(){
+  const byc={}; ISO.forEach(r=>{ (byc[r[0]]=byc[r[0]]||{n:0,len:r[3]}).n++; });
+  const order=["#1","#C0","#2-","#2+","#2","#C1","#M-","#S","#F","#3","#3+","#M","#4"];
+  const iso=order.map(id=>{ const b=byc[id]; if(!b)return"";
+    return `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border:2px solid ${ICOL[id]};display:inline-block"></span>${id} <span class="hint">${b.n}×${b.len}</span></span>`; }).join("");
+  const sh=`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:${SCOL.P}2e;border:2px solid ${SCOL.P};display:inline-block"></span>b%P^… <span class="hint">E1/W1/E2 ×24</span></span>`
+    +`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:${SCOL.Q}2e;border:2px solid ${SCOL.Q};display:inline-block"></span>b%QkV… <span class="hint">E4/W4/E5 ×20, others shorter</span></span>`;
+  $("isoLegend").innerHTML=iso+`<span class="hint" style="margin:0 4px">|</span>`+sh
+    +`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:${STUTCOL}22;border:2px solid ${STUTCOL};display:inline-block"></span>stutter <span class="hint">E4↔E5 · 2&lt;l·B\\_, differ @28</span></span>`;
+}
+function renderB64(){
+  const panel=$("b64Panel"); if(!$("b64Tog").checked){ panel.style.display="none"; return; } panel.style.display="block";
+  const out=$("b64Out"), eng=lastResults[activeFamily];
+  if(!eng || !eng.decVal || eng.decVal.size===0){
+    out.innerHTML=`<span class="hint">No decrypted values yet under <b>${FAM[activeFamily].name}</b> — place a crib. base64 decode reads the active family's value stream; set the injection to the <code>base64</code> preset and enter the crib in base64 characters for a like-for-like test.</span>`; return;
+  }
+  let html="";
+  for(let m=0;m<9;m++){
+    const vals=[]; for(let t=0;t<CORPUS[m].length;t++){ const v=eng.decVal.get(m+":"+t); vals.push(v!==undefined?mod(v-injOffset):undefined); }
+    const dec=b64decode(vals), known=[...dec].filter(c=>c!==".").length;
+    html+=`<div style="margin-bottom:4px"><span class="hint" style="display:inline-block;width:52px">${LABELS[m]}</span> <span style="color:var(--mint)">${esc(dec)}</span> <span class="hint">· ${known} byte${known===1?"":"s"}</span></div>`;
+  }
+  out.innerHTML=html;
+}
+
+let curPreset="ascii";
+const PGEN={a:presetA,b:presetB,ascii:presetASCII,b64:presetB64};
+const applyPreset=name=>{ curPreset=name; if(PGEN[name]) $("injOrder").value=PGEN[name](N); };
+applyPreset("ascii");
+$("injOrder").addEventListener("input",()=>{curPreset="custom";recompute();});
+$("pA").onclick=()=>{applyPreset("a");recompute();};
+$("pB").onclick=()=>{applyPreset("b");recompute();};
+$("pASCII").onclick=()=>{applyPreset("ascii");recompute();};
+$("pB64").onclick=()=>{applyPreset("b64");recompute();};
+$("pRand").onclick=()=>{curPreset="custom";const a=[...$("injOrder").value];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}$("injOrder").value=a.join("");recompute();};
+function setN(v){ v=parseInt(v); if(!Number.isFinite(v)||v<2)v=2; N=v; $("modN").value=N;
+  injOffset=mod(injOffset,N); $("offVal").textContent=injOffset;
+  if(curPreset!=="custom") applyPreset(curPreset);   // keep the alphabet the right length
+  recompute(); }
+$("modN").addEventListener("change",()=>setN($("modN").value));
+document.querySelectorAll("#nPresets button").forEach(b=>b.onclick=()=>setN(b.dataset.n));
+function setOffset(o){ injOffset=mod(o,N); $("offVal").textContent=injOffset; updateOffPreview(); buildGrid(); renderB64(); }
+$("offMinus").onclick=()=>setOffset(injOffset-1);
+$("offPlus").onclick=()=>setOffset(injOffset+1);
+$("offReset").onclick=()=>setOffset(0);
+$("addPlace").onclick=()=>{places.push({word:[],start:0,m:0,raw:""});editing=places.length-1;renderPlaces();recompute();};
+$("addPhrase").onclick=()=>{searchPhrases.push(""); renderSearchPhrases();};
+$("runSearch").onclick=runSearch;
+$("wrapLine").addEventListener("change",()=>{wrapInLine=$("wrapLine").checked;});
+$("depthTog").addEventListener("change",()=>recompute());
+$("isoTog").addEventListener("change",()=>buildGrid());
+$("sharedTog").addEventListener("change",()=>buildGrid());
+$("stutTog").addEventListener("change",()=>buildGrid());
+$("b64Tog").addEventListener("change",renderB64);
+// family tabs
+document.querySelectorAll("#familyTabs button").forEach(b=>b.onclick=()=>selectFamily(b.dataset.f));
+// overlay toggle (decrypt active family / raw glyphs)
+document.querySelectorAll("#overlayTog button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#overlayTog button").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+  overlayOn=b.dataset.o==="1"; buildGrid(); renderB64(); });
+// delegated modifier controls (rebuilt per family; handlers live on the stable container)
+$("familyControls").addEventListener("click", e=>{ const btn=e.target.closest("button"); if(!btn) return;
+  if(btn.dataset.mod==="gscan"){ runGromarkScan(); return; }
+  const seg=btn.closest("[data-mod]"); if(!seg) return; const which=seg.dataset.mod, val=btn.dataset.val;
+  seg.querySelectorAll("button").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
+  if(which==="sigma") SIGMA=+val; else if(which==="base") WBASE=val==="1"; else if(which==="drift") DRIFT=+val;
+  recompute(which); });
+$("familyControls").addEventListener("input", e=>{ const inp=e.target.closest("input[data-mod]"); if(!inp) return;
+  const which=inp.dataset.mod;
+  if(which==="g0"){ GG0=mod(parseInt(inp.value)||0); recompute("primer"); }
+  else if(which==="g1"){ GG1=mod(parseInt(inp.value)||0); recompute("primer"); }
+  else if(which==="lag"){ LAG=Math.max(1,parseInt(inp.value)||1); recompute("lag"); } });
+
+(function selfcheck(){
+  let pass=0,fail=0; const ck=(n,c)=>{c?pass++:fail++; if(!c)console.warn("[selfcheck] FAIL",n);};
+  // Gromark keystream: order-2 recurrence, correct + aperiodic well past message length
+  ck("gromark recurrence", (()=>{const K=gromarkK(3,7);return K[0]===3&&K[1]===7&&K[2]===mod(10)&&K[3]===mod(17)&&K.length>=137;})());
+  // static engine (progressive) recovers a planted per-msg-progressive corpus
+  ck("progressive recover", (()=>{const C=[...Array(N).keys()];for(let i=N-1;i>0;i--){const j=(Math.random()*(i+1))|0;[C[i],C[j]]=[C[j],C[i]];}
+    const P=Array.from({length:40},()=>(Math.random()*N)|0);const ct=P.map((p,t)=>C[mod(p+t)]);
+    const q={};C.forEach((g,s)=>q[g]=s);let good=0,tot=0;for(let t=0;t<ct.length;t++){tot++;if(mod(q[ct[t]]-t)===P[t])good++;}return good===tot;})());
+  // autokey forward-chain: encrypt a plant with cumulative autokey, decrypt with engineAutokey
+  ck("autokey Σ forward-chain", (()=>{
+    const C=[...Array(N).keys()];for(let i=N-1;i>0;i--){const j=(Math.random()*(i+1))|0;[C[i],C[j]]=[C[j],C[i]];}
+    const order=C.map(v=>String.fromCharCode(v+32)).join("");
+    const inj2={toVal:ch=>order.indexOf(ch),toChar:v=>order[mod(v)]};
+    const L=20, P=Array.from({length:L},()=>(Math.random()*N)|0), beta=17;
+    const ctv=[]; let sum=0; for(let t=0;t<L;t++){ ctv.push(C[mod(P[t]+beta+sum)]); sum=mod(sum+P[t]); }
+    const save=CORPUS[0].slice();
+    try{ for(let t=0;t<L;t++) CORPUS[0][t]=ctv[t];
+      const r=engineAutokey(1,"cumul",{}, [{m:0,start:0,word:P.map(v=>order[v])}], inj2);   // full crib → full chain
+      let ok=r.ok; for(let t=0;t<L;t++){ if(r.decVal.get("0:"+t)!==P[t]) ok=false; } return ok;
+    } finally { for(let t=0;t<save.length;t++) CORPUS[0][t]=save[t]; }
+  })());
+  const C=[...Array(N).keys()];for(let i=N-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[C[i],C[j]]=[C[j],C[i]];}
+  const q={};C.forEach((g,s)=>q[g]=s);const P=Array.from({length:40},()=>Math.floor(Math.random()*N));
+  const ct=P.map((p,t)=>C[mod(p+t)]);const qh={};for(let t=8;t<24;t++)qh[ct[t]]=mod(P[t]+t);
+  let good=0,tot=0;for(let t=0;t<ct.length;t++)if(qh[ct[t]]!==undefined){tot++;if(mod(qh[ct[t]]-t)===P[t])good++;}
+  ck("static pin math",good===tot&&tot>16);
+  const r1=solveMod(3,[{c:{0:1,2:-1},rhs:5},{c:{1:1,2:-1},rhs:9},{c:{0:1},rhs:20}]);
+  ck("solver consistent",r1.ok&&r1.sol[0]===20&&mod(r1.sol[0]-r1.sol[2])===5&&mod(r1.sol[1]-r1.sol[2])===9);
+  ck("solver inconsistent",solveMod(1,[{c:{0:1},rhs:1},{c:{0:1},rhs:2}]).ok===false);
+  const inj=buildInj(presetA(N)); ck("inj round-trip", inj.toChar(inj.toVal("Q"))==="Q" && inj.toVal("A")===0);
+  ck("base64 decode", b64decode([18,6,36,33])==="Hi!");
+  ck("base64 unknown->dot", (()=>{const d=b64decode([18,undefined,36,33]);return d==="..!";})());
+  ck("base64 preset len N", buildInj(presetB64(N)).len===N);
+  // variable-modulus math
+  ck("egcd inverse prime (mod 83)", (()=>{for(let a=1;a<83;a++){const v=egcdInv(a,83);if(v===null||mod(a*v,83)!==1)return false;}return true;})());
+  ck("egcd composite units only (mod 12)", (()=>{const units=[1,5,7,11];for(let a=1;a<12;a++){const v=egcdInv(a,12);const u=units.includes(a);if(u!==(v!==null))return false;if(v!==null&&mod(a*v,12)!==1)return false;}return true;})());
+  ck("solver over composite ring (mod 12)", (()=>{const r=solveMod(3,[{c:{0:1,2:-1},rhs:5},{c:{1:1,2:-1},rhs:9},{c:{0:1},rhs:8}],12);
+    return r.ok && r.sol[0]===8 && mod(r.sol[0]-r.sol[2],12)===5 && mod(r.sol[1]-r.sol[2],12)===9;})());
+  ck("solver inconsistent over ring", solveMod(1,[{c:{0:1},rhs:1},{c:{0:1},rhs:2}],12).ok===false);
+  ck("presets any length (N=125)", presetA(125).length===125 && new Set([...presetASCII(125)]).size===125);
+  ck("readout offset rotation", (()=>{ const inj=buildInj(presetA(N)); const v=10;
+    return inj.toChar(mod(v-0))===inj.toChar(v) && inj.toChar(mod(v-1))!==inj.toChar(v) && inj.toChar(mod(v-N))===inj.toChar(v); })());
+  console.log(`[selfcheck] ${fail===0?"ALL PASS":"FAILURES"} (${pass}/${pass+fail})`);
+})();
+
+renderPlaces(); renderIsoLegend(); renderSearchPhrases(); selectFamily("prog");
+</script>
+</body>
+</html>
