@@ -1,0 +1,91 @@
+{
+ "clean_pairs": 6,
+ "contradictions": 0,
+ "glyphs_linked": 37,
+ "linked_glyphs": [
+  0,
+  5,
+  6,
+  9,
+  10,
+  11,
+  13,
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  23,
+  26,
+  29,
+  31,
+  36,
+  40,
+  41,
+  42,
+  44,
+  46,
+  47,
+  48,
+  49,
+  57,
+  59,
+  63,
+  64,
+  65,
+  67,
+  68,
+  70,
+  72,
+  80,
+  81
+ ],
+ "distinct_positions": 19,
+ "matches_chain_extract": false,
+ "triplets_contributing": [
+  0
+ ],
+ "residual": {
+  "unlinked_glyphs": 46,
+  "collapse_pairs": {
+   "15": [
+    0,
+    10
+   ],
+   "33": [
+    9,
+    63
+   ],
+   "63": [
+    40,
+    72
+   ]
+  },
+  "global_gauge": 1,
+  "cross_triplet_base_deltas": 2
+ },
+ "ranking": [
+  {
+   "gain": "22 absolute values",
+   "action": "pin any 1 linked glyph (fixes gauge)"
+  },
+  {
+   "gain": "variable",
+   "action": "acquire T2/T3 internal isomorphs (adds new glyphs; clean set is all T1)"
+  },
+  {
+   "gain": "variable",
+   "action": "measure cross-triplet bridge shift (merges T2/T3 once they have isomorphs)"
+  },
+  {
+   "gain": "2",
+   "action": "distinguishing isomorph for a collapse pair"
+  },
+  {
+   "gain": "1 each",
+   "action": "crib/anchor on an unlinked glyph"
+  }
+ ],
+ "model_conditional": true
+}
