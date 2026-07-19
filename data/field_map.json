@@ -1,0 +1,2276 @@
+{
+ "_tiering": {
+  "tier1": "identical-ciphertext positions (fact)",
+  "tier2": "field layout; equality-run => constant Delta_p (all families); EQUAL within-triplet, SHIFT across",
+  "tier3_withheld": "values and shift magnitudes (need C)",
+  "label_caveat": "equal/shift depends on base-cluster model (FG4 within-triplet Delta=0 assumed; lattice contests E2)"
+ },
+ "corpus": {
+  "N": 83,
+  "triplets": [
+   [
+    0,
+    1,
+    2
+   ],
+   [
+    3,
+    4,
+    5
+   ],
+   [
+    6,
+    7,
+    8
+   ]
+  ],
+  "labels": [
+   "East 1",
+   "West 1",
+   "East 2",
+   "West 2",
+   "East 3",
+   "West 3",
+   "East 4",
+   "West 4",
+   "East 5"
+  ],
+  "lengths": [
+   99,
+   103,
+   118,
+   102,
+   137,
+   124,
+   119,
+   120,
+   114
+  ]
+ },
+ "fields": [
+  {
+   "pos": [
+    1,
+    2
+   ],
+   "len": 2,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2",
+      "West 2",
+      "East 3",
+      "West 3",
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ],
+      [
+       "West 2",
+       "East 3",
+       "West 3"
+      ],
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 1.9712900143658228e-31,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    3,
+    5
+   ],
+   "len": 3,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 3.058661705482773e-12,
+     "certified": true
+    },
+    {
+     "members": [
+      "West 2",
+      "East 3",
+      "West 3",
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 2",
+       "East 3",
+       "West 3"
+      ],
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 1.636170711923633e-29,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    6,
+    9
+   ],
+   "len": 4,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 4.4399211866494014e-16,
+     "certified": true
+    },
+    {
+     "members": [
+      "East 3",
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      4,
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 9.355411428586784e-24,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    10,
+    10
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2",
+      "West 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 1.7489030005928781e-06,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    11,
+    12
+   ],
+   "len": 2,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 2.107112048907082e-08,
+     "certified": true
+    },
+    {
+     "members": [
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 2.107112048907082e-08,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    13,
+    13
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "West 2",
+      "West 3"
+     ],
+     "member_idx": [
+      3,
+      5
+     ],
+     "equal_within_triplet": [
+      [
+       "West 2",
+       "West 3"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    14,
+    14
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 3",
+      "West 3"
+     ],
+     "member_idx": [
+      4,
+      5
+     ],
+     "equal_within_triplet": [
+      [
+       "East 3",
+       "West 3"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    15,
+    19
+   ],
+   "len": 5,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 6.444942933153435e-20,
+     "certified": true
+    },
+    {
+     "members": [
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 6.444942933153435e-20,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    20,
+    20
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "West 2",
+      "East 3",
+      "East 4",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      3,
+      4,
+      6,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 2",
+       "East 3"
+      ],
+      [
+       "East 4",
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 2.107112048907082e-08,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    21,
+    21
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    22,
+    22
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "West 2",
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      3,
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    23,
+    23
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    24,
+    24
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2",
+      "East 4",
+      "West 4"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2,
+      6,
+      7
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ],
+      [
+       "East 4",
+       "West 4"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 2.107112048907082e-08,
+     "certified": true
+    }
+   ]
+  },
+  {
+   "pos": [
+    25,
+    25
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 3",
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      5,
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    26,
+    27
+   ],
+   "len": 2,
+   "blocks": [
+    {
+     "members": [
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    29,
+    29
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "West 3"
+     ],
+     "member_idx": [
+      0,
+      1,
+      5
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    30,
+    30
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    31,
+    31
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "West 4"
+     ],
+     "member_idx": [
+      0,
+      1,
+      7
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    32,
+    32
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    33,
+    33
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 2",
+      "West 3"
+     ],
+     "member_idx": [
+      3,
+      5
+     ],
+     "equal_within_triplet": [
+      [
+       "West 2",
+       "West 3"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    35,
+    35
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 1",
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      1,
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    37,
+    37
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    38,
+    38
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 3",
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      4,
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    39,
+    40
+   ],
+   "len": 2,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    41,
+    41
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 2",
+      "East 4"
+     ],
+     "member_idx": [
+      2,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    42,
+    42
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 2",
+      "West 3"
+     ],
+     "member_idx": [
+      2,
+      5
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "East 5"
+     ],
+     "member_idx": [
+      6,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    43,
+    45
+   ],
+   "len": 3,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 1.7489030005928781e-06,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    46,
+    46
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    47,
+    48
+   ],
+   "len": 2,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    49,
+    49
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.00014515894904920887,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    52,
+    52
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 3",
+      "East 4"
+     ],
+     "member_idx": [
+      4,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    55,
+    55
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    56,
+    56
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 1",
+      "East 4"
+     ],
+     "member_idx": [
+      1,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    58,
+    58
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    59,
+    59
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 2"
+     ],
+     "member_idx": [
+      0,
+      3
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    61,
+    61
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 3",
+      "West 4"
+     ],
+     "member_idx": [
+      4,
+      7
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    63,
+    63
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 3",
+      "West 3"
+     ],
+     "member_idx": [
+      4,
+      5
+     ],
+     "equal_within_triplet": [
+      [
+       "East 3",
+       "West 3"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 4",
+      "West 4"
+     ],
+     "member_idx": [
+      6,
+      7
+     ],
+     "equal_within_triplet": [
+      [
+       "East 4",
+       "West 4"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    64,
+    64
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    66,
+    66
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 2",
+      "East 5"
+     ],
+     "member_idx": [
+      2,
+      8
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    68,
+    68
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 2",
+      "West 3"
+     ],
+     "member_idx": [
+      3,
+      5
+     ],
+     "equal_within_triplet": [
+      [
+       "West 2",
+       "West 3"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    70,
+    70
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 2",
+      "West 3"
+     ],
+     "member_idx": [
+      2,
+      5
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    71,
+    71
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "East 4"
+     ],
+     "member_idx": [
+      0,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    72,
+    72
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    73,
+    73
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 2",
+      "East 5"
+     ],
+     "member_idx": [
+      3,
+      8
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    74,
+    74
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 4"
+     ],
+     "member_idx": [
+      0,
+      7
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    81,
+    81
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "East 2"
+     ],
+     "member_idx": [
+      0,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    82,
+    82
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 1",
+      "East 2"
+     ],
+     "member_idx": [
+      1,
+      2
+     ],
+     "equal_within_triplet": [
+      [
+       "West 1",
+       "East 2"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    84,
+    84
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 1",
+      "East 5"
+     ],
+     "member_idx": [
+      1,
+      8
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "West 3",
+      "East 4"
+     ],
+     "member_idx": [
+      5,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    86,
+    86
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 2",
+      "East 3"
+     ],
+     "member_idx": [
+      2,
+      4
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    88,
+    88
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 3",
+      "West 4"
+     ],
+     "member_idx": [
+      5,
+      7
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    94,
+    94
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 2",
+      "East 4"
+     ],
+     "member_idx": [
+      2,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    97,
+    97
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 1",
+      "West 1"
+     ],
+     "member_idx": [
+      0,
+      1
+     ],
+     "equal_within_triplet": [
+      [
+       "East 1",
+       "West 1"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    101,
+    101
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 3",
+      "East 5"
+     ],
+     "member_idx": [
+      5,
+      8
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    107,
+    107
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 3",
+      "East 4"
+     ],
+     "member_idx": [
+      5,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    110,
+    110
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "East 2",
+      "East 4"
+     ],
+     "member_idx": [
+      2,
+      6
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    },
+    {
+     "members": [
+      "East 3",
+      "East 5"
+     ],
+     "member_idx": [
+      4,
+      8
+     ],
+     "equal_within_triplet": [],
+     "constant_shift_across_triplets": true,
+     "shift_magnitude": "UNKNOWN (cross-triplet base delta)",
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  },
+  {
+   "pos": [
+    111,
+    111
+   ],
+   "len": 1,
+   "blocks": [
+    {
+     "members": [
+      "West 4",
+      "East 5"
+     ],
+     "member_idx": [
+      7,
+      8
+     ],
+     "equal_within_triplet": [
+      [
+       "West 4",
+       "East 5"
+      ]
+     ],
+     "constant_shift_across_triplets": false,
+     "shift_magnitude": 0,
+     "coincidence_prob": 0.012048192771084338,
+     "certified": false
+    }
+   ]
+  }
+ ],
+ "bridge_targets": [
+  {
+   "pos": [
+    1,
+    2
+   ],
+   "len": 2,
+   "members": [
+    "East 1",
+    "West 1",
+    "East 2",
+    "West 2",
+    "East 3",
+    "West 3",
+    "East 4",
+    "West 4",
+    "East 5"
+   ]
+  },
+  {
+   "pos": [
+    3,
+    5
+   ],
+   "len": 3,
+   "members": [
+    "West 2",
+    "East 3",
+    "West 3",
+    "East 4",
+    "West 4",
+    "East 5"
+   ]
+  },
+  {
+   "pos": [
+    6,
+    9
+   ],
+   "len": 4,
+   "members": [
+    "East 3",
+    "East 4",
+    "West 4",
+    "East 5"
+   ]
+  }
+ ],
+ "phylogeny_shared_len": {
+  "East 1|West 1": 44,
+  "East 1|East 2": 27,
+  "East 1|West 2": 4,
+  "East 1|East 3": 2,
+  "East 1|West 3": 3,
+  "East 1|East 4": 4,
+  "East 1|West 4": 5,
+  "East 1|East 5": 2,
+  "West 1|East 2": 27,
+  "West 1|West 2": 3,
+  "West 1|East 3": 2,
+  "West 1|West 3": 3,
+  "West 1|East 4": 5,
+  "West 1|West 4": 4,
+  "West 1|East 5": 4,
+  "East 2|West 2": 3,
+  "East 2|East 3": 3,
+  "East 2|West 3": 4,
+  "East 2|East 4": 6,
+  "East 2|West 4": 3,
+  "East 2|East 5": 3,
+  "West 2|East 3": 6,
+  "West 2|West 3": 8,
+  "West 2|East 4": 6,
+  "West 2|West 4": 7,
+  "West 2|East 5": 8,
+  "East 3|West 3": 7,
+  "East 3|East 4": 12,
+  "East 3|West 4": 11,
+  "East 3|East 5": 12,
+  "West 3|East 4": 8,
+  "West 3|West 4": 6,
+  "West 3|East 5": 7,
+  "East 4|West 4": 22,
+  "East 4|East 5": 31,
+  "West 4|East 5": 26
+ }
+}
